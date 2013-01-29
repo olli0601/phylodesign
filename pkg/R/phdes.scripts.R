@@ -24,7 +24,7 @@ prj.popart.powercalc_link_consenting<- function(p.phylosignal=0.7,p.nocontam=0.8
 	test.prop0<- 0.10
 	test.prop1<- 0.4
 	test.alpha<- 0.05		
-	pooled.n<- 2
+	pooled.n<- 200
 	#opt.pooled<- "no pooling"#"pooled across ZA"#"pooled across trial"#"no pooling"
 	#opt.sampling<- "PC and HCC"#"only HCC"#"PC and HCC"
 	opt.power<-	"All"	
