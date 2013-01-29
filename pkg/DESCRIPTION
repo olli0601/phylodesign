@@ -1,0 +1,14 @@
+Package: phylodesign
+Version: 1.0-0
+Date: 2013/01/24
+Title: tools to design phylodynamic components of randomized trials.
+Author: {Christophe Fraser, Oliver Ratmann}
+Maintainer: Oliver Ratmann <o.ratmann@imperial.ac.uk>
+Depends:
+    R (>= 2.10)
+Description: tools to design phylodynamic components of randomized trials.
+License: GPL (>=2)
+LazyLoad: yes
+Collate:
+    'phdes.functions.R'
+    'phdes.scripts.R'
