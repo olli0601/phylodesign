@@ -115,7 +115,7 @@ phdes.plot.confint.panel<- function(lw.l,lw.u,hg.l,hg.u,x,y,xlab,ylab,cols=c("re
 }
 ###############################################################################
 #' plot power under a binomial test
-phdes.plot.power<- function(m, m2, c, c2, xlab, ylab, legend.txt, legend.loc, cols=c("red","blue"), verbose= 0)
+phdes.plot.power<- function(m, m2, c, c2, xlab="", ylab="", legend.txt="", legend.loc="bottomright", cols=c("red","blue"), verbose= 0)
 {	
 	x<- as.numeric(names(m))
 	x2<- as.numeric(names(m2))
@@ -127,8 +127,6 @@ phdes.plot.power<- function(m, m2, c, c2, xlab, ylab, legend.txt, legend.loc, co
 	
 	lines(x2,m2,col=cols[2],lty=2)
 	points(x2[c2],m2[c2],col=cols[2],pch=22)
-	print(legend.loc)
-	stop()
 	if(!is.character(legend.loc))
 		legend(x=legend.loc$x,y=legend.loc$y,fill=c(cols[1],cols[2],"transparent","transparent"),legend=legend.txt,bty='n', border= NA)
 	else
