@@ -127,7 +127,8 @@ phdes.plot.power<- function(m, m2, c, c2, xlab, ylab, legend.txt, legend.loc, co
 	
 	lines(x2,m2,col=cols[2],lty=2)
 	points(x2[c2],m2[c2],col=cols[2],pch=22)
-	
+	print(legend.loc)
+	stop()
 	if(!is.character(legend.loc))
 		legend(x=legend.loc$x,y=legend.loc$y,fill=c(cols[1],cols[2],"transparent","transparent"),legend=legend.txt,bty='n', border= NA)
 	else

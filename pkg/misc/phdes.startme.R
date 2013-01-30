@@ -8,7 +8,7 @@
 # file: phdes.startme.R
 #
 # usage from R:
-#> setwd("/Users/Oliver/workspace_sandbox/popartlib/phylodesign/pkg")
+#> setwd("/Users/cfraser/git/phylodesign/pkg")
 #> source("misc/phdes.startme.R")
 # usage from bash:
 #> misc/phdes.startme.R --help
@@ -35,17 +35,17 @@ if(!any(args=='--args'))
 if(any(args=='--args'))
 	args<- args[-(1:match("--args", args)) ]
 
-CODE.HOME<<- "/Users/Oliver/workspace_sandbox/popartlib/phylodesign/pkg"
-#CODE.HOME<<- "/home/koelle/or7/libs/popartlib"
+#CODE.HOME<<- "/Users/Oliver/workspace_sandbox/popartlib/phylodesign/pkg"
+CODE.HOME<<- "/Users/cfraser/phylodesign/pkg"
 #CODE.HOME<<- "/work/or105/libs/popartlib"
-HOME<<- "/Users/Oliver/workspace_sandbox/popart"
+HOME<<- "/Users/cfraser/phylodesign"
 #HOME<<- "/home/koelle/or7/popart"
 #HOME<<- "/work/or105/popart"
 DATA<<- paste(HOME,"data",sep='/')
 PHDES.DEBUG<<- 0
 #default.fun	<- "prj.popart.powercalc_tipc_consenting"
-#default.fun	<- "prj.popart.powercalc_link_consenting"
-default.fun	<- "prj.popart.power_test"
+default.fun	<- "prj.popart.powercalc_link_consenting"
+#default.fun	<- "prj.popart.power_test"
 #default.fun	<- "prj.popart.powercalc_cmp_link_tipc"
 #default.fun	<- "prj.popart.powercalc_tipc_contam"
 ###############################################################################

@@ -102,6 +102,7 @@ prj.popart.powercalc_link_consenting<- function(p.phylosignal=0.7,p.nocontam=0.8
 	
 	f.name<- paste(dir.name,paste("CFLINK_consent",p.nocontam,"phsig",p.phylosignal,"power",opt.power,"pool",opt.pooled,"sample",opt.sampling,"pwcalc",test.prop0,test.prop1,test.alpha,".pdf",sep='_'),sep='/')	
 	cat(paste("\nplot power to\n",f.name))
+	print("HERE")
 	pdf(paste(f.name),version="1.4",width=6,height=6)
 	phdes.plot.power(	power.hg.med.armA, power.hg.med.armC, is.conf.hg.med.armA, is.conf.hg.med.armC,
 			f.name, "% consenting to ph study at HCC", 
