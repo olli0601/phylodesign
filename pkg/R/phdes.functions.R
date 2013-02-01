@@ -1,4 +1,44 @@
 ###############################################################################
+# Generic form
+'%<-%' = function(l, r, ...) UseMethod('%<-%')
+# Binary Operator
+'%<-%.lbunch' = function(l, r, ...) {
+	Envir = as.environment(-1)
+	
+	if (length(r) > length(l))
+		warning("RHS has more args than LHS. Only first", length(l), "used.")
+	
+	if (length(l) > length(r))  {
+		warning("LHS has more args than RHS. RHS will be repeated.")
+		r <- extendToMatch(r, l)
+	}
+	
+	for (II in 1:length(l)) {
+		do.call('<-', list(l[[II]], r[[II]]), envir=Envir)
+	}
+}
+# Used if LHS is larger than RHS
+extendToMatch <- function(source, destin) {
+	s <- length(source)
+	d <- length(destin)
+	
+	# Assume that destin is a length when it is a single number and source is not
+	if(d==1 && s>1 && !is.null(as.numeric(destin)))
+		d <- destin
+	
+	dif <- d - s
+	if (dif > 0) {
+		source <- rep(source, ceiling(d/s))[1:d]
+	}
+	return (source)
+}
+# Grouping the left hand side
+g = function(...) {
+	List = as.list(substitute(list(...)))[-1L]
+	class(List) = 'lbunch'
+	return(List)
+}
+###############################################################################
 my.fade.col<-function(col,alpha=0.5)
 {
 	return(rgb(col2rgb(col)[1]/255,col2rgb(col)[2]/255,col2rgb(col)[3]/255,alpha))
@@ -403,6 +443,7 @@ popart.get.sampled.transmissions.p<- function(pop.size,f.coh,f.susc,f.untreated,
 #'  @param method 	poopling method. Supported methods are "no pooling", "pooled across country", "pooled across ZA", "pooled across SA", "pooled across trial".
 #' 	@return \item{inc}{pooled matrix of acute to acute transmissions}
 #' 			\item{idx.A}{row index of arm A sites}
+#' 			\item{idx.B}{row index of arm B sites}
 #'			\item{idx.C}{row index of arm C sites}
 #' 	@examples 	
 #' 	sites<- popart.getdata.randomized.arm(1)
@@ -414,6 +455,7 @@ popart.pool<- function(sites, transm, method="no pooling")
 	if(method=="no pooling")
 	{
 		idx.A<-	which(sites$arm=="A")
+		idx.B<-	which(sites$arm=="B")
 		idx.C<-	which(sites$arm=="C")				
 	}
 	else if(method=="pooled across country")
@@ -428,6 +470,7 @@ popart.pool<- function(sites, transm, method="no pooling")
 									apply(transm[ris[which(sites$arm[ris]=="C" & sites$country[ris]==2)],,drop=0],2,sum))					
 						}))
 		idx.A<-	seq(1,nrow(transm),by=3)
+		idx.B<-	seq(2,nrow(transm),by=3)
 		idx.C<-	seq(3,nrow(transm),by=3)
 	}
 	else if(method=="pooled across ZA")
@@ -439,6 +482,7 @@ popart.pool<- function(sites, transm, method="no pooling")
 									apply(transm[ris[which(sites$arm[ris]=="C" & sites$country[ris]==1)],,drop=0],2,sum))					
 						}))
 		idx.A<-	seq(1,nrow(transm),by=3)
+		idx.B<-	seq(2,nrow(transm),by=3)
 		idx.C<-	seq(3,nrow(transm),by=3)
 	}
 	else if(method=="pooled across SA")
@@ -450,6 +494,7 @@ popart.pool<- function(sites, transm, method="no pooling")
 									apply(transm[ris[which(sites$arm[ris]=="C" & sites$country[ris]==2)],,drop=0],2,sum))					
 						}))
 		idx.A<-	seq(1,nrow(transm),by=3)
+		idx.B<-	seq(2,nrow(transm),by=3)
 		idx.C<-	seq(3,nrow(transm),by=3)
 	}
 	else if(method=="pooled across trial")
@@ -461,6 +506,7 @@ popart.pool<- function(sites, transm, method="no pooling")
 									apply(transm[ris[which(sites$arm[ris]=="C")],,drop=0],2,sum)	)					
 						}))
 		idx.A<-	seq(1,nrow(transm),by=3)
+		idx.B<-	seq(2,nrow(transm),by=3)
 		idx.C<-	seq(3,nrow(transm),by=3)				
 	}
 	else if(method=="pooled across T5")
@@ -472,11 +518,12 @@ popart.pool<- function(sites, transm, method="no pooling")
 									apply(transm[ris[which(sites$arm[ris]=="C" & sites$triplet.id[ris]==5)],,drop=0],2,sum))					
 						}))
 		idx.A<-	seq(1,nrow(transm),by=3)
+		idx.B<-	seq(2,nrow(transm),by=3)
 		idx.C<-	seq(3,nrow(transm),by=3)		
 	}
 	else stop("popart.pool: pooling option not recognized")
 	
-	ans<- list(transm=transm, idx.A=idx.A, idx.C=idx.C)
+	ans<- list(transm=transm, idx.A=idx.A, idx.B=idx.B, idx.C=idx.C)
 	ans
 }	
 ###############################################################################
@@ -520,69 +567,47 @@ popart.pool<- function(sites, transm, method="no pooling")
 }	
 ###############################################################################
 #' performs power calculations and computes binomial confidence intervals for a given number of acute 2 acute transmissions
-#' @param x2i 			number of transmissions
-#' @param i2i			number of acute 2 acute transmissions
-#' @param idx.A			row index of arm A sites
-#' @param idx.C			row index of arm C sites
-#' @param test.prop0.A	null proportion of transmission during acute phase for arm A
-#' @param test.prop1.A 	alternate proportion of transmission during acute phase for arm A
-#' @param test.prop0.C	null proportion of transmission during acute phase for arm C (if ommitted set to the one for arm A)
-#' @param test.prop1.C 	alternate proportion of transmission during acute phase for arm C (if ommitted set to the one for arm A)
+#' @param x2i 			number of transmissions, typically for a specific arm
+#' @param i2i			number of acute 2 acute transmissions, typically for a specific arm
+#' @param test.prop0	null proportion of transmission during acute phase
+#' @param test.prop1 	alternate proportion of transmission during acute phase
 #' @param test.alpha	level of test
-#' @param method.pw		method used to calculate Binomial power
-#' @param method.ci		method used to calculate Binomial confidence intervals
-#' @return list containing power and confidence intervals
-phdes.binom.power<- function(x2i, i2i, idx.A, idx.C, test.prop0.A, test.prop1.A, test.prop0.C=NULL, test.prop1.C=NULL, test.alpha=0.05, verbose=0, method.pw="homebrew", method.ci="bayes")
+#' @param method.pw		method used to calculate Binomial power. Possible options are "homebrew","cloglog", "logit", "probit", "asymp", "lrt", "exact".
+#' @param method.ci		method used to calculate Binomial confidence intervals. Possible options are "exact", "ac", "asymptotic", "wilson", "prop.test", "bayes", "logit", "cloglog", "probit".
+#' @return \item{conf}{binomial confidence interval for each site in x2i and i2i}
+#' 		   \item{is.conf}{boolean flag for each site, indicating if test.prop0 is below the confidence interval AND if the i2i exceed 5}
+#' 		   \item{power}{binomial power for each site in x2i and i2i}
+#' @examples 	sites<- popart.getdata.randomized.arm(1)
+#' 	sites<- popart.getdata.randomized.n(sites, 2500, 3)
+#' 	x2i<- popart.get.sampled.transmissions(sites)
+#'	x2i<- phdes.get.linked.transmissions(x2i,0.8)			
+#'	tmp<- popart.pool(sites, x2i)
+#'	x2i<- tmp[["transm"]]
+#'	idx.A<- tmp[["idx.A"]]
+#' 	phdes.binom.power(	x2i[idx.A,,drop=0], round(x2i[idx.A,,drop=0]*test.prop0), test.prop0, test.prop1, test.alpha, verbose=0)
+phdes.binom.power<- function(x2i, i2i, test.prop0, test.prop1, test.alpha=0.05, verbose=0, method.pw="homebrew", method.ci="bayes")
 {		
 	if(!method.ci%in%c("exact", "ac", "asymptotic", "wilson", "prop.test", "bayes", "logit", "cloglog", "probit"))
 		stop("method.ci not known")
 	if(!method.pw%in%c("homebrew","cloglog", "logit", "probit", "asymp", "lrt", "exact"))
 		stop("method.pw not known")	
-	if(is.null(test.prop0.C))
-		test.prop0.C<- test.prop0.A
-	if(is.null(test.prop1.C))
-		test.prop1.C<- test.prop1.A
-	if(length(test.prop0.A)!=ncol(x2i))
-		test.prop0.A<- rep(test.prop0.A,ncol(x2i))
-	if(length(test.prop1.A)!=ncol(x2i))
-		test.prop1.A<- rep(test.prop1.A,ncol(x2i))	
-	if(length(test.prop0.C)!=ncol(x2i))
-		test.prop0.C<- rep(test.prop0.C,ncol(x2i))
-	if(length(test.prop1.C)!=ncol(x2i))
-		test.prop1.C<- rep(test.prop1.C,ncol(x2i))	
+	if(length(test.prop0)!=ncol(x2i))
+		test.prop0<- rep(test.prop0,ncol(x2i))
+	if(length(test.prop1)!=ncol(x2i))
+		test.prop1<- rep(test.prop1,ncol(x2i))
 		
-	x			<- x2i[idx.A,,drop=0]
-	x			<- apply(x,2,mean)
-	y			<- i2i[idx.A,,drop=0]	
-	y			<- apply(y,2,mean)	
-	test.prop0	<- test.prop0.A
-	test.prop1	<- test.prop1.A
+	x			<- apply(x2i,2,mean)		
+	y			<- apply(i2i,2,mean)	
 	
 	if(verbose){	cat("\nphylog linked incident cases\n");	print(x)	}	
-	conf.A<- binom.confint(as.vector(y), as.vector(x), conf.level = 0.95, methods=method.ci)[,c("lower","upper")]	
-	rownames(conf.A)<- colnames(x2i)
-	is.conf.A<- test.prop0<conf.A[,"lower"] & x*test.prop1>=5
+	conf<- binom.confint(as.vector(y), as.vector(x), conf.level = 0.95, methods=method.ci)[,c("lower","upper")]	
+	rownames(conf)<- colnames(x2i)
+	is.conf<- test.prop0<conf[,"lower"] & y>=5
 	#suppose  test.prop0<test.prop1<0.5, then the alternative Binom|test.prop0 has smaller variance
-	power.A<- .phdes.binom.power(x, test.prop1, test.prop0, test.alpha, method=method.pw)	 
-	names(power.A)<- colnames(x2i)
+	power<- .phdes.binom.power(x, test.prop1, test.prop0, test.alpha, method=method.pw)	 
+	names(power)<- colnames(x2i)
 	if(verbose){ cat(paste("\npower to distinguish",test.prop0, "from", test.prop1,"\n"));	print(power.hg.A)	}
 	
-	x			<- x2i[idx.C,,drop=0]
-	x			<- apply(x,2,mean)
-	y			<- i2i[idx.C,,drop=0]	
-	y			<- apply(y,2,mean)	
-	test.prop0	<- test.prop0.C
-	test.prop1	<- test.prop1.C
-	
-	
-	conf.C<- binom.confint(as.vector(y), as.vector(x), conf.level = 0.95, methods=method.ci)[,c("lower","upper")]	
-	rownames(conf.C)<- colnames(x2i)	
-	is.conf.C<- test.prop0<conf.C[,"lower"] & x*test.prop1>=5
-	#suppose  test.prop0<test.prop1<0.5, then the alternative Binom|test.prop0 has smaller variance
-	power.C<- .phdes.binom.power(x, test.prop1, test.prop0, test.alpha, method=method.pw)	
-	names(power.C)<- colnames(x2i)
-	if(verbose){ cat(paste("\npower to distinguish",test.prop0, "from", test.prop1,"\n"));	print(power.C)	}
-	
-	ans<- list(power.A=power.A, power.C=power.C, is.conf.A=is.conf.A, is.conf.C=is.conf.C, conf.A=conf.A, conf.C=conf.C)
+	ans<- list(conf=conf, is.conf=is.conf, power=power)
 	ans		
 }

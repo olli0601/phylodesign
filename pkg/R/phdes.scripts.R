@@ -17,15 +17,15 @@ prj.popart.powercalc_link_consenting<- function(p.phylosignal=0.7,p.nocontam=0.8
 	verbose<- 1
 	plot.increment<- 0.05
 	
-	m.type<- "Acute"	
-	cohort.size<- 2500
-	pc24.size<- 6000
-	cohort.dur<- 3	
-	test.prop0<- 0.10
-	test.prop1<- 0.4
-	test.alpha<- 0.05		
-	pooled.n<- 200
-	opt.pooled<- "pooled across trial"#"no pooling"#"pooled across ZA"#"pooled across trial"#"no pooling"
+	m.type		<- "Acute"	
+	cohort.size	<- 2500
+	pc24.size	<- 6000
+	cohort.dur	<- 3	
+	test.prop0	<- 0.10
+	test.prop1	<- 0.4
+	test.alpha	<- 0.05		
+	pooled.n	<- 1
+	opt.pooled	<- "no pooling"#"pooled across trial"#"no pooling"#"pooled across ZA"#"pooled across trial"#"no pooling"
 	#opt.sampling<- "PC and HCC"#"only HCC"#"PC and HCC"
 	opt.power<-	"All"	
 	if(!opt.sampling%in%c("PC and HCC","only HCC"))
@@ -48,6 +48,7 @@ prj.popart.powercalc_link_consenting<- function(p.phylosignal=0.7,p.nocontam=0.8
 	
 	sites<-	popart.getdata.randomized.arm( pooled.n )
 	sites<-	popart.getdata.randomized.n(sites, cohort.size, cohort.dur)
+	print(sites)
 	###############################################################################
 	#vary %consenting in HCC
 	###############################################################################
@@ -73,65 +74,70 @@ prj.popart.powercalc_link_consenting<- function(p.phylosignal=0.7,p.nocontam=0.8
 	
 	cat("\ncomputed linked transmissions")
 	x2i<- phdes.get.linked.transmissions(x2i,p.phylosignal)
-#print(x2i)	
+#print(x2i)
+#stop()
 	cat("\npool linked transmissions")
 	print(sites)
 	tmp		<- popart.pool(sites, x2i, method=opt.pooled)
 	x2i		<- tmp[["transm"]]
 	idx.A	<- tmp[["idx.A"]]
+	idx.B	<- tmp[["idx.B"]]
 	idx.C	<- tmp[["idx.C"]]
-#print(x2i); print(idx.A); print(idx.C)	
-	
+#print(x2i); print(idx.A); print(idx.B); print(idx.C)	
+#stop()	
 	cat("\ncompute power for dectecting differences in sampled acute to acute transmissions")
-	tmp<- phdes.binom.power(	x2i, round(x2i*test.prop0), idx.A, idx.C, test.prop0, test.prop1, test.alpha, verbose=0)
-	conf.lw.med.armA	<- tmp[["conf.A"]] 
-	conf.lw.med.armC	<- tmp[["conf.C"]] 
+	confint.lw			<- lapply(	list(idx.A,idx.B,idx.C),	
+									function(arm)	phdes.binom.power(	x2i[arm,,drop=0], round(x2i[arm,,drop=0]*test.prop0), test.prop0, test.prop1, test.alpha, verbose=0, method.pw="cloglog", method.ci="asymptotic")[["conf"]]		
+									)
+	names(confint.lw)	<- c("A","B","C")
+	tmp					<- lapply(	list(idx.A,idx.B,idx.C),
+									function(arm)	phdes.binom.power(	x2i[arm,,drop=0], round(x2i[arm,,drop=0]*test.prop1), test.prop0, test.prop1, test.alpha, verbose=0, method.pw="cloglog", method.ci="asymptotic")
+									)
+	confint.hg			<- lapply(tmp, function(x) x$conf	)							
+	is.conf.hg			<- lapply(tmp, function(x) x$is.conf	)
+	power.hg			<- lapply(tmp, function(x) x$power	)
+	names(confint.hg)	<- c("A","B","C")
+	names(is.conf.hg)	<- c("A","B","C")
+	names(power.hg)		<- c("A","B","C")
 	
-	tmp<- phdes.binom.power(	x2i, round(x2i*test.prop1), idx.A, idx.C, test.prop0, test.prop1, test.alpha, verbose=0)
-	conf.hg.med.armA	<- tmp[["conf.A"]]
-	conf.hg.med.armC	<- tmp[["conf.C"]]
-	is.conf.hg.med.armA	<- tmp[["is.conf.A"]] 
-	is.conf.hg.med.armC	<- tmp[["is.conf.C"]] 
-	power.hg.med.armA	<- tmp[["power.A"]]
-	power.hg.med.armC	<- tmp[["power.C"]] 
-		
+	
 	if(p.nocontam>=0.85)	
 		cols<- c("deepskyblue","dodgerblue4")
 	else					
 		cols<- c("firebrick1","firebrick4")
 	
-	
+	#plot power
 	f.name<- paste(dir.name,paste("CFLINK_consent",p.nocontam,"phsig",p.phylosignal,"power",opt.power,"pool",opt.pooled,"sample",opt.sampling,"pwcalc",test.prop0,test.prop1,test.alpha,".pdf",sep='_'),sep='/')	
 	cat(paste("\nplot power to\n",f.name))
-	print("HERE")
 	pdf(paste(f.name),version="1.4",width=6,height=6)
-	phdes.plot.power(	power.hg.med.armA, power.hg.med.armC, is.conf.hg.med.armA, is.conf.hg.med.armC,
-			xlab="% consenting to ph study at HCC", 
-			ylab=paste("power to distinguish acute < ",test.prop0*100,"% vs > ",test.prop1*100,"%\n",opt.pooled,sep=''),
-			legend.txt=c("arm A","arm C",paste("contamination",(1-p.nocontam)*100,"%, linked to HCC/C",p.prev.instudy.clu.armC*100,"%")),
-			cols=cols,legend.loc="bottomright", verbose= 0	)
+	phdes.plot.power(	power.hg[["A"]], power.hg[["C"]], is.conf.hg[["A"]], is.conf.hg[["C"]],
+						xlab="% consenting to ph study at HCC", 
+						ylab=paste("power to distinguish acute < ",test.prop0*100,"% vs > ",test.prop1*100,"%\n",opt.pooled,sep=''),
+						legend.txt=c("arm A","arm C",paste("contamination",(1-p.nocontam)*100,"%, linked to HCC/C",p.prev.instudy.clu.armC*100,"%")),
+						cols=cols,
+						legend.loc="bottomright", 
+						verbose= 0	)
 	dev.off()
 	
-	f.name<- paste(dir.name,paste("CFLINK_consent",p.nocontam,"phsig",p.phylosignal,"power",opt.power,"pool",opt.pooled,"sample",opt.sampling,"A_confint",test.prop0,test.prop1,test.alpha,".pdf",sep='_'),sep='/')
-	cat(paste("\nplot binomial confidence intervals to\n",f.name))
-	pdf(paste(f.name),version="1.4",width=6,height=6)
-	phdes.plot.confint(	rep(test.prop0,nrow(conf.lw.med.armA)), rep(test.prop1,nrow(conf.lw.med.armA)),
-			conf.lw.med.armA, conf.hg.med.armA,			
-			xlab="% consenting to ph study at HCC",ylab=paste("estimated proportion acute to acute transmission\n arm A,",opt.pooled),
-			legend.loc="topright",legend.txt=c(paste("true prop",test.prop0*100,"%",sep=' '), paste("true prop",test.prop1*100,"%",sep=' ')),cols=cols		)													
-	dev.off()
-	
-	f.name<- paste(dir.name,paste("CFLINK_consent",p.nocontam,"phsig",p.phylosignal,"power",opt.power,"pool",opt.pooled,"sample",opt.sampling,"C_confint",test.prop0,test.prop1,test.alpha,".pdf",sep='_'),sep='/')
-	pdf(paste(f.name),version="1.4",width=6,height=6)
-	phdes.plot.confint(	rep(test.prop0,nrow(conf.lw.med.armC)), rep(test.prop1,nrow(conf.lw.med.armC)),
-			conf.lw.med.armC, conf.hg.med.armC,			
-			xlab="% consenting to ph study at HCC",ylab=paste("estimated proportion acute to acute transmission\n arm C,",opt.pooled),
-			legend.loc="topright",legend.txt=c(paste("true prop",test.prop0*100,"%",sep=' '), paste("true prop",test.prop1*100,"%",sep=' ')),cols=cols		)
-	dev.off()
-	
+	#plot conf intervals
+	lapply(names(confint.hg),function(arm)
+			{
+				f.name<- paste(dir.name,paste("CFLINK_consent",p.nocontam,"phsig",p.phylosignal,"power",opt.power,"pool",opt.pooled,"sample",opt.sampling,arm,"confint",test.prop0,test.prop1,test.alpha,".pdf",sep='_'),sep='/')
+				cat(paste("\nplot binomial confidence intervals to\n",f.name))
+				pdf(paste(f.name),version="1.4",width=6,height=6)
+				phdes.plot.confint(	rep(test.prop0,nrow(confint.lw[[arm]])), rep(test.prop1,nrow(confint.lw[[arm]])),
+						confint.lw[[arm]], confint.hg[[arm]],			
+						xlab="% consenting to ph study at HCC",
+						ylab=paste("estimated proportion acute to acute transmission\n arm",arm,",",opt.pooled),
+						legend.loc="topright",
+						legend.txt=c(paste("true prop",test.prop0*100,"%",sep=' '), paste("true prop",test.prop1*100,"%",sep=' ')),
+						cols=cols		)													
+				dev.off()
+			})
+		
 	f.name<- paste(dir.name,paste("CFLINK_consent",p.nocontam,"phsig",p.phylosignal,"power",opt.power,"pool",opt.pooled,"sample",opt.sampling,"pwcalc",test.prop0,test.prop1,test.alpha,".R",sep='_'),sep='/')
 	cat(paste("\nsave R objects to\n",f.name))
-	save(sites, x2i, idx.A, idx.C, power.hg.med.armA, power.hg.med.armC, is.conf.hg.med.armA, is.conf.hg.med.armC, conf.lw.med.armA, conf.lw.med.armC, conf.hg.med.armA, conf.hg.med.armC, file=f.name)
+	save(sites, x2i, idx.A, idx.B, idx.C, power.hg, is.conf.hg, confint.lw, confint.hg, file=f.name)
 	stop()													
 }
 ###############################################################################
