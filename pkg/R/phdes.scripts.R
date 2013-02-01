@@ -258,71 +258,44 @@ prj.popart.powercalc_cmp_link_tipc<- function(p.nocontam=0.85, p.prev.instudy.cl
 	#pool transmissions
 	###############################################################################	
 	cat(paste("\npool transmissions",opt.pooled))
-	x2i.lw	<- popart.pool(sites, x2i.lw, method=opt.pooled)[["transm"]]
-	i2i.lw	<- popart.pool(sites, i2i.lw, method=opt.pooled)[["transm"]]
-	x2i.hg	<- popart.pool(sites, x2i.hg, method=opt.pooled)[["transm"]]
-	i2i.hg	<- popart.pool(sites, i2i.hg, method=opt.pooled)[["transm"]]	
-	tmp		<- popart.pool(sites, x2i, method=opt.pooled)
-	x2i		<- tmp[["transm"]]
-	idx.A	<- tmp[["idx.A"]]
-	idx.C	<- tmp[["idx.C"]]
+	x2i.lw						<- 		popart.pool(sites, x2i.lw, method=opt.pooled)[["transm"]]
+	i2i.lw						<- 		popart.pool(sites, i2i.lw, method=opt.pooled)[["transm"]]
+	x2i.hg						<- 		popart.pool(sites, x2i.hg, method=opt.pooled)[["transm"]]
+	i2i.hg						<- 		popart.pool(sites, i2i.hg, method=opt.pooled)[["transm"]]		
+	g(x2i, idx.A, idx.B, idx.C)	%<-%	popart.pool(sites, x2i, method=opt.pooled)
+	
 	#compute test.biased.H0 as fraction over means to see a pattern	
-	test.biased.H0		<- apply(i2i.lw[c(idx.A,idx.C),,drop=0],2,mean)/apply(x2i.lw[c(idx.A,idx.C),,drop=0],2,mean)	
-	test.biased.H1		<- apply(i2i.hg[c(idx.A,idx.C),,drop=0],2,mean)/apply(x2i.hg[c(idx.A,idx.C),,drop=0],2,mean)
-	test.biased.H0.A	<- apply(i2i.lw[idx.A,,drop=0],2,mean)/apply(x2i.lw[idx.A,,drop=0],2,mean)	
-	test.biased.H1.A	<- apply(i2i.hg[idx.A,,drop=0],2,mean)/apply(x2i.hg[idx.A,,drop=0],2,mean)
-	test.biased.H0.C	<- apply(i2i.lw[idx.C,,drop=0],2,mean)/apply(x2i.lw[idx.C,,drop=0],2,mean)	
-	test.biased.H1.C	<- apply(i2i.hg[idx.C,,drop=0],2,mean)/apply(x2i.hg[idx.C,,drop=0],2,mean)	
+	test.biased.H0		<- apply(i2i.lw,2,mean)/apply(x2i.lw,2,mean)	
+	test.biased.H1		<- apply(i2i.hg,2,mean)/apply(x2i.hg,2,mean)	
+	test.biased.H1.arm	<- lapply(	list(idx.A, idx.B, idx.C),
+									function(arm)	apply(i2i.hg[arm,,drop=0],2,mean)/apply(x2i.hg[arm,,drop=0],2,mean)
+									)				
+	test.biased.H0.arm	<- lapply(	list(idx.A, idx.B, idx.C),
+									function(arm)	apply(i2i.lw[arm,,drop=0],2,mean)/apply(x2i.lw[arm,,drop=0],2,mean)
+									)
+	names(test.biased.H0.arm)<- c("A","B","C")
+	names(test.biased.H1.arm)<- c("A","B","C")										
 	###############################################################################
 	#plot number of acute to acute transmissions under high scenario
 	#adjust for sampling bias
 	###############################################################################
 	cat("\nplot number of acute to acute transmissions under high scenario\nadjust for sampling bias")
-	f.name<- paste(dir.name,paste("VARYLINKAGE_LINK_a2a_nocontam",p.nocontam,"power",opt.power,"pool",opt.pooled,"sample",opt.sampling,"pwcalc",test.prop0,test.prop1,test.alpha,".pdf",sep='_'),sep='/')
+	f.name	<- paste(dir.name,paste("VARYLINKAGE_LINK_a2a_nocontam",p.nocontam,"power",opt.power,"pool",opt.pooled,"sample",opt.sampling,"pwcalc",test.prop0,test.prop1,test.alpha,".pdf",sep='_'),sep='/')
 	cat(paste("\nplot to\n",f.name))
 	pdf(paste(f.name),version="1.4",width=6,height=6)
 	par(mar=c(5,5.5,0.5,2))
-	plot(1,1,type='n',xlim=range(p.phylosignal),ylim=range(round(x2i*test.biased.H1.A)),xlab="% linked w phylogenetic method",ylab=paste("acute 2 acute, high scenario\n",opt.pooled))
-	lines(p.phylosignal, apply(round(x2i[c(idx.A,idx.C),,drop=0]*test.biased.H1),2,mean))
-	abline(h=apply(i2i.hg[c(idx.A,idx.C),,drop=0],2,mean), lty=2)
-	lines(p.phylosignal, apply(round(x2i[idx.A,,drop=0]*test.biased.H1.A),2,mean),col="red")
+	ylim	<- range(sapply(test.biased.H1.arm, function(x)	range(round(x2i*x)) ))
+	plot(1,1,type='n',xlim=range(p.phylosignal),ylim=ylim,xlab="% linked w phylogenetic method",ylab=paste("acute 2 acute, high scenario\n",opt.pooled))
+	lines(p.phylosignal, apply(round(x2i*test.biased.H1),2,mean))
+	abline(h=apply(i2i.hg,2,mean), lty=2)		
+	lines(p.phylosignal, apply(round(x2i[idx.A,,drop=0]*test.biased.H1.arm[["A"]]),2,mean),col="red")
 	abline(h=apply(i2i.hg[idx.A,,drop=0],2,mean), lty=2,col="red")
-	lines(p.phylosignal, apply(round(x2i[idx.C,,drop=0]*test.biased.H1.C),2,mean),col="blue")
+	lines(p.phylosignal, apply(round(x2i[idx.B,,drop=0]*test.biased.H1.arm[["B"]]),2,mean),col="green")
+	abline(h=apply(i2i.hg[idx.B,,drop=0],2,mean), lty=2,col="green")	
+	lines(p.phylosignal, apply(round(x2i[idx.C,,drop=0]*test.biased.H1.arm[["C"]]),2,mean),col="blue")
 	abline(h=apply(i2i.hg[idx.C,,drop=0],2,mean), lty=2,col="blue")
-	legend("topleft",fill=c("black","red","blue"),legend=c("overall","arm A","arm C"),bty='n',border=NA)
+	legend("topleft",fill=c("black","red","green","blue"),legend=c("overall","arm A","arm B","arm C"),bty='n',border=NA)
 	legend("topright",lty=c(1,2),legend=c("linked","tipc"),bty='n')
-	dev.off()
-	stop()
-	###############################################################################
-	#compare power - adjust for sampling bias
-	###############################################################################
-	if(p.nocontam>=0.85)	
-		cols<- c("deepskyblue","dodgerblue4")
-	else					
-		cols<- c("firebrick1","firebrick4")
-	
-	
-	cat("\ncompute power for dectecting differences in sampled acute to acute transmissions")	
-	tmp<- phdes.binom.power(x2i, round(x2i*test.biased.H1.A), idx.A, idx.C, test.biased.H0.A, test.biased.H1.A, test.biased.H0.C, test.biased.H1.C, test.alpha, verbose=0)
-	conf.hg.med.armA	<- tmp[["conf.A"]]
-	is.conf.hg.med.armA	<- tmp[["is.conf.A"]]
-	power.hg.med.armA	<- tmp[["power.A"]]
-	tmp<- phdes.binom.power(x2i, round(x2i*test.biased.H1.C), idx.A, idx.C, test.biased.H0.A, test.biased.H1.A, test.biased.H0.C, test.biased.H1.C, test.alpha, verbose=0)
-	conf.hg.med.armC	<- tmp[["conf.C"]]	 
-	is.conf.hg.med.armC	<- tmp[["is.conf.C"]] 	
-	power.hg.med.armC	<- tmp[["power.C"]] 		
-	tmp<- phdes.binom.power(x2i.hg, i2i.hg, idx.A, idx.C, test.biased.H0.A, test.biased.H1.A, test.biased.H0.C, test.biased.H1.C, test.alpha, verbose=0)	 
-		
-	f.name<- paste(dir.name,paste("VARYLINKAGE_LINK_power_nocontam",p.nocontam,"power",opt.power,"pool",opt.pooled,"sample",opt.sampling,"pwcalc",test.prop0,test.prop1,test.alpha,".pdf",sep='_'),sep='/')	
-	cat(paste("\nplot power to\n",f.name))
-	pdf(paste(f.name),version="1.4",width=6,height=6)
-	phdes.plot.power(	power.hg.med.armA, power.hg.med.armC, is.conf.hg.med.armA, is.conf.hg.med.armC,
-			"% linked w phylogenetic method", 
-			paste("power to distinguish acute < ",test.prop0*100,"% vs > ",test.prop1*100,"%\n",opt.pooled,sep=''),
-			c("arm A","arm C",paste("contamination",(1-p.nocontam)*100,"%, linked to HCC/C",p.prev.instudy.clu.armC*100,"%")),
-			cols=cols,"bottomright", verbose= 0	)
-	abline(h=tmp[["power.A"]], col=cols[1])
-	abline(h=tmp[["power.C"]], col=cols[2])
 	dev.off()
 	
 	stop()													

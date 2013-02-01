@@ -46,9 +46,9 @@ HOME<<- "/Users/Oliver/workspace_sandbox/popart"
 DATA<<- paste(HOME,"data",sep='/')
 PHDES.DEBUG<<- 0
 #default.fun	<- "prj.popart.powercalc_tipc_consenting"
-default.fun	<- "prj.popart.powercalc_link_consenting"
+#default.fun	<- "prj.popart.powercalc_link_consenting"
 #default.fun	<- "prj.popart.power_test"
-#default.fun	<- "prj.popart.powercalc_cmp_link_tipc"
+default.fun	<- "prj.popart.powercalc_cmp_link_tipc"
 #default.fun	<- "prj.popart.powercalc_tipc_contam"
 ###############################################################################
 #if(length(args) && !is.loaded("tipc_tabulate_after_sample"))
