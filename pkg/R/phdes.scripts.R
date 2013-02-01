@@ -28,8 +28,6 @@ prj.popart.powercalc_link_consenting<- function(p.phylosignal=0.7,p.nocontam=0.8
 	opt.pooled	<- "no pooling"#"pooled across trial"#"no pooling"#"pooled across ZA"#"pooled across trial"#"no pooling"
 	#opt.sampling<- "PC and HCC"#"only HCC"#"PC and HCC"
 	opt.power<-	"All"	
-	if(!opt.sampling%in%c("PC and HCC","only HCC"))
-		stop("prj.popart.powercalc_medsize: unknown method to sample")
 	if(!opt.pooled%in%c("pooled across country","pooled across ZA","pooled across SA","pooled across trial","no pooling"))
 		stop("prj.popart.powercalc_medsize: unknown method to pool")
 	if(!opt.power%in%c("All","PonlyPC","IonlyPC","PonlyPCandIonlyPC"))
@@ -172,10 +170,7 @@ prj.popart.powercalc_cmp_link_tipc<- function(p.nocontam=0.85, p.prev.instudy.cl
 	opt.power<-	"All"
 	###############################################################################
 	#set arguments
-	###############################################################################
-	
-	if(!opt.sampling%in%c("PC and HCC","only HCC"))
-		stop("prj.popart.powercalc_medsize: unknown method to sample")
+	###############################################################################	
 	if(!opt.pooled%in%c("pooled across country","pooled across ZA","pooled across SA","pooled across trial","no pooling"))
 		stop("prj.popart.powercalc_medsize: unknown method to pool")
 	if(!opt.power%in%c("All","PonlyPC","IonlyPC","PonlyPCandIonlyPC"))
@@ -318,20 +313,21 @@ prj.popart.powercalc_tipc_consenting<- function(p.phylosignal=0.7,p.nocontam=0.8
 	verbose<- 0
 	plot.increment<- 0.05
 	
-	m.type<- "Acute"	
-	cohort.size<- 2500
-	pc24.size<- 6000
-	cohort.dur<- 3	
-	test.prop0<- 0.10
-	test.prop1<- 0.4
-	test.alpha<- 0.05		 
-	debug<- 0
-	pooled.n<- 1
-	opt.pooled<- "pooled across trial"#"pooled across ZA"#"pooled across trial"#"no pooling"
-	opt.sampling<- "only HCC"#"PC and HCC"
-	opt.power<-	"All"
-	if(!opt.sampling%in%c("PC and HCC","only HCC"))
-		stop("prj.popart.powercalc_medsize: unknown method to sample")
+	m.type		<- "Acute"	
+	cohort.size	<- 2500
+	pc24.size	<- 6000
+	cohort.dur	<- 3	
+	test.prop0	<- 0.10
+	test.prop1	<- 0.4
+	test.alpha	<- 0.05		 
+	debug		<- 0
+	pooled.n	<- 100
+	opt.pooled	<- "no pooling"#"pooled across ZA"#"pooled across trial"#"no pooling"
+	opt.pooled	<- "pooled across SA"
+	opt.sampling<- "PC and HCC"#"only HCC"	#"PC and HCC"	#
+	#opt.sampling<- "PC after yr 1 and HCC"
+	#opt.sampling<- "PC only incident and HCC"
+	opt.power	<-	"All"
 	if(!opt.pooled%in%c("pooled across country","pooled across ZA","pooled across SA","pooled across trial","no pooling"))
 		stop("prj.popart.powercalc_medsize: unknown method to pool")
 	if(!opt.power%in%c("All","PonlyPC","IonlyPC","PonlyPCandIonlyPC"))
@@ -476,9 +472,9 @@ prj.popart.powercalc_tipc_consenting<- function(p.phylosignal=0.7,p.nocontam=0.8
 		sapply(names(conf.lw.u),function(arm)
 				{
 					f.name<- paste(dir.name,paste("VARYCONSENT_TIPC_confint",arm,p.nocontam,"power",opt.power,"pool",opt.pooled,"sample",opt.sampling,"pwcalc",test.prop0,test.prop1,test.alpha,".pdf",sep='_'),sep='/')
-					cat(paste("\nplot confint C to\n",f.name))
+					cat(paste("\nplot confint",arm,"to\n",f.name))
 					pdf(paste(f.name),version="1.4",width=6,height=12)
-					phdes.plot.confint.panel(t(conf.lw.l[[arm]]),t(conf.lw.u[[arm]]),t(conf.hg.l[[arm]]),t(conf.hg.u[[arm]]),p.vhcc.prev.Cs,p.consent.clus,"p.vhcc.prev.Cs","p.consent.clus", cols=cols)
+					phdes.plot.confint.panel(t(conf.lw.l[[arm]]),t(conf.lw.u[[arm]]),t(conf.hg.l[[arm]]),t(conf.hg.u[[arm]]),p.consent.clus,p.vhcc.prev.Cs,"p.vhcc.prev.Cs","p.consent.clus", cols=cols)
 					dev.off()					
 				})		
 	}
@@ -514,8 +510,6 @@ prj.popart.powercalc_tipc_contam<- function(p.prev.instudy.clu.armC=0.4, p.phylo
 	opt.pooled<- "pooled across T5"#"pooled across ZA"#"pooled across trial"#"no pooling"
 	opt.sampling<- "PC and HCC"#"only HCC"#"PC and HCC"
 	opt.power<-	"All"
-	if(!opt.sampling%in%c("PC and HCC","only HCC"))
-		stop("prj.popart.powercalc_medsize: unknown method to sample")
 	if(!opt.pooled%in%c("pooled across country","pooled across ZA","pooled across SA","pooled across trial","pooled across T5","no pooling"))
 		stop("prj.popart.powercalc_medsize: unknown method to pool")
 	if(!opt.power%in%c("All","PonlyPC","IonlyPC","PonlyPCandIonlyPC"))

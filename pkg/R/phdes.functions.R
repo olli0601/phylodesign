@@ -271,7 +271,7 @@ phdes.get.linked.transmissions<- function(x2i, p.linkage, rtn.exp=0)
 ###############################################################################
 #' compute the number of incident sequences that can be linked to a prevalent case with a perfect phylogenetic method
 #' @param x					data frame of trial sites with randomized arms and population numbers
-#' @param method			sampling scheme. Currently support "PC and HCC", "only HCC"
+#' @param method			sampling scheme. Options are "PC after yr 1 and HCC", "PC only incident and HCC", "PC and HCC", "only HCC"
 #' @param rtn.int			indicator if integer values are returned
 #' @param p.vhcc.prev.AB 	proportion of initially +ve individuals who visit HCC at some point in 3 year period in Arms A & B
 #' @param p.vhcc.prev.C  	proportion of initially +ve individuals who visit HCC at some point in 3 year period in Arm C
@@ -299,6 +299,16 @@ popart.get.sampled.transmissions<- function(x, method="PC and HCC", rtn.int=1, p
 		seq.PC.prev		<- x$PC.not.art*consent.PC*p.lab
 		seq.PC.inc		<- x$PC.inc*consent.PC*p.lab
 	}
+	else if(method=="PC after yr 1 and HCC")
+	{
+		seq.PC.prev		<- x$PC.not.art*visit.prev*consent.HCC*p.lab	+	x$PC.inc/3*consent.PC*p.lab
+		seq.PC.inc		<- x$PC.inc*2/3*consent.PC*p.lab
+	}
+	else if(method=="PC only incident and HCC")
+	{
+		seq.PC.prev		<- x$PC.not.art*visit.prev*consent.HCC*p.lab
+		seq.PC.inc		<- x$PC.inc*consent.PC*p.lab
+	}
 	else if(method=="only HCC")
 	{
 		seq.PC.prev		<- x$PC.not.art*visit.prev*consent.HCC*p.lab
@@ -319,7 +329,7 @@ popart.get.sampled.transmissions<- function(x, method="PC and HCC", rtn.int=1, p
 #' compute the number of acute to acute transmissions from tip clusters up to order 3
 #' @param x					data frame of trial sites with randomized arms and population numbers
 #' @param tipc.p			expected frequencies of tip cluster counts under hypothesis
-#' @param method			sampling scheme. Currently support "PC and HCC", "only HCC"
+#' @param method			sampling scheme. Options are "PC after yr 1 and HCC", "PC and HCC", "only HCC"
 #' @param rtn.int			indicator if integer values are returned 
 #' @param p.vhcc.prev.AB 	proportion of initially +ve individuals who visit HCC at some point in 3 year period in Arms A & B
 #' @param p.vhcc.prev.C  	proportion of initially +ve individuals who visit HCC at some point in 3 year period in Arm C
@@ -363,8 +373,12 @@ popart.get.sampled.acute2acute<- function(x, tipc.p, method="PC and HCC", rtn.in
 	#which lead to transmission in community
 	if(method=="PC and HCC")
 		seq.prev		<- (x$PC.not.art*consent.PC	+	(x$n.not.art-x$PC.not.art)*visit.prev*consent.HCC)	* p.lab
+	else if(method=="PC after yr 1 and HCC")
+		seq.prev		<- x$n.not.art*visit.prev*consent.HCC*p.lab		+		x$PC.inc/3*consent.PC*p.lab
+	else if(method=="PC only incident and HCC")
+		seq.prev		<- x$n.not.art*visit.prev*consent.HCC*p.lab
 	else if(method=="only HCC")
-		seq.prev		<- (x$PC.not.art*visit.prev*consent.HCC	+	(x$n.not.art-x$PC.not.art)*visit.prev*consent.HCC)	* p.lab
+		seq.prev		<- x$n.not.art*visit.prev*consent.HCC*p.lab
 	else
 		stop("unknown method to sample")	
 	seq.prev.coverage	<- seq.prev / x$n.prev
@@ -384,8 +398,10 @@ popart.get.sampled.acute2acute<- function(x, tipc.p, method="PC and HCC", rtn.in
 	s.inc.PC	<- lapply(seq_along(visit.inc),function(i)
 			{
 				s.inc.PC	<-	switch(	method,
-										"PC and HCC"=p.lab*consent.PC,
-										"only HCC"	=p.lab*consent.HCC*visit.inc[i]
+										"PC and HCC"=				p.lab*consent.PC,
+										"PC only incident and HCC"=	p.lab*consent.PC,
+										"PC after yr 1 and HCC"=	p.lab*consent.PC*2/3,
+										"only HCC"	=				p.lab*consent.HCC*visit.inc[i]
 										)
 				t(matrix(	c(	s.inc.PC,		2*s.inc.PC*(1-s.inc.PC),		3*s.inc.PC*(1-s.inc.PC)^2,	
 								0,			s.inc.PC*s.inc.PC,				3*s.inc.PC*s.inc.PC*(1-s.inc.PC),
