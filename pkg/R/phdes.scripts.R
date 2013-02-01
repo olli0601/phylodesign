@@ -454,16 +454,16 @@ prj.popart.powercalc_tipc_consenting<- function(p.phylosignal=0.7,p.nocontam=0.8
 		pdf(paste(f.name),version="1.4",width=12,height=6)		
 		breaks		<- diff(range(c(i2i.hg[["A"]],i2i.hg[["B"]],i2i.hg[["C"]])))/50
 		breaks		<- seq(min(c(i2i.hg[["A"]],i2i.hg[["B"]],i2i.hg[["C"]])),by=breaks, len=51)	
-		def.par <- par(no.readonly = TRUE)
-		layout.m<- matrix(data= seq_len(4),ncol=4,nrow=1,byrow=1)
-		layout(layout.m, widths=c(5,5,5,1))				
+		#def.par <- par(no.readonly = TRUE)
+		layout.m<- matrix(data= seq_len(3),ncol=3,nrow=1,byrow=1)
+		layout(layout.m)				
 		sapply(c("A","B","C"),function(arm)
 			{
-				image(main=paste("arm",arm),p.consent.clus,p.vhcc.prev.Cs,i2i.hg[[arm]], breaks=breaks, col=head( rev(gray(seq(0,.95,len=trunc(50*1.4)))), 50))
+				if(arm!="C")
+					image(main=paste("arm",arm),p.consent.clus,p.vhcc.prev.Cs,i2i.hg[[arm]], breaks=breaks, col=head( rev(gray(seq(0,.95,len=trunc(50*1.4)))), 50))
+				else
+					image.plot(main=paste("arm",arm),p.consent.clus,p.vhcc.prev.Cs,i2i.hg[[arm]], breaks=breaks, col=head( rev(gray(seq(0,.95,len=trunc(50*1.4)))), 50),zlim= range(i2i.hg))
 			})		
-		par(oma=c( 0,0,0,1))# reset margin to be much smaller.			
-		image.plot(zlim= range(i2i.hg), col=head( rev(gray(seq(0,.95,len=trunc(50*1.4)))), 50), legend.only=1, smallplot= c(.4,.6,0.2,.8) )	
-		par(def.par)
 		dev.off()
 	}
 	###############################################################################
@@ -478,7 +478,7 @@ prj.popart.powercalc_tipc_consenting<- function(p.phylosignal=0.7,p.nocontam=0.8
 					f.name<- paste(dir.name,paste("VARYCONSENT_TIPC_confint",arm,p.nocontam,"power",opt.power,"pool",opt.pooled,"sample",opt.sampling,"pwcalc",test.prop0,test.prop1,test.alpha,".pdf",sep='_'),sep='/')
 					cat(paste("\nplot confint C to\n",f.name))
 					pdf(paste(f.name),version="1.4",width=6,height=12)
-					phdes.plot.confint.panel(conf.lw.l[[arm]],conf.lw.u[[arm]],conf.hg.l[[arm]],conf.hg.u[[arm]],p.vhcc.prev.Cs,p.consent.clus,"p.vhcc.prev.Cs","p.consent.clus", cols=cols)
+					phdes.plot.confint.panel(t(conf.lw.l[[arm]]),t(conf.lw.u[[arm]]),t(conf.hg.l[[arm]]),t(conf.hg.u[[arm]]),p.vhcc.prev.Cs,p.consent.clus,"p.vhcc.prev.Cs","p.consent.clus", cols=cols)
 					dev.off()					
 				})		
 	}
@@ -510,7 +510,7 @@ prj.popart.powercalc_tipc_contam<- function(p.prev.instudy.clu.armC=0.4, p.phylo
 	test.prop1<- 0.4
 	test.alpha<- 0.05		 
 	debug<- 0
-	pooled.n<- 200
+	pooled.n<- 1
 	opt.pooled<- "pooled across T5"#"pooled across ZA"#"pooled across trial"#"no pooling"
 	opt.sampling<- "PC and HCC"#"only HCC"#"PC and HCC"
 	opt.power<-	"All"
@@ -572,62 +572,61 @@ prj.popart.powercalc_tipc_contam<- function(p.prev.instudy.clu.armC=0.4, p.phylo
 				x2i.hg	<- sapply(inc,function(x)		x[["a2a.hg"]]["x2i.s",])
 				i2i.hg	<- sapply(inc,function(x)		x[["a2a.hg"]]["i2i.s",])					
 				# pool transmissions
-				x2i.lw	<- popart.pool(sites, x2i.lw, method=opt.pooled)[["transm"]]
-				i2i.lw	<- popart.pool(sites, i2i.lw, method=opt.pooled)[["transm"]]
-				x2i.hg	<- popart.pool(sites, x2i.hg, method=opt.pooled)[["transm"]]
-				tmp		<- popart.pool(sites, i2i.hg, method=opt.pooled)
-				i2i.hg	<- tmp[["transm"]]
-				idx.A	<- tmp[["idx.A"]]
-				idx.C	<- tmp[["idx.C"]]
-				test.biased.H0.A<-	apply(i2i.lw[idx.A,,drop=0],2,mean)/apply(x2i.lw[idx.A,,drop=0],2,mean)	
-				test.biased.H1.A<-	apply(i2i.hg[idx.A,,drop=0],2,mean)/apply(x2i.hg[idx.A,,drop=0],2,mean)
-				test.biased.H0.C<-	apply(i2i.lw[idx.C,,drop=0],2,mean)/apply(x2i.lw[idx.C,,drop=0],2,mean)	
-				test.biased.H1.C<-	apply(i2i.hg[idx.C,,drop=0],2,mean)/apply(x2i.hg[idx.C,,drop=0],2,mean)	
+				x2i.lw							<- 		popart.pool(sites, x2i.lw, method=opt.pooled)[["transm"]]
+				i2i.lw							<- 		popart.pool(sites, i2i.lw, method=opt.pooled)[["transm"]]
+				x2i.hg							<- 		popart.pool(sites, x2i.hg, method=opt.pooled)[["transm"]]
+				g(i2i.hg, idx.A, idx.B, idx.C)	%<-% 	popart.pool(sites, i2i.hg, method=opt.pooled)
+				
+				test.biased.H0	<- lapply(	list(idx.A, idx.B, idx.C),
+						function(arm)	apply(i2i.lw[arm,,drop=0],2,mean)/apply(x2i.lw[arm,,drop=0],2,mean)
+				)
+				test.biased.H1	<- lapply(	list(idx.A, idx.B, idx.C),
+						function(arm)	apply(i2i.hg[arm,,drop=0],2,mean)/apply(x2i.hg[arm,,drop=0],2,mean)
+				)																
+				names(test.biased.H0)<- c("A","B","C")
+				names(test.biased.H1)<- c("A","B","C")
 				
 				# compute power and confidence intervals
-				tmp<- phdes.binom.power(x2i.lw, i2i.lw, idx.A, idx.C, test.biased.H0.A, test.biased.H1.A, test.biased.H0.C, test.biased.H1.C, test.alpha, verbose=0, method.ci="asymptotic",method.pw="cloglog")
-				conf.lw.A				<- tmp[["conf.A"]] 
-				conf.lw.C				<- tmp[["conf.C"]] 				
-				tmp<- phdes.binom.power(x2i.hg, i2i.hg, idx.A, idx.C, test.biased.H0.A, test.biased.H1.A, test.biased.H0.C, test.biased.H1.C, test.alpha, verbose=0, method.ci="asymptotic",method.pw="cloglog")	 
-				is.conf.hg.med.armA	<- tmp[["is.conf.A"]] 
-				is.conf.hg.med.armC	<- tmp[["is.conf.C"]] 
-				power.hg.med.armA	<- tmp[["power.A"]]
-				power.hg.med.armC	<- tmp[["power.C"]]
-				conf.hg.A				<- tmp[["conf.A"]] 
-				conf.hg.C				<- tmp[["conf.C"]] 
+				conf.lw.A		<- phdes.binom.power(x2i.lw[idx.A,,drop=0], i2i.lw[idx.A,,drop=0], test.biased.H0[["A"]], test.biased.H1[["A"]], test.alpha, verbose=0, method.ci="asymptotic",method.pw="cloglog")[["conf"]]
+				conf.lw.B		<- phdes.binom.power(x2i.lw[idx.B,,drop=0], i2i.lw[idx.B,,drop=0], test.biased.H0[["B"]], test.biased.H1[["B"]], test.alpha, verbose=0, method.ci="asymptotic",method.pw="cloglog")[["conf"]]
+				conf.lw.C		<- phdes.binom.power(x2i.lw[idx.C,,drop=0], i2i.lw[idx.C,,drop=0], test.biased.H0[["C"]], test.biased.H1[["C"]], test.alpha, verbose=0, method.ci="asymptotic",method.pw="cloglog")[["conf"]]
 				
-				tmp<- list(	i2i.hg.A= apply(i2i.hg[idx.A,,drop=0],2,mean), 
-						i2i.hg.C= apply(i2i.hg[idx.C,,drop=0],2,mean),
-						x2i.hg.A= apply(x2i.hg[idx.A,,drop=0],2,mean), 
-						x2i.hg.C= apply(x2i.hg[idx.C,,drop=0],2,mean),
-						test.biased.H0.A= test.biased.H0.A,
-						test.biased.H1.A= test.biased.H1.A,
-						test.biased.H0.C= test.biased.H0.C,
-						test.biased.H1.C= test.biased.H1.C,							
-						is.conf.A= is.conf.hg.med.armA, 
-						is.conf.C= is.conf.hg.med.armC,
-						power.A= power.hg.med.armA, 
-						power.C= power.hg.med.armC,
-						conf.hg.A= conf.hg.A,
-						conf.hg.C= conf.hg.C,
-						conf.lw.A= conf.lw.A,
-						conf.lw.C= conf.lw.C
-				)	
-				tmp
+				g(conf.hg.A,is.conf.hg.A,power.hg.A)	%<-% phdes.binom.power(x2i.hg[idx.A,,drop=0], i2i.hg[idx.A,,drop=0], test.biased.H0[["A"]], test.biased.H1[["A"]], test.alpha, verbose=0, method.ci="asymptotic",method.pw="cloglog")
+				g(conf.hg.B,is.conf.hg.B,power.hg.B)	%<-% phdes.binom.power(x2i.hg[idx.B,,drop=0], i2i.hg[idx.B,,drop=0], test.biased.H0[["B"]], test.biased.H1[["B"]], test.alpha, verbose=0, method.ci="asymptotic",method.pw="cloglog")
+				g(conf.hg.C,is.conf.hg.C,power.hg.C)	%<-% phdes.binom.power(x2i.hg[idx.C,,drop=0], i2i.hg[idx.C,,drop=0], test.biased.H0[["C"]], test.biased.H1[["C"]], test.alpha, verbose=0, method.ci="asymptotic",method.pw="cloglog")
+				
+				tmp<- list(	i2i.hg.A= apply(i2i.hg[idx.A,,drop=0],2,mean),
+							i2i.hg.B= apply(i2i.hg[idx.B,,drop=0],2,mean),
+							i2i.hg.C= apply(i2i.hg[idx.C,,drop=0],2,mean),
+							x2i.hg.A= apply(x2i.hg[idx.A,,drop=0],2,mean),
+							x2i.hg.B= apply(x2i.hg[idx.B,,drop=0],2,mean),
+							x2i.hg.C= apply(x2i.hg[idx.C,,drop=0],2,mean),
+							is.conf.A= is.conf.hg.A,
+							is.conf.B= is.conf.hg.B,
+							is.conf.C= is.conf.hg.C,
+							power.A= power.hg.A,
+							power.B= power.hg.B,
+							power.C= power.hg.C,
+							conf.hg.A= conf.hg.A,
+							conf.hg.B= conf.hg.B,
+							conf.hg.C= conf.hg.C,
+							conf.lw.A= conf.lw.A,
+							conf.lw.B= conf.lw.B,
+							conf.lw.C= conf.lw.C
+							)	
+				tmp						
 			})
 	names(out)<- p.nocontams
-	i2i.hg.A	<- sapply(out,function(x)		x[["i2i.hg.A"]]	)
-	i2i.hg.C	<- sapply(out,function(x)		x[["i2i.hg.C"]]	)
-	power.A		<- sapply(out,function(x)		x[["power.A"]]	)
-	power.C		<- sapply(out,function(x)		x[["power.C"]]	)
-	conf.hg.A.u	<- sapply(out,function(x)		x[["conf.hg.A"]][,"upper"]	)
-	conf.hg.C.u	<- sapply(out,function(x)		x[["conf.hg.C"]][,"upper"]	)
-	conf.hg.A.l	<- sapply(out,function(x)		x[["conf.hg.A"]][,"lower"]	)
-	conf.hg.C.l	<- sapply(out,function(x)		x[["conf.hg.C"]][,"lower"]	)
-	conf.lw.A.u	<- sapply(out,function(x)		x[["conf.lw.A"]][,"upper"]	)
-	conf.lw.C.u	<- sapply(out,function(x)		x[["conf.lw.C"]][,"upper"]	)
-	conf.lw.A.l	<- sapply(out,function(x)		x[["conf.lw.A"]][,"lower"]	)
-	conf.lw.C.l	<- sapply(out,function(x)		x[["conf.lw.C"]][,"lower"]	)	
+	i2i.hg			<- lapply(c("i2i.hg.A","i2i.hg.B","i2i.hg.C"), function(arm)	sapply(out,function(x)		x[[arm]]	)	)
+	names(i2i.hg)	<- c("A","B","C")
+	conf.hg.u		<- lapply(c("conf.hg.A","conf.hg.B","conf.hg.C"), function(arm)	sapply(out,function(x)		x[[arm]][,"upper"]	)	)
+	names(conf.hg.u)<- c("A","B","C")
+	conf.lw.u		<- lapply(c("conf.lw.A","conf.lw.B","conf.lw.C"), function(arm)	sapply(out,function(x)		x[[arm]][,"upper"]	)	)
+	names(conf.lw.u)<- c("A","B","C")
+	conf.hg.l		<- lapply(c("conf.hg.A","conf.hg.B","conf.hg.C"), function(arm)	sapply(out,function(x)		x[[arm]][,"lower"]	)	)
+	names(conf.hg.l)<- c("A","B","C")
+	conf.lw.l		<- lapply(c("conf.lw.A","conf.lw.B","conf.lw.C"), function(arm)	sapply(out,function(x)		x[[arm]][,"lower"]	)	)
+	names(conf.lw.l)<- c("A","B","C")		
 	###############################################################################
 	#plot sampled a2a
 	###############################################################################
@@ -637,15 +636,19 @@ prj.popart.powercalc_tipc_contam<- function(p.prev.instudy.clu.armC=0.4, p.phylo
 		f.name<- paste(dir.name,paste("VARYCONTAM_TIPC_a2a_visitHCC.C",p.prev.instudy.clu.armC,"power",opt.power,"pool",opt.pooled,"sample",opt.sampling,"pwcalc",test.prop0,test.prop1,test.alpha,".pdf",sep='_'),sep='/')
 		cat(paste("\nplot a2a to\n",f.name))
 		pdf(paste(f.name),version="1.4",width=12,height=6)		
-		breaks		<- diff(range(c(i2i.hg.A,i2i.hg.C)))/50
-		breaks		<- seq(min(c(i2i.hg.A,i2i.hg.C)),by=breaks, len=51)	
-		def.par <- par(no.readonly = TRUE)
-		layout.m<- matrix(data= c(1,2),ncol=2,nrow=1,byrow=1)
-		layout(layout.m)		
-		image(main="arm C",p.consent.clus,p.nocontams,i2i.hg.C, breaks=breaks, col=head( rev(gray(seq(0,.95,len=trunc(50*1.4)))), 50))
-		image.plot(p.consent.clus,p.nocontams,i2i.hg.A, breaks=breaks, col=head( rev(gray(seq(0,.95,len=trunc(50*1.4)))), 50),main="arm A")	
-		par(def.par)
-		dev.off()
+		breaks		<- diff(range(unlist(i2i.hg)))/50
+		breaks		<- seq(min(unlist(i2i.hg)),by=breaks, len=51)		
+		#def.par <- par(no.readonly = TRUE)
+		layout.m<- matrix(data= seq_len(3),ncol=3,nrow=1,byrow=1)
+		layout(layout.m)				
+		sapply(c("A","B","C"),function(arm)
+				{
+					if(arm!="C")
+						image(main=paste("arm",arm),p.consent.clus,p.nocontams,i2i.hg[[arm]], breaks=breaks, col=head( rev(gray(seq(0,.95,len=trunc(50*1.4)))), 50))
+					else
+						image.plot(main=paste("arm",arm),p.consent.clus,p.nocontams,i2i.hg[[arm]], breaks=breaks, col=head( rev(gray(seq(0,.95,len=trunc(50*1.4)))), 50),zlim= range(i2i.hg))
+				})
+		dev.off()	
 	}
 	###############################################################################
 	#plot panel of confidence intervals
@@ -653,17 +656,15 @@ prj.popart.powercalc_tipc_contam<- function(p.prev.instudy.clu.armC=0.4, p.phylo
 	if(1)
 	{
 		cols<- c("deepskyblue","dodgerblue4")
-		f.name<- paste(dir.name,paste("VARYCONTAM_TIPC_confint_C_visitHCC.C",p.prev.instudy.clu.armC,"power",opt.power,"pool",opt.pooled,"sample",opt.sampling,"pwcalc",test.prop0,test.prop1,test.alpha,".pdf",sep='_'),sep='/')
-		cat(paste("\nplot confint C to\n",f.name))
-		pdf(paste(f.name),version="1.4",width=6,height=12)
-		phdes.plot.confint.panel(t(conf.lw.C.l),t(conf.lw.C.u),t(conf.hg.C.l),t(conf.hg.C.u),p.consent.clus,p.nocontams,"p.vhcc.prev.Cs","p.nocontams", cols=cols)
-		dev.off()
-		
-		f.name<- paste(dir.name,paste("VARYCONTAM_TIPC_confint_A_visitHCC.C",p.prev.instudy.clu.armC,"power",opt.power,"pool",opt.pooled,"sample",opt.sampling,"pwcalc",test.prop0,test.prop1,test.alpha,".pdf",sep='_'),sep='/')
-		cat(paste("\nplot confint A to\n",f.name))
-		pdf(paste(f.name),version="1.4",width=6,height=12)
-		phdes.plot.confint.panel(t(conf.lw.A.l),t(conf.lw.A.u),t(conf.hg.A.l),t(conf.hg.A.u),p.consent.clus,p.nocontams,"p.vhcc.prev.Cs","p.nocontams", cols=cols)
-		dev.off()
+		cat(paste("\nplot confidence panels\n"))
+		sapply(names(conf.lw.u),function(arm)
+				{
+					f.name<- paste(dir.name,paste("VARYCONTAM_TIPC_confint",arm,"visitHCC.C",p.prev.instudy.clu.armC,"power",opt.power,"pool",opt.pooled,"sample",opt.sampling,"pwcalc",test.prop0,test.prop1,test.alpha,".pdf",sep='_'),sep='/')
+					cat(paste("\nplot confint C to\n",f.name))
+					pdf(paste(f.name),version="1.4",width=6,height=12)
+					phdes.plot.confint.panel(t(conf.lw.l[[arm]]),t(conf.lw.u[[arm]]),t(conf.hg.l[[arm]]),t(conf.hg.u[[arm]]),p.consent.clus,p.nocontams,"p.vhcc.prev.Cs","p.nocontams", cols=cols)
+					dev.off()					
+				})				
 	}
 	stop()	
 }

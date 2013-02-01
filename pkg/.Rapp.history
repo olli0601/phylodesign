@@ -1,250 +1,90 @@
-source("rsrc/phylodyStartme.R")
-source("rsrc/phylodyStartme.R")
-source("rsrc/phylodyStartme.R")
-source("rsrc/phylodyStartme.R")
-source("rsrc/phylodyStartme.R")
-source("rsrc/phylodyStartme.R")
-source("rsrc/phylodyStartme.R")
-source("rsrc/phylodyStartme.R")
-source("rsrc/phylodyStartme.R")
-source("rsrc/phylodyStartme.R")
-source("rsrc/phylodyStartme.R")
-source("rsrc/phylodyStartme.R")
-source("rsrc/phylodyStartme.R")
-source("rsrc/phylodyStartme.R")
-2.5/5
-2.5/6
-0.03/36
-0.06/2.5
-0.06/4
-0.05/0.02
-80*0.001
-CODE.HOME<<- "/Users/Oliver/workspace_sandbox/popartlib/phylodesign"
-popart.sites	<- read.csv(paste(CODE.HOME,"/pkg/data/triplet_summary_table_121212.csv",sep=''))
-popart.sites
-save(popart.sites,file=paste(CODE.HOME,"/pkg/data/popart_triplets_121212.Rdata",sep=''))
-setwd("/Users/Oliver/workspace_sandbox/popartlib/phylodesign")
-source("misc/phdes.startme.R")
-popart.sites<- NULL
-source("misc/phdes.startme.R")
-popart.sites	<- read.csv(paste(CODE.HOME,"/pkg/data/popart_triplets_121212.csv",sep=''))
-popart.sites
-save(popart.sites,file=paste(CODE.HOME,"/pkg/data/popart_triplets_121212.Rdata",sep=''))
-popart.sites<- NULL
-load(paste(CODE.HOME,"/pkg/data/popart_triplets_121212.Rdata",sep=''))
-popart.sites
-popart.triplets.121212<- popart.sites
-save(popart.triplets.121212,file=paste(CODE.HOME,"/pkg/data/popart.triplets.121212.Rdata",sep=''))
-require(phylodesign)
-data()
-data("popart.triplets.121212")
-popart.triplets.121212
-is.data.frame(popart.triplets.121212)
-ncol(popart.triplets.121212)
-ncol(popart.sites)
-load(paste(CODE.HOME,"/pkg/data/popart.triplets.121212.Rdata",sep=''))
-popart.triplets.121212
-data("popart.triplets.121212")
-popart.triplets.121212
-?data
-require(phylodesign)
-data()
-data("popart.triplets.121212")
-popart.triplets.121212
-?require
-detach("package:phylodesign")
-require(phylodesign)
-data()
-data("popart.tripletsX.121212")
-popart.tripletsX.121212
-as.data.frame(popart.tripletsX.121212)
-read.csv(paste(CODE.HOME,"/pkg/data/popart.triplets.121212.csv",sep=''))
-popart.triplets.121212<- read.csv(paste(CODE.HOME,"/pkg/data/popart.triplets.121212.csv",sep=''))
-save(popart.triplets.121212,file=paste(CODE.HOME,"/pkg/data/popart.triplets.121212.rda",sep=''))
-load(paste(CODE.HOME,"/pkg/data/popart.triplets.121212.rda",sep=''))
-popart.triplets.121212
-popart.triplets.121212<- NULL
-load(paste(CODE.HOME,"/pkg/data/popart.triplets.121212.rda",sep=''))
-popart.triplets.121212
-detach("package:phylodesign")
-require(phylodesign)
-data("popart.tripletsX.121212")
-data("popart.triplets.121212")
-popart.triplets.121212
-library(roxygen)
-library(roxygen2)
-library(roxygen)
-library(roxygen2)
-?roxygenize
-roxygenize("~/workspace_sandbox/popartlib/phylodesign")
-roxygenize("~/workspace_sandbox/popartlib/phylodesign/pkg")
-require(help="phylodesign")
-require(help=phylodesign)
-library(help=phylodesign)
-?popart.getsampled.linkedseq.n
-?popart.getsampled.linkedseq.n
-setwd("/Users/Oliver/workspace_sandbox/phylodylib/")
-source("rsrc/phylodyStartme.R")
-detach("package:phylodesign")
-require(phylodesign)
-roxygenize("~/workspace_sandbox/popartlib/phylodesign/pkg")
-detach("package:phylodesign")
-require(phylodesign)
-?popart.pool
-roxygenize("~/workspace_sandbox/popartlib/phylodesign/pkg")
-setwd("/Users/Oliver/workspace_sandbox/popartlib/phylodesign/pkg")
-source("misc/phdes.startme.R")
-popart.CLUSTERP.ACHG
-popart.tipcp.highacute<- popart.CLUSTERP.ACHG
-popart.tipcp.lowacute<- popart.CLUSTERP.ACLW
-save(popart.tipcp.highacute,file="~/workspace_sandbox/popartlib/phylodesign/pkg/data/popart.tipcp.highacute.rda")
-save(popart.tipcp.lowacute,file="~/workspace_sandbox/popartlib/phylodesign/pkg/data/popart.tipcp.lowacute.rda")
-popart.CLUSTERP.ACLW
-setwd("/Users/Oliver/workspace_sandbox/popartlib/phylodesign/pkg")
-roxygenize("~/workspace_sandbox/popartlib/phylodesign/pkg")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-372.8117/620.5000
-347.64290/718.81523
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-?rbinom
-rbinom(5,100,c(0.0001,0.99999,0.000001,0.9999999,0.5))
-rbinom(5,100,c(0.0001,0.99999,0.000001,0.9999999,0.5))
-rbinom(5,100,c(0.0001,0.99999,0.000001,0.9999999,0.5))
-rbinom(3,c(10,100,1000),0.9999)
-rbinom(3,c(10,100,1000),0.9999)
-rbinom(3,c(10,100,1000),0.9999)
-rbinom(3,c(10,100,1000),0.99)
-rbinom(3,c(10,100,1000),0.99)
-rbinom(3,c(10,100,1000),0.99)
-rbinom(3,c(10,100,1000),0.99)
-rbinom(3,c(10,100,1000),0.99)
-rbinom(3,c(10,100,1000),0.99)
-rbinom(3,c(10,100,1000),0.99)
-rbinom(3,c(10,100,1000),0.99)
-rbinom(3,c(10,100,1000),0.99)
-length(matrix(NA,2,2))
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-matrix(1:4,2,2)/matrix(rep(4,4),2,2)
-setwd("/Users/Oliver/workspace_sandbox/phylodylib/")
-source("rsrc/phylodyStartme.R")
-source("rsrc/phylodyStartme.R")
-setwd("/Users/Oliver/workspace_sandbox/popartlib/phylodesign/pkg")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-2572.572/3324.595
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-argv<- list()
-argv$a<- 1
-argv
-source("misc/phdes.startme.R")
-argv<- NULL
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-rbind(5,4)
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
+load("/Users/Oliver/workspace_sandbox/phylodylib/examples/NBH3N2_NL_EU101027_observedsus.R")
+simu
+sim
+simuobs
+os
+m<- read.csv("~/workspace_sandbox/phylodylib/examples/NL_ILI_negbin_m7_1994_2009.csv")
+m
+m<- read.csv("~/workspace_sandbox/phylodylib/examples/NL_ILI_negbin_m7_1994_2009.csv", sep='\t')
+m
+m2<- m[,"Year","Week","Time","H3N2.specific..per.10.000."]
+colnames(m)
+m2<- m[,c("Year","Week","Time","H3N2.specific..per.10.000.")]
+m2[1:10]
+m2[1:10,]
+m2
+f<- "/Users/Oliver/workspace_sandbox/phylodylib/examples/NL_ILI_negbin_m7_1994_2009_H3N2.csv"
+h3n2.data<- m2
+save(h3n2.data, file=f)
+f<- "/Users/Oliver/workspace_sandbox/phylodylib/examples/NL_ILI_negbin_m7_1994_2009_H3N2.R"
+save(h3n2.data, file=f)
+library(GillespieSSA)
+Logistic growth model#
+a = function(parms,x){#
+b <- parms[1]#
+d <- parms[2]#
+K <- parms[3]#
+N <- x[1]#
+return(c(b*N , N*b + (b-d)*N/K))#
+}#
+parms <- c(2,1,1000,500)#
+x <- 500#
+nu <- matrix(c(+1, -1),ncol=2)#
+t <- 0#
+for (i in seq(100)) {#
+out <- ssa.d(a(parms,x),nu)#
+x <- x + out$nu_j#
+t <- t + 1#
+cat("t:",t,", x:",x,"\n")#
+}
+ssa.d
+?data.frame
+data.frame( sample(attr$gender,size=size, replace=TRUE, prob= c(0.5,0.5)) )
+data.frame( sample(factor(c('m','f')),size=10, replace=TRUE, prob= c(0.5,0.5)) )
+tmp<- factor(c('m','f'))
+data.frame( sample(tmp,size=10, replace=TRUE, prob= c(0.5,0.5)) )
+y<- data.frame( sample(tmp,size=10, replace=TRUE, prob= c(0.5,0.5)) )
+y
+?eval
+rep(0.5,2)
+diag(c(0.5,0.4),2)
+f<- "/Users/Oliver/workspace_sandbox/phylodylib/examples/NL_ILI_negbin_m7_1994_2009_H3N2.R"\\
+theta<- 4
+rep( (3 - theta)/2, 2)
+0.17*.3
+?data.frame
+30*4 + 508/2 + 1152/2
+30*4 + 508/1 + 1152/1
+ssa.d
+m<- matrix(1:9,3,3)
+sample(1:9,4,replace=1)
+sample(1:9,4,replace=1)/3
+sample(1:9,4,replace=1)%/%3
+sample(1:9,4,replace=1)%%3
+x<- sample(1:9,4,replace=1)
+x
+x%%3
+(x-1)%%3
+(x-1)%%3+1
+x%/%3
+?select
+?subset
+0.0125 * 1e4
+1/ (0.0125 * 1e4)
+50/1500
+?read.tree
+library(ape)
+?read.tree
+read.tree(text="(A:1,B:1):10;")
+read.tree(text="(A:1,B:1,C:1):10;")
+plot(read.tree(text="(A:1,B:1,C:1):10;"))
+example of using 'incomparables'#
+x <- data.frame(k1=c(NA,NA,3,4,5), k2=c(1,NA,NA,4,5), data=1:5)#
+y <- data.frame(k1=c(NA,2,NA,4,5), k2=c(NA,NA,3,4,5), data=1:5)
+x
+y
+merge(x, y, by=c("k1","k2")) # NA's match
+library(compiler)
+setwd("/Users/Oliver/git/phylodesign/pkg")
 source("misc/phdes.startme.R")
 source("misc/phdes.startme.R")
