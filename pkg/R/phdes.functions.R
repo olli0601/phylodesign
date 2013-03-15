@@ -204,7 +204,14 @@ clu.exp.X2E<- function(clu.p)
 
 }
 ###############################################################################
-clu.simulate<- function(inc, clu.n, p, rtn.int=0)
+clu.p.init<- function(p.E2E, l.U2E, l.T2E, p.O2E)
+{
+	tmp<- c(p.E2E, c(l.U2E, l.T2E) / c(l.U2E+l.T2E) * (1-p.O2E-p.E2E), p.O2E)
+	names(tmp)<- c("E2E","U2E","T2E","O2E")
+	tmp 
+}
+###############################################################################
+clu.probabilities<- function(clu.n, p, with.ntr.weight=0)
 {
 	if(length(p)!=4)	stop("invalid transmission probabilities")
 	if(!all(c("E2E","U2E","T2E","O2E")%in%names(p)))	stop("missing transmission probabilties")		
@@ -219,29 +226,24 @@ clu.simulate<- function(inc, clu.n, p, rtn.int=0)
 	clu.p			<- t( sapply(seq_along(clu.p),function(i)
 						{
 							tmp<- apply(clu.p[[i]],2,function(x)	sum(x,na.rm=1)	)
-							tmp / clu.nchain							
+							if(with.ntr.weight)
+								tmp<- tmp / clu.nchain
+							tmp
 						}) )				
-	rownames(clu.p)	<- c("U","T","O")
-	
+	rownames(clu.p)	<- c("U","T","O")	
 	#stop()
 	clu.p			<- clu.p / sum(clu.p) 		#in or out, the final clu will be the same as this only changes the 'tmp' factor
-	print(clu.p)			
-	#print(clu.p)	
-	#print(sum(clu.p * rep( seq_len(ncol(clu.p)), each=nrow(clu.p) )))
-	
-	print(apply(clu.p,1,sum))
-	#print(apply(clu.p,2,sum)*seq_len(ncol(clu.p)))
-	
+	clu.p	
+}
+###############################################################################
+clu.simulate<- function(clu.p, inc, rtn.int=0)
+{
 	tmp				<- sum(apply(clu.p,2,sum)*seq_len(ncol(clu.p)))		#sum of incidence in clu.p
-	#print(tmp)
-	#stop()
 	clu				<- lapply(inc, function(x)  x/tmp*clu.p )
 	if(rtn.int)
 		clu			<- lapply(inc, round)
 	if(length(clu)==1)
 		clu			<- clu[[1]]
-	#print(clu)
-	#stop()
 	clu
 }
 ###############################################################################
@@ -267,11 +269,11 @@ clu.exp.transmissions<- function(clu, clu.n, p, s, mx.s.ntr, exclude.O= 1)
 	tmp				<- lapply(clu.ps, clu.exp.X2E )	
 	clu.p.E2E		<- t( sapply(seq_along(tmp),function(i)	tmp[[i]][["n.E2E"]]	) )
 	clu.p.x2E		<- t( sapply(seq_along(tmp),function(i)	tmp[[i]][["n.Idx2E"]]	) )
-	print(clu.p.E2E); print(clu.p.x2E); print(clu[,seq_len(mx.s.ntr)])
+	#print(clu.p.E2E); print(clu.p.x2E); print(clu[,seq_len(mx.s.ntr)])
 	#stop()
 	clu.E2E			<- clu.p.E2E * clu[,seq_len(mx.s.ntr)]
 	clu.x2E			<- clu.p.x2E * clu[,seq_len(mx.s.ntr)]
-	print(clu.x2E)
+	#print(clu.x2E)
 	if(!exclude.O)
 	{
 		ans			<- c( sum(clu.E2E), apply(clu.x2E,1,sum) )
@@ -292,8 +294,9 @@ clu.sample<- function(clu, s, mx.s.ntr=ncol(clu), rtn.exp=0)
 	if(any(s<0) | any(s>1))	stop("invalid s")
 	if(!all(c("Idx","E")%in%names(s)))	stop("invalid names of s")
 	if(mx.s.ntr>ncol(clu))	stop("mx.s.ntr must be smaller than the max number of transmissions")
-	
-	s.Idx		<- s["Idx"]
+	#print(clu)
+	s.Idx		<- s["Idx"]	
+	#print(s.Idx)	
 	s.E			<- s["E"]
 	closure		<- ncol(clu)	
 	
@@ -325,6 +328,7 @@ clu.sample<- function(clu, s, mx.s.ntr=ncol(clu), rtn.exp=0)
 							tmp
 						})
 		colnames(clu.s)<- paste("ns",seq_len(mx.s.ntr),sep='')
+		#print( clu.s )
 	}
 	clu.s 
 }
@@ -611,6 +615,87 @@ popart.get.sampled.transmissions<- function(x, method="PC and HCC", rtn.int=1, p
 	x2i
 }
 ###############################################################################
+popart.sampling.init<- function(x, p.consent.PC, p.consent.HCC, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method="PC and HCC")
+{
+	s<- matrix(NA,nrow=nrow(x),ncol=7,dimnames= list(x$comid, c("visit.prev","visit.inc","PC.prev","nonPC.prev","PC.inc","nonPC.inc","baseline")))
+	
+	s[x$arm!="C", "visit.prev"]	<- p.vhcc.prev.AB
+	s[x$arm=="C", "visit.prev"]	<- p.vhcc.prev.C
+	s[x$arm!="C", "visit.inc"]	<- p.vhcc.inc.AB
+	s[x$arm=="C", "visit.inc"]	<- p.vhcc.inc.C
+	
+	s[, "PC.prev"]		<- p.consent.PC*p.lab
+	s[, "PC.inc"]		<- switch(	method,
+									"PC and HCC"				= rep( p.lab*p.consent.PC, nrow(s) ),
+									"PC only incident and HCC"	= rep( p.lab*p.consent.PC, nrow(s) ),
+									"PC after yr 1 and HCC"		= rep( p.lab*p.consent.PC*2/3, nrow(s) ),
+									"only HCC"					= p.lab*p.consent.HCC*s[,"visit.inc"],
+									NA
+									)
+	if(any(is.na(s[, "PC.inc"])))	stop("unknown method")		
+	
+	s[, "nonPC.prev"]	<- s[,"visit.prev"]*p.consent.HCC*p.lab		
+	s[, "nonPC.inc"]	<- s[,"visit.inc"]*p.consent.HCC*p.lab			
+	
+	s[, "baseline"]		<- switch(	method,
+									"PC and HCC"				= x$PC.not.art*s[,"PC.prev"]	+	(x$n.not.art-x$PC.not.art)*s[,"nonPC.prev"],
+									"PC after yr 1 and HCC"		= x$PC.inc/3*s[,"PC.prev"]		+ 	x$n.not.art*s[,"nonPC.prev"],
+									"PC only incident and HCC"	= x$n.not.art*s[,"nonPC.prev"],
+									"only HCC"					= x$n.not.art*s[,"nonPC.prev"],
+									NA
+									)
+	if(any(is.na(s[, "baseline"])))	stop("unknown method")								
+	s[, "baseline"]		<- s[, "baseline"] / x$n.prev		#coverage at baseline is sampled HIV+ at baseline / total HIV+ at baseline	
+	as.data.frame(s[,-c(1,2)])	
+}
+###############################################################################
+popart.get.sampled.transmissions.from.tipc<- function(x, tipc.p, clu.n, theta, sampling, method="PC and HCC", rtn.int=1, mx.sampled.ntr=ncol(clu.n), exclude.O= 1)
+{
+	verbose<- 0
+	if(abs(sum(tipc.p)-1)>EPS)	stop("invalid tipc.p")
+	
+	tipc.PC		<- lapply( x$PC.inc, 			function(z) clu.simulate(tipc.p, z, rtn.int=rtn.int)  )
+	tipc.nonPC	<- lapply( x$n.inc-x$PC.inc, 	function(z) clu.simulate(tipc.p, z, rtn.int=rtn.int)  )
+
+	tipc.PC.s	<- lapply(	seq_along(tipc.PC), function(i)
+						{
+							tmp			<- as.numeric(sampling[i,c("baseline","PC.inc")])
+							names(tmp)	<- c("Idx","E")							
+							clu.sample(tipc.PC[[i]], tmp, rtn.exp=!rtn.int)
+						})			
+	tipc.nonPC.s<- lapply(	seq_along(tipc.nonPC), function(i)
+						{
+							tmp			<- as.numeric(sampling[i,c("baseline","nonPC.inc")])
+							names(tmp)	<- c("Idx","E")
+							clu.sample(tipc.nonPC[[i]], tmp, rtn.exp=!rtn.int)
+						})		
+					
+	ans<- sapply(seq_along(tipc.PC.s),function(i)
+						{
+							tmp			<- c(1,1)
+							names(tmp)	<- c("Idx","E")		
+														
+							tipc.pooled	<- tipc.PC[[i]] + tipc.nonPC[[i]]
+							if(verbose) print(tipc.pooled)
+							tr.complete	<- clu.exp.transmissions(tipc.pooled, 		clu.n, theta, tmp, mx.s.ntr=mx.sampled.ntr, exclude.O=exclude.O )
+							
+							tmp[]		<- as.numeric(sampling[i,c("baseline","PC.inc")])
+							#print(tmp)
+							tr.PC.s		<- clu.exp.transmissions(tipc.PC.s[[i]], 	clu.n, theta, tmp, mx.s.ntr=mx.sampled.ntr, exclude.O=exclude.O )
+							
+							tmp[]		<- as.numeric(sampling[i,c("baseline","nonPC.inc")])
+							#print(tmp)
+							tr.nonPC.s	<- clu.exp.transmissions(tipc.nonPC.s[[i]], clu.n, theta, tmp, mx.s.ntr=mx.sampled.ntr, exclude.O=exclude.O )
+							
+							c( tr.PC.s["E2E"]+tr.nonPC.s["E2E"], tr.complete["E2E"], sum(tr.PC.s)+sum(tr.nonPC.s), sum(tr.complete) )							
+						})
+	colnames(ans)<- x$comid			
+	rownames(ans)<- c("i2i.s","i2i.c","x2i.s","x2i.c")	
+	if(rtn.int)
+		ans<- floor(ans)		
+	ans
+}
+###############################################################################
 #' compute the number of acute to acute transmissions from tip clusters up to order 3
 #' @param x					data frame of trial sites with randomized arms and population numbers
 #' @param tipc.p			expected frequencies of tip cluster counts under hypothesis
@@ -866,6 +951,22 @@ popart.pool<- function(sites, transm, method="no pooling")
 	}
 	ans
 }	
+###############################################################################
+phdes.power.ttest.cl<- function(x2i, p.H0, p.H1, var.p.H0, var.p.H1, alpha= 0.05, verbose=0)
+{
+	ncl<- length(x2i)
+	if(length(p.H0)!=ncl)	p.H0<- rep(p.H0,ncl)
+	if(length(p.H1)!=ncl)	p.H1<- rep(p.H1,ncl)
+	if(length(var.p.H0)!=1)	stop("invalid var.p.H0")
+	
+	delta	<- mean( p.H1 - p.H0 )
+	var.D	<- sum( p.H0*(1-p.H0)/x2i + p.H1*(1-p.H1)/x2i + var.p.H0 + var.p.H1) / ( ncl-1 )
+	se.D	<- sqrt(var.D)
+	tmp		<- (qnorm(alpha/2)*se.D - delta) / se.D
+	pw		<- 1 - pnorm( tmp )
+	#print(delta); print(tmp); print(pw)
+	pw
+}
 ###############################################################################
 #' performs power calculations and computes binomial confidence intervals for a given number of acute 2 acute transmissions
 #' @param x2i 			number of transmissions, typically for a specific arm

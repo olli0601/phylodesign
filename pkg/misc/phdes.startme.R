@@ -45,8 +45,10 @@ HOME<<- "/Users/Oliver/workspace_sandbox/popart"
 #HOME<<- "/work/or105/popart"
 DATA<<- paste(HOME,"data",sep='/')
 PHDES.DEBUG<<- 0
-default.fun	<- "prj.popart.powercalc_tipc_consenting"
+#default.fun	<- "prj.popart.tchain_test"
 #default.fun	<- "prj.popart.powercalc_link_consenting"
+default.fun		<- "prj.popart.powercalc_tipc_test"
+#default.fun		<- "prj.popart.powercalc_tipc_consenting"
 #default.fun	<- "prj.popart.power_test"
 #default.fun	<- "prj.popart.powercalc_cmp_link_tipc"
 #default.fun	<- "prj.popart.powercalc_tipc_contam"
@@ -74,6 +76,11 @@ my.make.documentation<- function()
 {
 	require(roxygen2)		
 	roxygenize(CODE.HOME)
+}
+###############################################################################
+my.fade.col<-function(col,alpha=0.5)
+{
+	return(rgb(col2rgb(col)[1]/255,col2rgb(col)[2]/255,col2rgb(col)[3]/255,alpha))
 }
 ###############################################################################
 my.mkdir(HOME,"data")
