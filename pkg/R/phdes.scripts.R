@@ -296,6 +296,443 @@ prj.popart.powercalc_cmp_link_tipc<- function(p.nocontam=0.85, p.prev.instudy.cl
 	stop()													
 }
 ###########################################################################
+prj.popart.powercalc_tipc_test_ukhivrdb<- function(p.phylosignal=0.7,p.nocontam=1, opt.pooled= "no pooling", opt.sampling= "PC and HCC")
+{
+	require(binom)
+	require(phylodesign)
+	my.mkdir(DATA,"popartpowercalc_test")
+	dir.name<- paste(DATA,"popartpowercalc_test",sep='/')	
+	resume<- 0
+	verbose<- 0
+	plot.increment<- 0.05
+	
+	m.type		<- "Acute"	
+	cohort.size	<- 0
+	cohort.dur	<- 5	
+	theta.EE.H0	<- 0.10
+	theta.EE.H1	<- 0.4
+	theta.UE	<- 0.3
+	theta.TE	<- theta.UE / 5
+	test.alpha	<- 0.05		 
+	debug		<- 1
+	pooled.n	<- 1
+	opt.pooled	<- "no pooling"#"pooled across ZA"#"pooled across trial"#"no pooling"
+	opt.pooled	<- "pooled across SA"
+	opt.clu.closure	<- 14
+	opt.sampling<- "only HCC"
+	#opt.sampling<- "PC after yr 1 and HCC"
+	#opt.sampling<- "PC only incident and HCC"
+	opt.power	<-	"All"
+	
+	cat(paste("\ncohort.size",cohort.size))
+	cat(paste("\ncohort.dur",cohort.dur))
+	cat(paste("\ntheta.EE.H0",theta.EE.H0))
+	cat(paste("\ntheta.EE.H1",theta.EE.H1))
+	cat(paste("\ntest.alpha",test.alpha))	
+	cat(paste("\np.nocontam",p.nocontam))
+	cat(paste("\npooled.n",pooled.n))
+	cat(paste("\nopt.pooled",opt.pooled))
+	cat(paste("\nopt.power",opt.power))
+	cat(paste("\nopt.sampling",opt.sampling))
+	
+	sites			<- popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug )
+	sites$arm		<- 'C'
+	sites$inc.rate	<- seq(1.6,2.3,len=nrow(sites))/100
+	sites$p.adults	<- 1
+	sites$hivcomb	<- 20
+	sites$hivsero	<- 20
+	sites$artadjust	<- 85
+	sites$artcrude	<- 85
+	sites$popsize	<- 6e3 * 0.8 / (1-seq(0.2,0.3,len=nrow(sites))) / 0.2  	#number in UK HIV RDB is 6k and 80% is MSM	assume %undiagnosed 20%-30%	-> total prevalence. prevalence 20%,-> total population		
+			
+	sites<-	popart.getdata.randomized.n(sites, cohort.size, cohort.dur, rtn.exp=debug)	
+	print(sites)
+
+	#total annual incidence between 315-600
+	print(range(sites$n.inc/cohort.dur))
+	
+	#compute complete tip cluster probs under H0 and H1
+	clu.n		<- clu.n.of.tchain(opt.clu.closure)	
+	theta.H0	<- clu.p.init(theta.EE.H0, theta.UE, theta.TE, 1-p.nocontam)
+	theta.H1	<- clu.p.init(theta.EE.H1, theta.UE, theta.TE, 1-p.nocontam)
+	tipc.p.H0	<- clu.probabilities(clu.n, theta.H0, with.ntr.weight= 1)
+	tipc.p.H1	<- clu.probabilities(clu.n, theta.H1, with.ntr.weight= 1)
+	
+	#for H1 (high E->E), get n(E->E) and n(x->E) for each arm under baseline scenario
+	if(1)
+	{
+		p.lab			<- seq(0.1,0.7,0.05)		
+		p.consent.coh	<- 0						#there is no cohort
+		p.consent.clu	<- 1
+		p.vhcc.prev.AB	<- 0
+		p.vhcc.inc.AB	<- 0
+		p.vhcc.prev.C	<- 0.75						#this setting gives 300-550 clusters for 30% sampling
+		p.vhcc.inc.C	<- 0.75 / 1.5					#	
+		p.baseline		<- 0.5						#sequences that cluster are 50%
+		xlab			<- "coverage"
+		
+		NCLU<<- matrix(NA,0,2)
+		ans			<- lapply(p.lab,function(x)
+				{		
+					cat(paste("\nprocess",x))
+					#theta.H0	<- clu.p.init(theta.EE.H0, theta.UE, theta.TE, p.contam)
+					#theta.H1	<- clu.p.init(theta.EE.H1, theta.UE, theta.TE, p.contam)
+					#tipc.p.H0	<- clu.probabilities(clu.n, theta.H0, with.ntr.weight=1)
+					#tipc.p.H1	<- clu.probabilities(clu.n, theta.H1, with.ntr.weight=1)
+					sampling<- popart.sampling.init(sites,  p.consent.coh, p.consent.clu, x, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)
+					sampling$baseline<- p.baseline
+					print(sampling)
+					
+					ntr.hg.H0<- popart.get.sampled.transmissions.from.tipc(sites, tipc.p.H0, clu.n, theta.H0, sampling, opt.sampling, mx.sampled.ntr=6, exclude.O= 1, rtn.int=!debug, verbose=0)
+					ntr.hg.H1<- popart.get.sampled.transmissions.from.tipc(sites, tipc.p.H1, clu.n, theta.H1, sampling, opt.sampling, mx.sampled.ntr=6, exclude.O= 1, rtn.int=!debug, verbose=1)
+					#print(ntr.hg)						
+					list(i2i.s.H0= ntr.hg.H0["i2i.s",], x2i.s.H0=ntr.hg.H0["x2i.s",],i2i.s.H1= ntr.hg.H1["i2i.s",], x2i.s.H1=ntr.hg.H1["x2i.s",]) 
+				})
+		names(ans)<- p.lab	
+		#print(ans)
+		
+		ans.x2E.H0<- sapply(seq_along(ans),function(i) ans[[i]][["x2i.s.H0"]])
+		ans.E2E.H0<- sapply(seq_along(ans),function(i) ans[[i]][["i2i.s.H0"]])
+		ans.x2E.H1<- sapply(seq_along(ans),function(i) ans[[i]][["x2i.s.H1"]])
+		ans.E2E.H1<- sapply(seq_along(ans),function(i) ans[[i]][["i2i.s.H1"]])
+		
+		#print(ans.x2E.H1)		
+		#print(ans.E2E.H1 / ans.x2E.H1 )
+		arms<- c("C")
+		ans	<- lapply(seq_along(arms),function(i)
+				{
+					cat(paste("\n arm ",arms[i]))
+					#power with t-test per arm
+					idx			<- sites$arm==arms[i]
+					p.H0		<- ans.E2E.H0[idx,,drop=0] / ans.x2E.H0[idx,,drop=0]
+					p.H1		<- ans.E2E.H1[idx,,drop=0] / ans.x2E.H1[idx,,drop=0]															
+					
+					#power with simple binom test, averaging over different assumptions on %diagnosed and cum true incidence/year
+					p.H0		<- apply(ans.E2E.H0[idx,,drop=0] / ans.x2E.H0[idx,,drop=0],2,mean)
+					p.H1		<- apply(ans.E2E.H1[idx,,drop=0] / ans.x2E.H1[idx,,drop=0],2,mean)
+					e.H0		<- apply(floor(ans.E2E.H0[idx,,drop=0]),2,mean)
+					e.H1		<- apply(floor(ans.E2E.H1[idx,,drop=0]),2,mean)
+					n.H0		<- apply(floor(ans.x2E.H0[idx,,drop=0]),2,mean)
+					n.H1		<- apply(floor(ans.x2E.H1[idx,,drop=0]),2,mean) 
+					#print(c(n.H0,n.H1,e.H0,e.H1))
+					
+					pw.b		<- .phdes.binom.power(n.H1, p.H1, p.H0, test.alpha, method="asymp")
+					names(pw.b)	<- names(ans)
+					#print(pw.b)					
+					#stop()
+					list(pw.b=pw.b, p.H0.m=p.H0, p.H1.m=p.H1)
+				})
+		#plot computed power for each arm	
+		pw.b<- sapply(seq_along(ans),function(i)
+				{
+					ans[[i]][["pw.b"]]
+				})		
+		colnames(pw.b)<- arms
+		print(pw.b)		
+		print(NCLU)
+
+		
+		
+		clr<- c("red","blue","green")
+		f.name	<- paste(dir.name,"/",xlab,"_power.pdf",sep='')
+		cat(paste("\n plot to ",f.name))
+		pdf(f.name,version="1.4",width=5,height=5)		
+		plot(1,1,type='n',bty='n',xlim=range(p.lab),ylim=range(c(pw.b)),xlab=xlab,ylab="power")
+		sapply(seq_len(ncol(pw.b)),function(j)
+				{
+					lines(p.lab,pw.b[,j])
+				})		
+		legend("bottomright",bty='n',legend=c("prob(acute/early)>40% vs <10%"))
+		dev.off()
+		
+		f.name	<- paste(dir.name,"/",xlab,"_nclu.pdf",sep='')
+		cat(paste("\n plot to ",f.name))
+		pdf(f.name,version="1.4",width=5,height=5)		
+		plot(1,1,type='n',bty='n',xlim=range(p.lab),ylim=range(c(NCLU[,2])),xlab=xlab,ylab="number of clusters")
+		sapply(seq_len(ncol(pw.b)),function(j)
+				{
+					lines(p.lab,NCLU[,2])
+				})				
+		dev.off()				
+	}
+	stop()
+}
+###########################################################################
+prj.popart.powercalc_tipc_test_residual<- function(p.phylosignal=0.7,p.nocontam=0.85, opt.pooled= "no pooling", opt.sampling= "PC and HCC")
+{
+	require(binom)
+	require(phylodesign)
+	my.mkdir(DATA,"popartpowercalc_test")
+	dir.name<- paste(DATA,"popartpowercalc_test",sep='/')	
+	resume<- 0
+	verbose<- 0
+	plot.increment<- 0.05
+	
+	m.type		<- "Acute"	
+	cohort.size	<- 2500
+	pc24.size	<- 6000
+	cohort.dur	<- 3	
+	theta.EE.H0	<- 0.10
+	theta.EE.H1	<- 0.4
+	theta.UE	<- 0.3
+	theta.TE	<- theta.UE / 5
+	test.alpha	<- 0.05		 
+	debug		<- 1
+	pooled.n	<- 1
+	opt.pooled	<- "no pooling"#"pooled across ZA"#"pooled across trial"#"no pooling"
+	opt.pooled	<- "pooled across SA"
+	opt.clu.closure	<- 14
+	opt.sampling<- "PC and HCC"#"only HCC"	#"PC and HCC"	#
+	#opt.sampling<- "PC after yr 1 and HCC"
+	#opt.sampling<- "PC only incident and HCC"
+	opt.power	<-	"All"
+	
+	cat(paste("\ncohort.size",cohort.size))
+	cat(paste("\ncohort.dur",cohort.dur))
+	cat(paste("\ntheta.EE.H0",theta.EE.H0))
+	cat(paste("\ntheta.EE.H1",theta.EE.H1))
+	cat(paste("\ntest.alpha",test.alpha))	
+	cat(paste("\np.nocontam",p.nocontam))
+	cat(paste("\npooled.n",pooled.n))
+	cat(paste("\nopt.pooled",opt.pooled))
+	cat(paste("\nopt.power",opt.power))
+	cat(paste("\nopt.sampling",opt.sampling))
+	
+	sites<-	popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug )
+	sites<-	popart.getdata.randomized.n(sites, cohort.size, cohort.dur, rtn.exp=debug)	
+	print(sites)
+	
+	#compute complete tip cluster probs under H0 and H1
+	clu.n		<- clu.n.of.tchain(opt.clu.closure)	
+	theta.H0	<- clu.p.init(theta.EE.H0, theta.UE, theta.TE, 1-p.nocontam)
+	theta.H1	<- clu.p.init(theta.EE.H1, theta.UE, theta.TE, 1-p.nocontam)
+	tipc.p.H0	<- clu.probabilities(clu.n, theta.H0, with.ntr.weight= 1)
+	tipc.p.H1	<- clu.probabilities(clu.n, theta.H1, with.ntr.weight= 1)
+	
+	#for H1 (high E->E), get n(E->E) and n(x->E) for each arm under residual sampling scenario
+	if(1)
+	{
+		p.lab			<- 0.7			#set lower as discussed		
+		p.consent.coh	<- 0.9
+		p.consent.clu	<- 1
+		p.vhcc.prev.AB	<- 0.95
+		p.vhcc.inc.AB	<- 0.8
+		p.vhcc.prev.C	<- 0.4
+		p.vhcc.inc.C	<- 0.4/2					
+		p.contam		<- seq(0.05,0.2,0.025)
+		opt.sampling	<- "PC and HCC"	
+		#opt.sampling	<- "only HCC"		
+		ans			<- lapply(p.contam,function(x)
+				{
+					theta.H0	<- clu.p.init(theta.EE.H0, theta.UE, theta.TE, x)
+					theta.H1	<- clu.p.init(theta.EE.H1, theta.UE, theta.TE, x)
+					tipc.p.H0	<- clu.probabilities(clu.n, theta.H0, with.ntr.weight=1)
+					tipc.p.H1	<- clu.probabilities(clu.n, theta.H1, with.ntr.weight=1)
+					
+					sampling<- popart.sampling.init(sites,  p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)
+					print(sampling)
+					stop()
+					#print(xtable(sampling, digits=2), floating=FALSE)
+					ntr.hg<- popart.get.sampled.transmissions.from.tipc(sites, tipc.p.H1, clu.n, theta.H1, sampling, opt.sampling, mx.sampled.ntr=6, exclude.O= 1, rtn.int=!debug)
+					#print(ntr.hg)						
+					list(i2i.s= ntr.hg["i2i.s",], x2i.s=ntr.hg["x2i.s",]) 
+				})
+		names(ans)<- p.contam	
+		#print(ans)
+		ans.x2E<- sapply(seq_along(ans),function(i) ans[[i]][["x2i.s"]])
+		ans.E2E<- sapply(seq_along(ans),function(i) ans[[i]][["i2i.s"]])
+		
+		print(ans.E2E)
+		clr<- c("red","blue","green")
+		arms<- c("A","B","C")
+		p.vary<- as.numeric(names(ans))
+		xlab<- "proportion transmission from outside cluster"
+		sapply(seq_along(arms),function(j)
+				{
+					plotmat	<- ans.E2E[sites$arm==arms[j],]
+					ylim	<- c(0,max( sapply(seq_along(arms),function(k) apply( ans.E2E[sites$arm==arms[k],],2,sum ) ) ))
+					
+					f.name	<- paste(dir.name,"/residual_",opt.sampling,p.vhcc.prev.C,p.vhcc.inc.C,p.lab,xlab,"_vs_E2E_arm",arms[j],".pdf",sep='')
+					cat(paste("\n plot to ",f.name))
+					pdf(f.name,version="1.4",width=5,height=5)
+					plot(1,1,type='n',bty='n',xlim=range(p.vary),ylim=ylim,xlab=xlab,ylab="n(E->E)")
+					z		<- rep(0,ncol(plotmat))
+					cols	<- colorRampPalette(c(clr[j],"yellow"))(nrow(plotmat))
+					for(i in seq_len(nrow(plotmat)))
+					{
+						polygon( c(p.vary,rev(p.vary)), c(z+plotmat[i,], rev(z)), col=cols[i] )
+						z	<- z+plotmat[i,]
+					}										
+					legend("topleft",bty='n',legend=paste("arm",arms[j]))
+					dev.off()
+				})
+		clr<- c("black","black","black")
+		arms<- c("A","B","C")
+		sapply(seq_along(arms),function(j)
+				{
+					plotmat	<- ans.x2E[sites$arm==arms[j],]
+					ylim	<- c(0,max( sapply(seq_along(arms),function(k) apply( ans.x2E[sites$arm==arms[k],],2,sum ) ) ))
+					
+					f.name	<- paste(dir.name,"/residual_",opt.sampling,p.vhcc.prev.C,p.vhcc.inc.C,p.lab,xlab,"_vs_x2E_arm",arms[j],".pdf",sep='')
+					cat(paste("\n plot to ",f.name))
+					pdf(f.name,version="1.4",width=5,height=5)
+					plot(1,1,type='n',bty='n',xlim=range(p.vary),ylim=ylim,xlab=xlab,ylab="n(E->E)")
+					z		<- rep(0,ncol(plotmat))
+					cols	<- colorRampPalette(c(clr[j],"gray50"))(nrow(plotmat))
+					for(i in seq_len(nrow(plotmat)))
+					{
+						polygon( c(p.vary,rev(p.vary)), c(z+plotmat[i,], rev(z)), col=cols[i] )
+						z	<- z+plotmat[i,]
+					}										
+					legend("topleft",bty='n',legend=paste("arm",arms[j]))
+					dev.off()
+				})
+	}
+	#if samples available from multiple visits to HCC, how would this change p.lab ?
+	if(0)
+	{
+		p.lab<- 0.5
+		n<- seq.int(1,3)
+		print( 1-pbinom(0,n,p.lab) )
+		p.lab<- 0.6
+		print( 1-pbinom(0,n,p.lab) )
+	}	
+	#for H1 (high E->E), get n(E->E) and n(x->E) for each arm under residual baseline scenario
+	if(0)
+	{
+		p.lab			<- 0.7		
+		p.consent.coh	<- 0.9
+		p.consent.clu	<- 1
+		p.vhcc.prev.AB	<- 0.95
+		p.vhcc.inc.AB	<- 0.8
+		p.vhcc.prev.C	<- 0.4
+		p.vhcc.inc.C	<- p.vhcc.prev.C/2					
+		p.contam		<- seq(0.05,0.2,0.025)
+		opt.sampling	<- "PC and HCC"	
+		#opt.sampling	<- "only HCC"
+		xlab			<- "proportion of transmissions from outside cluster"
+		
+		ans			<- lapply(p.contam,function(x)
+				{
+					theta.H0	<- clu.p.init(theta.EE.H0, theta.UE, theta.TE, x)
+					theta.H1	<- clu.p.init(theta.EE.H1, theta.UE, theta.TE, x)
+					tipc.p.H0	<- clu.probabilities(clu.n, theta.H0, with.ntr.weight=1)
+					tipc.p.H1	<- clu.probabilities(clu.n, theta.H1, with.ntr.weight=1)
+					sampling<- popart.sampling.init(sites,  p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)
+					#print(sampling)
+					ntr.hg.H0<- popart.get.sampled.transmissions.from.tipc(sites, tipc.p.H0, clu.n, theta.H0, sampling, opt.sampling, mx.sampled.ntr=6, exclude.O= 1, rtn.int=!debug)
+					ntr.hg.H1<- popart.get.sampled.transmissions.from.tipc(sites, tipc.p.H1, clu.n, theta.H1, sampling, opt.sampling, mx.sampled.ntr=6, exclude.O= 1, rtn.int=!debug)
+					#print(ntr.hg)						
+					list(i2i.s.H0= ntr.hg.H0["i2i.s",], x2i.s.H0=ntr.hg.H0["x2i.s",],i2i.s.H1= ntr.hg.H1["i2i.s",], x2i.s.H1=ntr.hg.H1["x2i.s",]) 
+				})
+		names(ans)<- p.contam	
+		#print(ans)
+		ans.x2E.H0<- sapply(seq_along(ans),function(i) ans[[i]][["x2i.s.H0"]])
+		ans.E2E.H0<- sapply(seq_along(ans),function(i) ans[[i]][["i2i.s.H0"]])
+		ans.x2E.H1<- sapply(seq_along(ans),function(i) ans[[i]][["x2i.s.H1"]])
+		ans.E2E.H1<- sapply(seq_along(ans),function(i) ans[[i]][["i2i.s.H1"]])
+		
+		#print(ans.x2E.H1)		
+		#print(ans.E2E.H1 / ans.x2E.H1 )
+		arms<- c("A","B","C")
+		ans	<- lapply(seq_along(arms),function(i)
+				{
+					cat(paste("\n arm ",arms[i]))
+					#power with t-test per arm
+					idx			<- sites$arm==arms[i]
+					p.H0		<- ans.E2E.H0[idx,] / ans.x2E.H0[idx,]
+					print(p.H0)
+					p.H1		<- ans.E2E.H1[idx,] / ans.x2E.H1[idx,]					
+					var.pH0		<- (apply(p.H0,2,mean)*0.5)^2 	#10*10*apply(ans.E2E.H0[idx,] / ans.x2E.H0[idx,],2,var)
+					var.pH1		<- (apply(p.H1,2,mean)*0.5)^2	#10*10*apply(ans.E2E.H0[idx,] / ans.x2E.H0[idx,],2,var)
+					
+					pw			<- sapply(seq_along(ans),function(j)
+							{
+								n.H1	<- floor(ans.x2E.H1[idx,j])										
+								phdes.power.ttest.cl(n.H1, p.H0[,j], p.H1[,j], var.pH0[j], var.pH1[j], alpha= test.alpha)
+							})
+					names(pw)	<- names(ans)
+					#print(pw)
+					
+					#design effect: 1+(harmonic mean(n.H1)-1) * within clu corr
+					des.effect	<- 1 + (1/apply(1/ans.x2E.H1[idx,],2,mean)-1) * var.pH1 / (apply(p.H1,2,mean)*(1-apply(p.H1,2,mean)))
+					des.effect	<- 1 + (apply(ans.x2E.H1[idx,],2,mean)-1) * var.pH1 / (apply(p.H1,2,mean)*(1-apply(p.H1,2,mean)))
+					#print(des.effect)
+					
+					#power with simple binom test, adjusting for design effect
+					p.H0		<- apply(ans.E2E.H0[idx,] / ans.x2E.H0[idx,],2,mean)
+					p.H1		<- apply(ans.E2E.H1[idx,] / ans.x2E.H1[idx,],2,mean)
+					e.H0		<- apply(floor(ans.E2E.H0[idx,]),2,sum) / des.effect
+					e.H1		<- apply(floor(ans.E2E.H1[idx,]),2,sum) / des.effect
+					n.H0		<- apply(floor(ans.x2E.H0[idx,]),2,sum) / des.effect
+					n.H1		<- apply(floor(ans.x2E.H1[idx,]),2,sum) / des.effect
+					pw.b		<- .phdes.binom.power(n.H1, p.H1, p.H0, test.alpha, method="asymp")
+					names(pw.b)	<- names(ans)
+					#print(pw.b)
+					
+					#95% conf interval with simple binom test, adjusting for design effect
+					conf.H1		<- binom.confint(e.H1, n.H1, conf.level = 0.95, methods="cloglog")[,c("lower","upper")]
+					conf.H0		<- binom.confint(e.H0, n.H0, conf.level = 0.95, methods="cloglog")[,c("lower","upper")]
+					rownames(conf.H0)<- rownames(conf.H1)<- names(ans)
+					#print( conf.H0 ); print( conf.H1 )
+					
+					list(pw.n=pw, pw.b=pw.b,conf.b.H0=conf.H0, conf.b.H1=conf.H1, p.H0.m=p.H0, p.H1.m=p.H1)
+				})
+		print(ans)		
+		#plot computed power for each arm	
+		pw.n<- sapply(seq_along(ans),function(i)
+				{
+					ans[[i]][["pw.n"]]
+				})		
+		colnames(pw.n)<- arms
+		pw.b<- sapply(seq_along(ans),function(i)
+				{
+					ans[[i]][["pw.b"]]
+				})		
+		colnames(pw.b)<- arms
+		
+		clr<- c("red","blue","green")
+		f.name	<- paste(dir.name,"/residual_",opt.sampling,p.vhcc.prev.C,p.vhcc.inc.C,p.lab,xlab,"_power.pdf",sep='')
+		cat(paste("\n plot to ",f.name))
+		pdf(f.name,version="1.4",width=5,height=5)		
+		plot(1,1,type='n',bty='n',xlim=range(p.contam),ylim=range(c(0,1,pw.b,pw.n)),xlab=xlab,ylab="power")
+		sapply(seq_len(ncol(pw.n)),function(j)
+				{
+					#lines(p.contam,pw.n[,j],col=clr[j],lty=1)
+				})
+		sapply(seq_len(ncol(pw.b)),function(j)
+				{
+					lines(p.contam,pw.b[,j],col=clr[j],lty=2)
+				})
+		#legend("bottomleft",bty='n',lty=c(1,2),legend=c("normal approx (Hayes1999)","Binomial using effective size"))
+		legend("bottomright",bty='n',fill=clr,legend=c("arm A","arm B","arm C"))
+		dev.off()
+		
+		#plot confidence intervals for each arm
+		sapply(seq_along(ans),function(i)
+				{
+					ylim<- range(c(ans[[i]][["conf.b.H0"]],ans[[i]][["conf.b.H1"]]))
+					ylim<- ylim*c(1,1.3)
+					
+					f.name	<- paste(dir.name,"/residual_",xlab,"_confint_",arms[i],".pdf",sep='')
+					cat(paste("\n plot to ",f.name))
+					pdf(f.name,version="1.4",width=5,height=5)		
+					
+					plot(1,1,type='n',bty='n',xlim=range(p.contam),ylim=ylim,xlab=xlab,ylab="95% Binomial confidence interval")
+					x<- ans[[i]][["conf.b.H0"]]
+					#polygon( c(p.contam,rev(p.contam)), c(x[,1],rev(x[,2])), col=my.fade.col(clr[i],0.4), border=NA )
+					polygon( c(p.contam,rev(p.contam)), c(x[,1],rev(x[,2])), col="gray50", border=NA )
+					x<- ans[[i]][["conf.b.H1"]]
+					polygon( c(p.contam,rev(p.contam)), c(x[,1],rev(x[,2])), col=my.fade.col(clr[i],0.7), border=NA )					
+					lines(p.contam,ans[[i]][["p.H0.m"]], lty=2)
+					lines(p.contam,ans[[i]][["p.H1.m"]], lty=3)
+					legend("topleft",bty='n',legend=paste("arm",arms[i]))
+					dev.off()
+				})  
+		
+	}
+}
+###########################################################################
 prj.popart.powercalc_tipc_test<- function(p.phylosignal=0.7,p.nocontam=0.85, opt.pooled= "no pooling", opt.sampling= "PC and HCC")
 {
 	require(binom)
@@ -549,7 +986,86 @@ prj.popart.powercalc_tipc_test<- function(p.phylosignal=0.7,p.nocontam=0.85, opt
 	}
 	
 	#for H1 (high E->E), get n(E->E) and n(x->E) for each arm under baseline scenario
-	if(1)
+	if(0)
+	{
+		p.lab			<- 0.9		
+		p.consent.coh	<- 0.9
+		p.consent.clu	<- 0.5
+		p.vhcc.prev.AB	<- 0.95
+		p.vhcc.inc.AB	<- 0.8
+		p.vhcc.prev.C	<- 0.4
+		p.vhcc.inc.C	<- 0.4/2					
+		p.contam		<- seq(0.1,0.4,0.05)
+		
+		ans			<- lapply(p.contam,function(x)
+				{
+					theta.H0	<- clu.p.init(theta.EE.H0, theta.UE, theta.TE, x)
+					theta.H1	<- clu.p.init(theta.EE.H1, theta.UE, theta.TE, x)
+					tipc.p.H0	<- clu.probabilities(clu.n, theta.H0)
+					tipc.p.H1	<- clu.probabilities(clu.n, theta.H1)
+					
+					sampling<- popart.sampling.init(sites,  p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)
+					#print(sampling)
+					#print(xtable(sampling, digits=2), floating=FALSE)
+					#stop()
+					ntr.hg<- popart.get.sampled.transmissions.from.tipc(sites, tipc.p.H1, clu.n, theta.H1, sampling, opt.sampling, mx.sampled.ntr=6, exclude.O= 1, rtn.int=!debug)
+					#print(ntr.hg)						
+					list(i2i.s= ntr.hg["i2i.s",], x2i.s=ntr.hg["x2i.s",]) 
+				})
+		names(ans)<- p.contam	
+		#print(ans)
+		ans.x2E<- sapply(seq_along(ans),function(i) ans[[i]][["x2i.s"]])
+		ans.E2E<- sapply(seq_along(ans),function(i) ans[[i]][["i2i.s"]])
+		
+		print(ans.E2E)
+		clr<- c("red","blue","green")
+		arms<- c("A","B","C")
+		p.vary<- as.numeric(names(ans))
+		xlab<- "proportion transmission from outside cluster"
+		sapply(seq_along(arms),function(j)
+				{
+					plotmat	<- ans.E2E[sites$arm==arms[j],]
+					ylim	<- c(0,max( sapply(seq_along(arms),function(k) apply( ans.E2E[sites$arm==arms[k],],2,sum ) ) ))
+					
+					f.name	<- paste(dir.name,"/",xlab,"_vs_E2E_arm",arms[j],".pdf",sep='')
+					cat(paste("\n plot to ",f.name))
+					pdf(f.name,version="1.4",width=5,height=5)
+					plot(1,1,type='n',bty='n',xlim=range(p.vary),ylim=ylim,xlab=xlab,ylab="n(E->E)")
+					z		<- rep(0,ncol(plotmat))
+					cols	<- colorRampPalette(c(clr[j],"yellow"))(nrow(plotmat))
+					for(i in seq_len(nrow(plotmat)))
+					{
+						polygon( c(p.vary,rev(p.vary)), c(z+plotmat[i,], rev(z)), col=cols[i] )
+						z	<- z+plotmat[i,]
+					}										
+					legend("topleft",bty='n',legend=paste("arm",arms[j]))
+					dev.off()
+				})
+		clr<- c("black","black","black")
+		arms<- c("A","B","C")
+		sapply(seq_along(arms),function(j)
+				{
+					plotmat	<- ans.x2E[sites$arm==arms[j],]
+					ylim	<- c(0,max( sapply(seq_along(arms),function(k) apply( ans.x2E[sites$arm==arms[k],],2,sum ) ) ))
+					
+					f.name	<- paste(dir.name,"/",xlab,"_vs_x2E_arm",arms[j],".pdf",sep='')
+					cat(paste("\n plot to ",f.name))
+					pdf(f.name,version="1.4",width=5,height=5)
+					plot(1,1,type='n',bty='n',xlim=range(p.vary),ylim=ylim,xlab=xlab,ylab="n(E->E)")
+					z		<- rep(0,ncol(plotmat))
+					cols	<- colorRampPalette(c(clr[j],"gray50"))(nrow(plotmat))
+					for(i in seq_len(nrow(plotmat)))
+					{
+						polygon( c(p.vary,rev(p.vary)), c(z+plotmat[i,], rev(z)), col=cols[i] )
+						z	<- z+plotmat[i,]
+					}										
+					legend("topleft",bty='n',legend=paste("arm",arms[j]))
+					dev.off()
+				})
+	}
+	
+	#for H1 (high E->E), get n(E->E) and n(x->E) for each arm under baseline scenario
+	if(0)
 	{
 		p.lab			<- 0.9		
 		p.consent.coh	<- 0.9
@@ -680,6 +1196,8 @@ prj.popart.powercalc_tipc_test<- function(p.phylosignal=0.7,p.nocontam=0.85, opt
 				})  
 		
 	}
+	
+	
 	stop()
 	
 	a2a.hg<- popart.get.sampled.transmissions.from.tipc(sites, tipc.p.H0, clu.n, theta.H0, sampling, opt.sampling, mx.sampled.ntr=6, exclude.O= 1, rtn.int=!debug)
@@ -1618,4 +2136,86 @@ prj.popart.power_test<- function()
 			})
 	stop()	
 }
-
+###############################################################################
+prj.ibm.simudata<- function()
+{		
+	m.type<- "Acute"
+	loc.type<- "ZA-A"
+	m.popsize<- 6e4
+	resume<- 0
+	verbose<- 1
+	record.tpc<- 1
+	tpc.repeat<- 2
+	theta<- c(26, 0.055, 0, 0)
+	names(theta)<- c("acute","base","m.st1","m.st2")
+	if(exists("argv"))
+	{
+		tmp<- na.omit(sapply(argv,function(arg)
+						{	switch(substr(arg,2,2),
+									r= return(as.numeric(substr(arg,3,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) tpc.repeat<- tmp[1]
+		tmp<- na.omit(sapply(argv,function(arg)
+						{	switch(substr(arg,2,2),
+									l= return(substr(arg,3,nchar(arg))),NA)	}))
+		if(length(tmp)>0) loc.type<- tmp[1]
+		tmp<- na.omit(sapply(argv,function(arg)
+						{	switch(substr(arg,2,2),
+									n= return(as.numeric(substr(arg,3,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) m.popsize<- tmp[1]
+		tmp<- na.omit(sapply(argv,function(arg)
+						{	switch(substr(arg,2,2),
+									a= return(as.numeric(substr(arg,3,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) theta[1]<- tmp[1]
+		tmp<- na.omit(sapply(argv,function(arg)
+						{	switch(substr(arg,2,2),
+									b= return(as.numeric(substr(arg,3,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) theta[2]<- tmp[1]
+	}
+	
+	cat(paste("\nm.popsize ",m.popsize))
+	cat(paste("\nloc.type ",loc.type))
+	cat(paste("\ntpc.repeat ",tpc.repeat))
+	cat(paste("\ntheta0.acute ",theta[1]))
+	cat(paste("\ntheta0.base ",theta[2]))
+	
+	my.mkdir(DATA,"simudata")
+	dir.name<- paste(DATA,"simudata",sep='/')
+	f.name<- paste(dir.name,paste("tpc_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta[1],"_b",theta[2],sep=''),sep='/')
+	
+	if(resume)
+	{
+		options(show.error.messages = FALSE)		
+		cat(paste("\nprj.simudata: try to resume file ",paste(f.name,"_tpc.R",sep='')))
+		readAttempt<-try(suppressWarnings(load(paste(f.name,"_tpc.R",sep=''))))
+		options(show.error.messages = TRUE)
+		if(!inherits(readAttempt, "try-error"))
+			cat(paste("\nprj.simudata: resumed file ",paste(f.name,"_tpc.R",sep='')))
+	}
+	if(!resume || inherits(readAttempt, "try-error"))
+	{
+		
+		tpc<- lapply(seq_len(tpc.repeat),function(i)
+				{
+					cat(paste("\nprj.simudata: replicate",i))
+					ans<- vector("list",2)
+					names(ans)<- c("ibm","tpc")
+					
+					ibm<- ibm.init.model(m.type,loc.type,m.popsize, theta, resume= resume)	
+					ans[["ibm"]]<- ibm.collapse(ibm)
+					tpc.data<- ssa.run(ans[["ibm"]], ssa.ctime= 0, ssa.etime= 1,record.tpc= record.tpc, verbose= 0, resume= resume)
+					if(record.tpc)
+						ans[["tpc"]]<- tpc.collapse(tpc.data)
+					else
+						ans[["tpc"]]<- tpc.data
+					ans
+				})
+		cat(paste("\nprj.simudata: write tpc data to file",paste(f.name,"_tpc.R",sep='')))
+		save(tpc,file=paste(f.name,"_tpc.R",sep=''))
+	}
+	#print( summary( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc"]]) ) )
+	#stop()
+	summary( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc"]][["attack.rate"]]) )
+	tpc.agg.data<- lapply(seq_along(tpc), function(i) tpc.tabulate(tpc[[i]][["tpc"]]))
+	print(tpc.agg.data)
+}
+###############################################################################

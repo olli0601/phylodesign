@@ -47,11 +47,17 @@ DATA<<- paste(HOME,"data",sep='/')
 PHDES.DEBUG<<- 0
 #default.fun	<- "prj.popart.tchain_test"
 #default.fun	<- "prj.popart.powercalc_link_consenting"
-default.fun		<- "prj.popart.powercalc_tipc_test"
-#default.fun		<- "prj.popart.powercalc_tipc_consenting"
+#default.fun	<- "prj.popart.powercalc_tipc_test"
+#default.fun		<- "prj.popart.powercalc_tipc_test_ukhivrdb"
+default.fun		<- "prj.popart.powercalc_tipc_test_residual"
+#default.fun	<- "prj.popart.powercalc_tipc_consenting"
 #default.fun	<- "prj.popart.power_test"
 #default.fun	<- "prj.popart.powercalc_cmp_link_tipc"
 #default.fun	<- "prj.popart.powercalc_tipc_contam"
+
+#default.fun<- "prj.popart.powercalc_link_consenting"
+#default.fun<- "prj.plotfisherhettransm"
+
 ###############################################################################
 #if(length(args) && !is.loaded("tipc_tabulate_after_sample"))
 #{
@@ -99,9 +105,14 @@ if(length(args))
 	{
 		if(length(tmp)>1) stop("phdes.startme.R: duplicate -exe")
 		else default.fun<- switch(tmp[1],
-					POPART.POWER.LINK.CONSENT= "prj.popart.powercalc_link_consenting",
-					POPART.POWER.TIPC.CONSENT= "prj.popart.powercalc_tipc_consenting",
-					MAKE.DOCUMENTATION		 = "my.make.documentation"
+					POPART.POWER.LINK.CONSENT	= "prj.popart.powercalc_link_consenting",
+					POPART.POWER.TIPC.CONSENT	= "prj.popart.powercalc_tipc_consenting",
+					TEST						= "prj.test",
+					SIMU.DATA					= "prj.simudata",
+					ACUTE.LKL					= "prj.acute.loglklsurface",
+					ACUTE.ABC					= "prj.acutesampling.rejabc",
+					WH.SLEEPER					= "prj.wh.sleeper",
+					MAKE.DOCUMENTATION		 	= "my.make.documentation"
 					)
 	}
 	tmp<- na.omit(sapply(args,function(arg)
