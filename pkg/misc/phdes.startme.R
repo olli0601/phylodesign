@@ -56,9 +56,10 @@ default.fun	<- "prj.popart.tchain_test"
 #default.fun	<- "prj.popart.power_test"
 #default.fun	<- "prj.popart.powercalc_cmp_link_tipc"
 #default.fun	<- "prj.popart.powercalc_tipc_contam"
-default.fun	<-	"prj.acute.clusterdistribution"
+#default.fun	<-	"prj.acute.clusterdistribution"
 #default.fun<- "prj.popart.powercalc_link_consenting"
 #default.fun<- "prj.plotfisherhettransm"
+default.fun<- "prj.simudata"
 
 ###############################################################################
 #if(length(args) && !is.loaded("tipc_tabulate_after_sample"))

@@ -4,25 +4,24 @@ ssa.get.transition.compartmental<- function(ibm, verbose=0)
 #print(ibm)	
 	#st.lv<- levels( ibm[["init.pop"]][["status"]] )
 	if(ncol(ibm[["curr.pop"]])>2)	stop("ssa.get.transprob: error at 1a")
-	ans<- vector("list",4)
-	names(ans)<- c("from","from.attr","to","time")
-	propens<- acute.get.rates(ibm)	
+	ans					<- vector("list",4)
+	names(ans)			<- c("from","from.attr","to","time")
+	propens				<- acute.get.rates(ibm[["curr.pop"]], ibm[["beta"]])
 	#determine transition by risk group x->y	 from: donor risk group x, to: recipient risk group y
-	tmp <- 	my.sample(seq_len(length(propens)), size = 1, prob = as.vector(propens), replace= 1)
-	ans[["from.attr"]]<- colnames(propens)[ (tmp-1)%%nrow(propens)+1 ]
-	to<-	colnames(propens)[ (tmp-1)%/%nrow(propens)+1 ]
-#print(from); print(to)
+	tmp 				<- my.sample(seq_len(length(propens)), size = 1, prob = as.vector(propens), replace= 1)
+	ans[["from.attr"]]	<- colnames(propens)[ (tmp-1)%%nrow(propens)+1 ]	
+	to					<- colnames(propens)[ (tmp-1)%/%nrow(propens)+1 ]
 	#determine donor and recpipient individuals 
 	setkey(ibm[["curr.pop"]],"status","id")
-	old.warn<- getOption("warn")
+	old.warn			<- getOption("warn")
 	options(warn=-1)		#TODO known inefficiency: should convert ibm factors to characters
-	ans[["from"]]<- my.sample(ibm[["curr.pop"]][ans[["from.attr"]]][,id], size=1)
-	ans[["to"]]<- my.sample(ibm[["curr.pop"]][to][,id], size=1)
+	ans[["from"]]		<- my.sample(ibm[["curr.pop"]][ans[["from.attr"]]][,id], size=1)
+	ans[["to"]]			<- my.sample(ibm[["curr.pop"]][to][,id], size=1)
 	options(warn=old.warn)
 	setkey(ibm[["curr.pop"]],"id","status")
 	if(verbose)	cat(paste("\n mean reaction time",1/sum(propens)))
 	#determine time to transition
-	ans[["time"]]<- -log(runif(1)) / sum(propens)
+	ans[["time"]]		<- -log(runif(1)) / sum(propens)
 	ans
 }
 ###############################################################################
@@ -50,31 +49,31 @@ ssa.run<- function(ibm, ssa.ctime= 0, ssa.etime= 1, verbose= 0, save= '', resume
 		
 		if(record.tpc)
 		{ 
-			tpc.data<- tpc.init(ibm)
-			tpc.tree.idx<- rep(NA,nrow(ibm[["curr.pop"]]))
-			tpc.tree.idx[ ibm[["curr.pop"]][ ibm[["curr.pop"]][,status!='s'], id] ]<- seq.int(1,length(tpc.data[["trees"]]))			
+			tpc.data		<- tpc.init(ibm)
+			tpc.tree.idx	<- rep(NA,nrow(ibm[["curr.pop"]]))		
+			tpc.tree.idx[ unlist(subset(ibm[["curr.pop"]], status!='s', id)) ]	<- seq.int(1,length(tpc.data[["trees"]]))
 		}
 		else	
-			tpc.tree.idx<- tpc.data<- NULL
+			tpc.tree.idx	<- tpc.data	<- NULL
 		while(ssa.ctime<ssa.etime)
 		{
 			#determine next infection
-			ssa.update<- ssa.get.transition.compartmental(ibm, verbose=0)
+			ssa.update		<- ssa.get.transition.compartmental(ibm, verbose=0)
 			#update and store
-			ibm[["curr.pop"]][ssa.update$to,"status"]<- 'i'
+			ibm[["curr.pop"]][ssa.update$to,"status"]	<- 'i'
 			if(is.na(tpc.tree.idx[ssa.update$from]))	stop("ssa.run: cannot find tree index")
-			tpc.tree.idx[ssa.update$to]<- tpc.tree.idx[ssa.update$from] 
-			ssa.ctime<- ssa.ctime + ssa.update$time
+			tpc.tree.idx[ssa.update$to]					<- tpc.tree.idx[ssa.update$from] 
+			ssa.ctime									<- ssa.ctime + ssa.update$time
 			#print(ssa.update)
 			#print(tpc.tree.idx)
 			#print(tpc.data[["trees"]][[tpc.tree.idx]])
 			#next line: expensive
 			if(record.tpc) 
-				tpc.data[["trees"]][[ tpc.tree.idx[ssa.update$from] ]]<- tpc.add.tree(tpc.data[["trees"]][[ tpc.tree.idx[ssa.update$from] ]], ssa.update$from, ibm[["curr.pop"]][ssa.update$to],ssa.ctime)				
-			ssa.nevent<- ssa.nevent + 1						
+				tpc.data[["trees"]][[ tpc.tree.idx[ssa.update$from] ]]<- tpc.add.tree(tpc.data[["trees"]][[ tpc.tree.idx[ssa.update$from] ]], ssa.update$from, ibm[["curr.pop"]][ssa.update$to], ssa.ctime)			
+			ssa.nevent									<- ssa.nevent + 1						
 			if(verbose)
 				cat(paste("\nat time",ssa.ctime,"\tindividual",ssa.update$from,"infects",ssa.update$to,"nevent",ssa.nevent,"attack rate",ssa.nevent/nrow(ibm[["curr.pop"]])))
-			#store: from, to, branch length		as well as data frame of node attributes of donor at time of infection				
+			#store: from, to, branch length		as well as data frame of node attributes of donor at time of infection		
 		}
 		if(record.tpc)
 			tpc.data[["attack.rate"]]<- ssa.nevent / nrow(ibm[["curr.pop"]]) / ssa.etime

@@ -20,13 +20,13 @@ ibm.init.attributes<- function(mt)
 	if(!mt%in%names(IBM.MODELT))	stop("ibm.def.attributes: 1a")
 	mt<- IBM.MODELT[mt]
 	if(mt>1)	stop("ibm.def.attributes: 1b")
-	a<-  vector("list",length(IBM.IND.ATTRIBUTES))
-	names(a)<- names(IBM.IND.ATTRIBUTES)
+	a		<-  vector("list",length(IBM.IND.ATTRIBUTES))
+	names(a)<- 	names(IBM.IND.ATTRIBUTES)
 	a$status<- 	factor(c('s','i','t','u'))
-	a$gender<-	factor(c('m','h'))
-	a$risk<- 	factor(c('l','m','h')) 
-	a$circ <- 	factor(c('y','n'))
-	a$age<- 	factor(c('<17','<19','<22','<25','<30','<35','<40','<45','<50','<55'))
+	a$gender<-	factor(c('f','m'))
+	a$risk	<- 	factor(c('l','m','h')) 
+	a$circ	<- 	factor(c('y','n'))
+	a$age	<- 	factor(c('<17','<19','<22','<25','<30','<35','<40','<45','<50','<55'))
 	a
 }
 ###############################################################################
@@ -41,32 +41,59 @@ ibm.init.incidence<- function(loc)
 	ans
 }
 ###############################################################################
+ibm.init.popinitdistributions.popart<- function(attr, popart.community)
+{
+	data(popart.triplets.130207)
+	comm		<- popart.triplets.130207[ popart.community==popart.triplets.130207$comid_old, , drop=0]	
+	tmp			<- lapply(seq_along(attr),function(i)
+					{
+						switch(	names(attr)[i],
+								status=	{		
+											s	<- 1-comm[,"hivcomb"]/100
+											u	<- comm[,"hivcomb"] / 100 * ( 1 - comm[,"artadjust"]/100 )
+											t	<- comm[,"hivcomb"] / 100 * comm[,"artadjust"]/100 
+											ans	<- c(s,0,t,u)
+											names(ans)<- c('s','i','t','u')
+											ans
+										},
+								gender= rep(1/length(attr[[i]]),length(attr[[i]])),
+								risk= 	c(0.2,0.4,0.4),
+								circ= 	c(0.2,0.8),
+								age= 	rep(1/length(attr[[i]]),length(attr[[i]]))
+						)
+					})
+	names(tmp)	<- names(attr)
+	tmp$npop	<- round( comm[,"popsize"] * comm[,"p.adults"] ) 
+	tmp	
+}
+###############################################################################
 #' @export
-ibm.init.popinitdistributions<- function(attr, loc)
+ibm.init.popinitdistributions.vanilla<- function(attr, loc, popsize)
 {
 	if(!loc%in%c("SA-A","ZA-A","ZA-C"))	stop("ibm.init.popinitdistributions: error at 1a")
 	
-	tmp<- lapply(seq_along(attr),function(i)
-			{
-				switch(	names(attr)[i],
-						status=	{
-							if(loc=="ZA-A")			tmp<- c(0.135, 0.7, 0)					#c(estim prevalence, targeted treatment uptake)							
-							else if(loc=="SA-A")	tmp<- c(0.178, 0.7, 0)
-							else if(loc=="ZA-C")	tmp<- c(0.135, 0.3*0.6, 0)				#c(estim prevalence, estimated ART of those known HIV+ * known HIV+)
-							#else if(loc%in%rownames(POPART.SITES))
-							#						tmp<- c(POPART.SITES[loc,"adult HIV prev"],POPART.SITES[loc,"HIV inf on ART"]*POPART.SITES[loc,"known HIV status"],ibm.init.incidence(loc))
-												
-							ans<- c(1-tmp[1]-tmp[3]/4,tmp[3]/4,tmp[1]*tmp[2],tmp[1]*(1-tmp[2]) )
-							names(ans)<- c('s','i','t','u')
-							ans
-						},
-						gender= rep(1/length(attr[[i]]),length(attr[[i]])),
-						risk= 	c(0.2,0.4,0.4),
-						circ= 	c(0.2,0.8),
-						age= 	rep(1/length(attr[[i]]),length(attr[[i]]))
-				)
-			})
-	names(tmp)<- names(attr)	
+	tmp			<- lapply(seq_along(attr),function(i)
+					{
+						switch(	names(attr)[i],
+								status=	{
+									if(loc=="ZA-A")			tmp<- c(0.135, 0.7, 0)					#c(estim prevalence, targeted treatment uptake)							
+									else if(loc=="SA-A")	tmp<- c(0.178, 0.7, 0)
+									else if(loc=="ZA-C")	tmp<- c(0.135, 0.3*0.6, 0)				#c(estim prevalence, estimated ART of those known HIV+ * known HIV+)
+									#else if(loc%in%rownames(POPART.SITES))
+									#						tmp<- c(POPART.SITES[loc,"adult HIV prev"],POPART.SITES[loc,"HIV inf on ART"]*POPART.SITES[loc,"known HIV status"],ibm.init.incidence(loc))
+														
+									ans<- c(1-tmp[1]-tmp[3]/4,tmp[3]/4,tmp[1]*tmp[2],tmp[1]*(1-tmp[2]) )
+									names(ans)<- c('s','i','t','u')
+									ans
+								},
+								gender= rep(1/length(attr[[i]]),length(attr[[i]])),
+								risk= 	c(0.2,0.4,0.4),
+								circ= 	c(0.2,0.8),
+								age= 	rep(1/length(attr[[i]]),length(attr[[i]]))
+						)
+					})
+	names(tmp)	<- names(attr)
+	tmp$npop	<- popsize
 	tmp
 }
 ###############################################################################
@@ -126,8 +153,9 @@ ibm.set.modelbeta<- function(mt, beta.template, theta)
 }
 ###############################################################################
 #' @export
-ibm.init.pop<- function(attr, size, distr)
+ibm.init.pop<- function(attr, distr)
 {
+	size<- distr$npop
 	distr<- lapply(distr,function(x)
 			{
 				paste("c(",paste(x,sep='',collapse=','),")")
@@ -144,34 +172,37 @@ ibm.init.pop<- function(attr, size, distr)
 ###############################################################################
 #' @export
 ibm.init.model<- function(m.type,loc.type,m.popsize,theta,save='', resume= 1)
-{
+{	
+	data(popart.phylo.com)
+	
 	old.warn<- getOption("warn")
 	options(warn=2)			#turn warnings into error
 	require(data.table)
 	options(warn=old.warn)
-	theta.acute<- theta[1]
-	theta.base<- theta[2]
+	theta.acute	<- theta[1]
+	theta.base	<- theta[2]
 	
 	if(resume && nchar(save))
 	{
 		options(show.error.messages = FALSE)		
 		cat(paste("\nibm.init.model: try to resume file ",save))
-		readAttempt<-try(suppressWarnings(load(save)))
+		readAttempt	<-try(suppressWarnings(load(save)))
 		options(show.error.messages = TRUE)
 		if(!inherits(readAttempt, "try-error"))
 			cat(paste("\nibm.init.model: resumed file ",save))
 	}
 	if(!resume || inherits(readAttempt, "try-error"))
 	{
-		ibm<- vector("list",3)
-		names(ibm)<- c("init.pop","curr.pop","beta")
-		
-		ibm.att<- ibm.init.attributes(m.type)
-		ibm$beta<- ibm.init.beta(ibm.att)
-					
-		ibm$beta<- ibm.set.modelbeta(m.type, ibm$beta, theta)
-		ibm.distr<- ibm.init.popinitdistributions(ibm.att, loc.type)
-		ibm$init.pop<- ibm.init.pop(ibm.att,m.popsize,ibm.distr)
+		ibm				<- vector("list",3)
+		names(ibm)		<- c("init.pop","curr.pop","beta")		
+		ibm.att			<- ibm.init.attributes(m.type)
+		ibm$beta		<- ibm.init.beta(ibm.att)					
+		ibm$beta		<- ibm.set.modelbeta(m.type, ibm$beta, theta)
+		if(loc.type%in%popart.phylo.com)
+			ibm.distr	<- ibm.init.popinitdistributions.popart(ibm.att, loc.type)
+		else
+			ibm.distr	<- ibm.init.popinitdistributions.vanilla(ibm.att, loc.type,m.popsize)
+		ibm$init.pop	<- ibm.init.pop(ibm.att,ibm.distr)
 		ibm$curr.pop<- ibm$init.pop		
 		if(nchar(save))
 		{
