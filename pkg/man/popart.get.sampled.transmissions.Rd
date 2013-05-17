@@ -13,8 +13,9 @@
   \item{x}{data frame of trial sites with randomized arms
   and population numbers}
 
-  \item{method}{sampling scheme. Currently support "PC and
-  HCC", "only HCC"}
+  \item{method}{sampling scheme. Options are "PC after yr 1
+  and HCC", "PC only incident and HCC", "PC and HCC", "only
+  HCC"}
 
   \item{rtn.int}{indicator if integer values are returned}
 

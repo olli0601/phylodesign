@@ -14,6 +14,7 @@ names(IBM.IND.ATTRIBUTES)<- c("status","gender","risk","circ","age")
 
 ###############################################################################
 #Gillespie SSA simulation of tip clusters
+#' @export
 ibm.init.attributes<- function(mt)
 {
 	if(!mt%in%names(IBM.MODELT))	stop("ibm.def.attributes: 1a")
@@ -29,6 +30,7 @@ ibm.init.attributes<- function(mt)
 	a
 }
 ###############################################################################
+#' @export
 ibm.init.incidence<- function(loc)
 {
 	if(regexpr("ZA",loc)>0)	ans<- 0.0117
@@ -39,9 +41,10 @@ ibm.init.incidence<- function(loc)
 	ans
 }
 ###############################################################################
+#' @export
 ibm.init.popinitdistributions<- function(attr, loc)
 {
-	if(!loc%in%c("SA-A","ZA-A","ZA-C",rownames(POPART.SITES)))	stop("ibm.init.popinitdistributions: error at 1a")
+	if(!loc%in%c("SA-A","ZA-A","ZA-C"))	stop("ibm.init.popinitdistributions: error at 1a")
 	
 	tmp<- lapply(seq_along(attr),function(i)
 			{
@@ -50,8 +53,8 @@ ibm.init.popinitdistributions<- function(attr, loc)
 							if(loc=="ZA-A")			tmp<- c(0.135, 0.7, 0)					#c(estim prevalence, targeted treatment uptake)							
 							else if(loc=="SA-A")	tmp<- c(0.178, 0.7, 0)
 							else if(loc=="ZA-C")	tmp<- c(0.135, 0.3*0.6, 0)				#c(estim prevalence, estimated ART of those known HIV+ * known HIV+)
-							else if(loc%in%rownames(POPART.SITES))
-													tmp<- c(POPART.SITES[loc,"adult HIV prev"],POPART.SITES[loc,"HIV inf on ART"]*POPART.SITES[loc,"known HIV status"],ibm.init.incidence(loc))
+							#else if(loc%in%rownames(POPART.SITES))
+							#						tmp<- c(POPART.SITES[loc,"adult HIV prev"],POPART.SITES[loc,"HIV inf on ART"]*POPART.SITES[loc,"known HIV status"],ibm.init.incidence(loc))
 												
 							ans<- c(1-tmp[1]-tmp[3]/4,tmp[3]/4,tmp[1]*tmp[2],tmp[1]*(1-tmp[2]) )
 							names(ans)<- c('s','i','t','u')
@@ -67,6 +70,7 @@ ibm.init.popinitdistributions<- function(attr, loc)
 	tmp
 }
 ###############################################################################
+#' @export
 ibm.init.beta<- function(attr)
 {
 	#set up components for beta: 
@@ -103,6 +107,7 @@ ibm.init.beta<- function(attr)
 	ans
 }
 ###############################################################################
+#' @export
 ibm.set.modelbeta<- function(mt, beta.template, theta)
 {
 	if(!mt%in%names(IBM.MODELT))	stop("ibm.init.modelbeta: 1a")
@@ -120,6 +125,7 @@ ibm.set.modelbeta<- function(mt, beta.template, theta)
 	beta.template
 }
 ###############################################################################
+#' @export
 ibm.init.pop<- function(attr, size, distr)
 {
 	distr<- lapply(distr,function(x)
@@ -136,6 +142,7 @@ ibm.init.pop<- function(attr, size, distr)
 	ans
 }
 ###############################################################################
+#' @export
 ibm.init.model<- function(m.type,loc.type,m.popsize,theta,save='', resume= 1)
 {
 	old.warn<- getOption("warn")
@@ -175,11 +182,13 @@ ibm.init.model<- function(m.type,loc.type,m.popsize,theta,save='', resume= 1)
 	ibm
 }
 ###############################################################################
+#' @export
 ibm.sample<- function(ibm, include.prob)
 {
 	ibm[["curr.pop"]][runif(nrow(ibm[["curr.pop"]]))<=include.prob,id]	
 }
 ###############################################################################
+#' @export
 ibm.as.data.table<- function(ibm)
 {
 	require(data.table)
@@ -196,6 +205,7 @@ ibm.as.data.table<- function(ibm)
 	ibm
 }
 ###############################################################################
+#' @export
 ibm.collapse<-function(ibm)
 {
 	inc.i<- sapply(ibm[["beta"]][['i']],function(x)	any(x!=1)	)

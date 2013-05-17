@@ -1,24 +1,31 @@
-acute.MAX.TIPC.SIZE<<- 6
+acute.MAX.TIPC.SIZE<<- 10
 popart.CLUSTERP.ACHG<<- matrix(c(0.2,0.05,0.05,0.4/3,0.1/3,0.1/3,0.2/3,0.05/3,0.05/3),3,3,dimnames=list(c("U","T","O"),c("1","2","3")))
 popart.CLUSTERP.ACLW<<- matrix(c(825/1800,495/1800,165/1800,50/1800,30/1800,10/1800,25/1800,15/1800,5/1800),3,3,dimnames=list(c("U","T","O"),c("1","2","3")))
 ###############################################################################
 acute.get.rates<- function(ibm, per.capita.i= 0)
 {
 	#in model 'Acute', rates are ' base * rel. infectiousness * S / N '
-	attr.counts<- as.matrix( table(ibm[["init.pop"]][,"status",with=FALSE]) )
-#print(attr.counts)	
-	infecteds<- attr.counts<- attr.counts[names(ibm[["beta"]][['i']][[1]]),]
-	if(per.capita.i)	infecteds[]<- 1 
-	propens<-	ibm[["beta"]][['i']][[1]]*infecteds*ibm[["beta"]][["base"]] 
-	propens<-	propens %*% t(ibm[["beta"]][['s']][[1]] * attr.counts / nrow(ibm[["init.pop"]])) 
-	rownames(propens)<- colnames(propens)
+	attr.counts			<- as.matrix(table(subset(ibm[["init.pop"]],select=status)))
+	if(!setequal( names(ibm[["beta"]][['i']][[1]]),rownames(attr.counts) ))	stop("expected same covariates in init.pop and beta")
+	attr.counts			<- attr.counts[names(ibm[["beta"]][['i']][[1]]),]		#re-order covariates
+	infecteds			<- attr.counts
+	if(per.capita.i)	
+		infecteds[]		<- 1 
+	#ibm[["beta"]][['i']][[1]] is relative transmission rates per covariate, ie s i t u   --> compute beta per covariate
+	propens				<- ibm[["beta"]][['i']][[1]]*infecteds*ibm[["beta"]][["base"]]
+	#ibm[["beta"]][['s']][[1]] is relative susceptibility per covariate; ONLY s is susceptible and we ASSUME no re-infection
+	propens				<- propens %*% t(ibm[["beta"]][['s']][[1]] * attr.counts / nrow(ibm[["init.pop"]])) 
+	rownames(propens)	<- colnames(propens)
 	propens
 }	
 ###############################################################################
+#' Compute the likelihood of a transmission chain with \code{nx} transmissions from the index case and \code{ni} transmissions from non-index cases under the \code{Acute} model
+#' @param nx	number of transmissions from donor with risk group X, nx=0 is possible
+#' @param ni	number of transmissions from donor with risk group I, ni=0 is possible
+#' @export 
+#' There are 1+nx+ni NODES in this tree.
 acute.lkl.tree.xk.ik<- function(nx,ni,rx,ri,dT, log=0)
 {
-	#nx is number of LINKS from donor with risk group X
-	#ni is number of LINKS from donor with risk group I. There are 1+nx+ni NODES in this tree.
 	if(length(rx)!=1 || length(ri)!=1 || length(nx)!=1 || length(ni)!=1)	stop("acute.lkl.tree.xk.ik: not vectorized")
 	k<- seq.int(0,nx+ni)
 	if(log)
@@ -28,74 +35,76 @@ acute.lkl.tree.xk.ik<- function(nx,ni,rx,ri,dT, log=0)
 	ans
 }
 ###############################################################################
-acute.lkl.ntrees<- function(n)
+#' Compute the log likelihood of a tip cluster table under the \code{Acute} model
+acute.loglkl<- function(tpc, rate.m, sample.prob, dT, clu.n=NULL)
 {
-	#n is number of NODES, there are thus n-1 LINKS in the tip cluster
-	if(n>acute.MAX.TIPC.SIZE) 		stop("acute.tpc.lkl.xk.ik: too many nodes in tip cluster")
-	if(n<1) 						stop("acute.tpc.lkl.xk.ik: too few nodes in tip cluster")
-	
-	ans<- switch(	n,
-			c(1),
-			c(1),
-			c(1, factorial(2)),
-			c(1, factorial(3),factorial(3)+choose(3,2)),
-			c(1, factorial(4)/2, 2*factorial(4)/2, 2*factorial(4)),
-			c(1, 5*4, 3*factorial(5)/2, 5*4+5*4*3+2*factorial(5), 5+5*4+2*factorial(5)),
-			NA
-	)
-	if(any(is.na(ans)))	stop("acute.tpc.lkl.xk.ik: produced NA")
-	matrix( c(seq.int(0,length(ans)-1),ans), nrow=2, ncol=length(ans), byrow=1, dimnames=list(c('i',"tree.n"),c()))		
-}
-###############################################################################
-acute.loglkl<- function(tpc, rate.m, dT)
-{
-#print(tpc); print(rate.m)
-	ans<- numeric(2)
-	tpc.n.mx<- ncol(tpc)	#max number of nodes in tip cluster  
-	if(tpc.n.mx>acute.MAX.TIPC.SIZE)
-	{
-		cat(paste("\nacute.loglkl: clip tip cluster size",tpc.n.mx,"to max supported size ",acute.MAX.TIPC.SIZE))
-		tpc.n.mx<- acute.MAX.TIPC.SIZE
-		tpc<- tpc[,seq_len(tpc.n.mx)]
-	}
-	tpc.n<- seq.int(1,tpc.n.mx)						#number of nodes
-	lkl.trees<- lapply( tpc.n, acute.lkl.ntrees )	#ith list element: number of NODES is i, list[[i]]['i',]: number of LINKS from risk group I 
-	tpc<- cbind(tpc,rep(0,nrow(tpc)))	
-	#get probs of the tip clusters that have a 'u' index case
-#print(rate.m)	
-	rx<- rate.m['u','s']
-	lkl.trees<- lapply( tpc.n, function(n)
-			{	
-				#sapply( lkl.trees[[n]]['i',], function(ni) print(c(n-ni-1,ni,rx,rate.m['i','s'],dT)) )
-				tmp<- sapply( lkl.trees[[n]]['i',], function(ni) acute.lkl.tree.xk.ik(n-ni-1,ni,rx,rate.m['i','s'],dT, log=0) )#n-ni-1 is number of LINKS from risk group U						
-				rbind(lkl.trees[[n]],matrix(tmp,nrow=1,ncol=length(tmp),dimnames=list(c("tree.p"),c())) )				
-			})	
-#print(lkl.trees)
-	lkl.tipc<- sapply( tpc.n, function(n) weighted.mean(lkl.trees[[n]]["tree.p",], w= lkl.trees[[n]]["tree.n",] / sum(lkl.trees[[n]]["tree.n",])) )
-	lkl.tipc<- c(lkl.tipc,1-sum(lkl.tipc)) #closure sth tipc probs sum to 1
-	if(sum(lkl.tipc)!=1)	stop("acute.loglkl: 'u' tip probs do not sum to 1")
-	lkl.tipc<- matrix( data= c(seq_along(lkl.tipc),lkl.tipc), nrow=2, ncol=length(lkl.tipc), byrow=1, dimnames=list(c("tipc.n","tipc.p"),c()))
-print(lkl.tipc)	
-	#'tipc.n' is number of nodes in tip cluster
-	#'tipc.p' is prob of a single tip cluster
-	ans[1]<- dmultinom(tpc['u',], prob=lkl.tipc["tipc.p",],log=1)	#probs must sum to 1, otherwise internally standardized
-#print(lkl)	
-	#get probs of the tip clusters that have a 't' index case
-	rx<- rate.m['t','s']
-	lkl.trees<- lapply( tpc.n, function(n) lkl.trees[[n]][1:2,,drop=0] )		
-	lkl.trees<- lapply( tpc.n, function(n)
+#print(tpc); print(rate.m)		
+	ans			<- numeric(2)
+	tpc.n.mx	<- ncol(tpc)-1														#max number of transmissions in tip cluster  	
+	tpc.closure	<- ifelse(all(sample.prob==1), tpc.n.mx+1, acute.MAX.TIPC.SIZE)		#without sampling, need to compute probabilities only up to the largest number of transmissions + 1 in the any tip cluster
+	if(tpc.n.mx>tpc.closure)	
+		stop(paste("\nfound tip cluster sizes",tpc.n.mx,"while max supported is",tpc.closure))
+	if(is.null(clu.n))	
+		clu.n	<- clu.n.of.tchain(tpc.closure)
+#print(clu.n)
+		
+	#get transmission chain likelihoods for those that start with 'U'
+	chain.lkl	<- sapply(seq.int(0,ncol(clu.n)-1),function(ntrm)
 			{				
-				tmp<- sapply( lkl.trees[[n]]['i',], function(ni) acute.lkl.tree.xk.ik(n-ni-1,ni,rx,rate.m['i','s'],dT, log=0) )#n-ni-1 is number of LINKS from risk group T
-				rbind(lkl.trees[[n]],matrix(tmp,nrow=1,ncol=length(tmp),dimnames=list(c("tree.p"),c())) )				
-			})	
-#print(lkl.trees)		
-	lkl.tipc<- sapply( tpc.n, function(n) weighted.mean(lkl.trees[[n]]["tree.p",], w= lkl.trees[[n]]["tree.n",] / sum(lkl.trees[[n]]["tree.n",])) )
-	lkl.tipc<- c(lkl.tipc,1-sum(lkl.tipc)) #closure sth tipc probs sum to 1
-	if(sum(lkl.tipc)!=1)	stop("acute.loglkl: 't' tip probs do not sum to 1")
-	lkl.tipc<- matrix( data= c(seq_along(lkl.tipc),lkl.tipc), nrow=2, ncol=length(lkl.tipc), byrow=1, dimnames=list(c("tipc.n","tipc.p"),c()))
-#print(lkl.tipc)	
-	ans[2]<- dmultinom(tpc['t',], prob=lkl.tipc["tipc.p",],log=1)	#probs must sum to 1, otherwise internally standardized
-	sum(ans)
+				tmp<- sapply( 	seq.int(0,ntrm), function(nx){		acute.lkl.tree.xk.ik(nx,ntrm-nx,rate.m['u','s'],rate.m['i','s'],dT,log=0) 			})
+				c(tmp,rep(0, ncol(clu.n)-1-ntrm))
+			})
+	#multiply with possible number of combinations
+	chain.lkl			<- chain.lkl * clu.n
+	colnames(chain.lkl)	<- paste('n',seq.int(0,ncol(chain.lkl)-1),sep='')
+	rownames(chain.lkl)	<- paste('idx',seq.int(0,nrow(chain.lkl)-1),sep='')	
+	if(any(sample.prob!=1))
+		chain.lkl		<- clu.p.of.tchain.rnd.sampling(chain.lkl, sample.prob, mx.s.ntr=min(tpc.n.mx+1,tpc.closure), log=0, clu.p.norm=0, rtn.only.closure.sum=0 )
+#print(chain.lkl)	
+	#the [idx0, seq.int(2,ncol(chain.lkl))] are tip clusters starting with an 'E' index case
+	tipc.lkl.E			<- c( chain.lkl[1,seq.int(2,ncol(chain.lkl))] )
+	chain.lkl[1,seq.int(2,ncol(chain.lkl))]	<- 0	
+	chain.lkl			<- chain.lkl[,-ncol(chain.lkl)]
+	#integrate transmission chains out
+	tipc.lkl.U			<- apply(chain.lkl,2,function(x) sum(x, na.rm=1))
+#print(tipc.lkl.U)	
+	#
+	#get transmission chain likelihoods for those that start with 'T'
+	#
+	chain.lkl	<- sapply(seq.int(0,ncol(clu.n)-1),function(ntrm)
+			{				
+				tmp<- sapply( 	seq.int(0,ntrm), function(nx){		acute.lkl.tree.xk.ik(nx,ntrm-nx,rate.m['t','s'],rate.m['i','s'],dT,log=0) 			})
+				c(tmp,rep(0, ncol(clu.n)-1-ntrm))
+			})
+	#multiply with possible number of combinations
+	chain.lkl			<- chain.lkl * clu.n	
+	colnames(chain.lkl)	<- paste('n',seq.int(0,ncol(chain.lkl)-1),sep='')
+	rownames(chain.lkl)	<- paste('idx',seq.int(0,nrow(chain.lkl)-1),sep='')
+	if(any(sample.prob!=1))
+		chain.lkl		<- clu.p.of.tchain.rnd.sampling(chain.lkl, sample.prob, mx.s.ntr=min(tpc.n.mx+1,tpc.closure), log=0, clu.p.norm=0, rtn.only.closure.sum=0 )
+#print(chain.lkl)		
+	#the [idx0, seq.int(2,ncol(chain.lkl))] are tip clusters starting with an 'E' index case
+#print(tipc.lkl.E)
+	tipc.lkl.E			<- tipc.lkl.E + c( chain.lkl[1,seq.int(2,ncol(chain.lkl))] )
+	names(tipc.lkl.E)	<- paste("ns",seq.int(0,length(tipc.lkl.E)-1),sep='')
+#print(tipc.lkl.E)	
+	chain.lkl[1,seq.int(2,ncol(chain.lkl))]	<- 0	
+	chain.lkl			<- chain.lkl[,-ncol(chain.lkl)]
+	#integrate transmission chains out
+	tipc.lkl.T			<- apply(chain.lkl,2,function(x) sum(x, na.rm=1))
+#print(tipc.lkl.T)			
+	#multinomial observation model	
+	tipc.lkl			<- rbind(tipc.lkl.E,rbind(tipc.lkl.U,tipc.lkl.T))
+	rownames(tipc.lkl)	<- c('i','u','t')
+#print(tipc.lkl); print(tpc)	
+	if(ncol(tipc.lkl)!=ncol(tpc))	stop("columns of tipc.lkl and tpc do not match")
+	if(nrow(tipc.lkl)!=nrow(tpc))	stop("rows of tipc.lkk and tpc do not match")
+#print(tipc.lkl); print(tpc)
+	table.lkl<- dmultinom(as.vector(tpc), size=NULL, prob= as.vector(tipc.lkl), log=1)
+	
+	ans<- list(table.lkl= table.lkl, tipc.lkl=tipc.lkl)
+#	print(ans)
+	ans
 }
 ###############################################################################
 #' randomize allocation of arms to triplets 

@@ -12,3 +12,9 @@ LazyLoad: yes
 Collate:
     'phdes.functions.R'
     'phdes.scripts.R'
+    'simple.gillespie.R'
+    'simple.ibm.R'
+    'tipc.clusters.R'
+    'tipc.models.R'
+    'tipc.setofclusters.R'
+    'util.R'

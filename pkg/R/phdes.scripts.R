@@ -1619,7 +1619,6 @@ prj.popart.tchain_test<- function()
 	my.mkdir(DATA,"popartpowercalc_test")
 	dir.name<- paste(DATA,"popartpowercalc_test",sep='/')	
 	
-	#print(clu.p)
 	if(0)
 	{
 		require(xtable)
@@ -1854,11 +1853,14 @@ prj.popart.tchain_test<- function()
 		p.E2E		<- 0.4		
 		theta		<- { tmp<- c(p.E2E, p.U2E, p.T2E, p.O2E); names(tmp)<- c("E2E","U2E","T2E","O2E"); tmp }
 		incidence	<- 1000
-		clu.simulate(incidence, clu.n, theta)
+		
+		clu.n		<- clu.n.of.tchain(15)
+		clu.p		<- clu.probabilities(clu.n, theta)
+		clu.simulate( clu.p, incidence )
 	}
 	
 	#simulate tip cluster under sampling
-	if(0)
+	if(1)
 	{
 		p.U2E		<- 0.4
 		p.T2E		<- 0.1
@@ -1869,18 +1871,22 @@ prj.popart.tchain_test<- function()
 		incidence	<- 1000		
 		clu.n		<- clu.n.of.tchain(15)
 		mx.s.ntr	<- ncol(clu.n)#6
-		
-		clu.sim		<- clu.simulate(incidence, clu.n, theta)
+		print(clu.n)
+		clu.p		<- clu.probabilities(clu.n, theta)
+		print(clu.p)
+		clu.sim		<- clu.simulate(clu.p, incidence)
 		print(clu.sim)
+		stop()
 		clu.sim		<- clu.sample(clu.sim, sampling, mx.s.ntr, rtn.exp=1)		
 		print(clu.sim)
-		
+		stop()
 		clu.p	<- lapply(r.E2E,function(x)
 				{
 					theta<- p.U2E*c(x,1)
 					names(theta)<- c("E2E","U2E")				
 					clu.p.of.tchain(clu.n, theta )								
 				})
+		stop()
 	}
 	
 	#compute expected number of x->E and E->E transmissions for sampled tip cluster, and compare pi^s as sampling varies
@@ -1895,8 +1901,8 @@ prj.popart.tchain_test<- function()
 		incidence	<- 1000		
 		clu.n		<- clu.n.of.tchain(14)
 		mx.s.ntr	<- 14
-		clu.sim		<- clu.simulate(incidence, clu.n, theta)
-		print(clu.sim)
+		clu.p		<- clu.probabilities(clu.n, theta)		
+		clu.sim		<- clu.simulate( clu.p, incidence )
 		print(apply(clu.sim,1,sum))
 
 		clu.trans	<- sapply(sampling.pa,function(x)
@@ -2135,87 +2141,5 @@ prj.popart.power_test<- function()
 					stop("x2i and x2i.hg different ?")				
 			})
 	stop()	
-}
-###############################################################################
-prj.ibm.simudata<- function()
-{		
-	m.type<- "Acute"
-	loc.type<- "ZA-A"
-	m.popsize<- 6e4
-	resume<- 0
-	verbose<- 1
-	record.tpc<- 1
-	tpc.repeat<- 2
-	theta<- c(26, 0.055, 0, 0)
-	names(theta)<- c("acute","base","m.st1","m.st2")
-	if(exists("argv"))
-	{
-		tmp<- na.omit(sapply(argv,function(arg)
-						{	switch(substr(arg,2,2),
-									r= return(as.numeric(substr(arg,3,nchar(arg)))),NA)	}))
-		if(length(tmp)>0) tpc.repeat<- tmp[1]
-		tmp<- na.omit(sapply(argv,function(arg)
-						{	switch(substr(arg,2,2),
-									l= return(substr(arg,3,nchar(arg))),NA)	}))
-		if(length(tmp)>0) loc.type<- tmp[1]
-		tmp<- na.omit(sapply(argv,function(arg)
-						{	switch(substr(arg,2,2),
-									n= return(as.numeric(substr(arg,3,nchar(arg)))),NA)	}))
-		if(length(tmp)>0) m.popsize<- tmp[1]
-		tmp<- na.omit(sapply(argv,function(arg)
-						{	switch(substr(arg,2,2),
-									a= return(as.numeric(substr(arg,3,nchar(arg)))),NA)	}))
-		if(length(tmp)>0) theta[1]<- tmp[1]
-		tmp<- na.omit(sapply(argv,function(arg)
-						{	switch(substr(arg,2,2),
-									b= return(as.numeric(substr(arg,3,nchar(arg)))),NA)	}))
-		if(length(tmp)>0) theta[2]<- tmp[1]
-	}
-	
-	cat(paste("\nm.popsize ",m.popsize))
-	cat(paste("\nloc.type ",loc.type))
-	cat(paste("\ntpc.repeat ",tpc.repeat))
-	cat(paste("\ntheta0.acute ",theta[1]))
-	cat(paste("\ntheta0.base ",theta[2]))
-	
-	my.mkdir(DATA,"simudata")
-	dir.name<- paste(DATA,"simudata",sep='/')
-	f.name<- paste(dir.name,paste("tpc_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta[1],"_b",theta[2],sep=''),sep='/')
-	
-	if(resume)
-	{
-		options(show.error.messages = FALSE)		
-		cat(paste("\nprj.simudata: try to resume file ",paste(f.name,"_tpc.R",sep='')))
-		readAttempt<-try(suppressWarnings(load(paste(f.name,"_tpc.R",sep=''))))
-		options(show.error.messages = TRUE)
-		if(!inherits(readAttempt, "try-error"))
-			cat(paste("\nprj.simudata: resumed file ",paste(f.name,"_tpc.R",sep='')))
-	}
-	if(!resume || inherits(readAttempt, "try-error"))
-	{
-		
-		tpc<- lapply(seq_len(tpc.repeat),function(i)
-				{
-					cat(paste("\nprj.simudata: replicate",i))
-					ans<- vector("list",2)
-					names(ans)<- c("ibm","tpc")
-					
-					ibm<- ibm.init.model(m.type,loc.type,m.popsize, theta, resume= resume)	
-					ans[["ibm"]]<- ibm.collapse(ibm)
-					tpc.data<- ssa.run(ans[["ibm"]], ssa.ctime= 0, ssa.etime= 1,record.tpc= record.tpc, verbose= 0, resume= resume)
-					if(record.tpc)
-						ans[["tpc"]]<- tpc.collapse(tpc.data)
-					else
-						ans[["tpc"]]<- tpc.data
-					ans
-				})
-		cat(paste("\nprj.simudata: write tpc data to file",paste(f.name,"_tpc.R",sep='')))
-		save(tpc,file=paste(f.name,"_tpc.R",sep=''))
-	}
-	#print( summary( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc"]]) ) )
-	#stop()
-	summary( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc"]][["attack.rate"]]) )
-	tpc.agg.data<- lapply(seq_along(tpc), function(i) tpc.tabulate(tpc[[i]][["tpc"]]))
-	print(tpc.agg.data)
 }
 ###############################################################################

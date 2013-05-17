@@ -1,4 +1,9 @@
+#' this file contains all R functions of the hivclust package
+#' @useDynLib tipc
+
+
 ###############################################################################
+#' @export
 tpc.init.tree<- function(x, n.init= 5)
 {
 	tmp<- vector("list",2)
@@ -8,6 +13,7 @@ tpc.init.tree<- function(x, n.init= 5)
 	tmp
 }
 ###############################################################################
+#' @export
 tpc.add.tree<- function(tree,from,to,ctime, n.init= 5)
 {		
 	tmp<- as.data.frame(c(to,ctime))
@@ -25,6 +31,7 @@ tpc.add.tree<- function(tree,from,to,ctime, n.init= 5)
 	tree
 }
 ###############################################################################
+#' @export
 tpc.find.treeidx<- function(tpc,catt,cfrom)
 {
 	tmp<- which(sapply(	seq_along(tpc[["trees"]]),function(i)	
@@ -34,6 +41,7 @@ tpc.find.treeidx<- function(tpc,catt,cfrom)
 	my.sample(tmp,size=1)
 }
 ###############################################################################
+#' @export
 tpc.init<- function(ibm, ctime= 0)
 {
 	tpc<- vector("list",2)
@@ -45,6 +53,8 @@ tpc.init<- function(ibm, ctime= 0)
 	tpc
 }
 ###############################################################################
+#' The simulated set of tip clusters contains NA rows to speed up memory management. This function deletes NA rows for all tip clusters 
+#' @export
 tpc.collapse<- function(tpc)
 {
 	tpc[["trees"]]<- lapply(tpc[["trees"]],function(x)
@@ -59,32 +69,38 @@ tpc.collapse<- function(tpc)
 	tpc
 }
 ###############################################################################
+#' The list of tip clusters \code{tpc[["trees"]]} contains for each list item "nodes" and "edges". 
+#' This function tabulates the number of nodes per dependent variable in "status" for each tip cluster.
+#' It is assumed that missing NA rows have been deleted.  
+#' @export
 tpc.tabulate<- function(tpc)
-{	 
-	st.lv<- levels( tpc[["trees"]][[1]][["nodes"]][["status"]] )
-	st.m<- sapply(tpc[["trees"]],function(x)
-			{
-				tabulate(x[["nodes"]][,"status"],nbins= length(st.lv))				
-			})
-	rownames(st.m)<- st.lv
-	st.mx<- max(st.m)
-	#count all combinations XI^n up to n=st.m
-	roots<- st.lv[ !st.lv%in%c('s') ]
-	ans<- matrix(NA,nrow=length(roots),ncol=1+st.mx,dimnames=list(roots,seq.int(1,1+st.mx)))
+{	
+	#count the number of nodes per dependent variable for each tip cluster
+	st.lv			<- levels( tpc[["trees"]][[1]][["nodes"]][["status"]] )
+	st.m			<- sapply(tpc[["trees"]],function(x)
+						{
+							tabulate(x[["nodes"]][,"status"],nbins= length(st.lv))				
+						})
+	rownames(st.m)	<- st.lv
+	st.mx			<- max(st.m)	
+	#count the number of tip clusters with n=0 transmissions to I, n=1 transmissions to I etc (cols) per index case of type 'status' (row)
+	roots			<- st.lv[ !st.lv%in%c('s') ]	
+	ans				<- matrix(NA,nrow=length(roots),ncol=1+st.mx,dimnames=list(roots,paste('n',seq.int(0,st.mx), sep='')))
 	for(i in seq_along(roots))
 		for(j in seq.int(st.mx,0,-1))
 		{			
 			if(roots[i]=='i')
-				tmp<- st.m['u',]==0 & st.m['t',]==0 & st.m['i',]==j
+				tmp				<- st.m['u',]==0 & st.m['t',]==0 & st.m['i',]==j
 			else
-				tmp<- st.m[roots[i],]==1 & st.m['i',]==j
+				tmp				<- st.m[roots[i],]==1 & st.m['i',]==j
 			
-			ans[roots[i],j+1]<- ncol(st.m[,tmp,drop=0])
-			st.m<- st.m[,!tmp,drop=0]					
+			ans[roots[i],j+1]	<- ncol(st.m[,tmp,drop=0])
+			st.m				<- st.m[,!tmp,drop=0]					
 		}		
 	ans
 }
 ###############################################################################
+#' @export
 tpc.tabulate.after.sample<- function(tpc, sid)
 {
 	st.lv<- levels( tpc[["trees"]][[1]][["nodes"]][["status"]] )
@@ -108,6 +124,7 @@ tpc.tabulate.after.sample<- function(tpc, sid)
 	ans	
 }
 ###############################################################################
+#' @export
 tipc.mle<- function(tpc, ibm, theta.acute, theta.base)
 {
 	theta<- expand.grid(acute= theta.acute, base= theta.base)
@@ -123,6 +140,7 @@ tipc.mle<- function(tpc, ibm, theta.acute, theta.base)
 	t(theta[rev(sort(log.lkls,index.return=1)$ix),])					
 }
 ###############################################################################
+#' @export
 tpc.mean<- function(tpc)
 {
 	if(length(tpc)<2)	stop("tpc.mean: only 1 list element")
@@ -141,6 +159,7 @@ tpc.mean<- function(tpc)
 	ans	
 }
 ###############################################################################
+#' @export
 tpc.sd<- function(tpc)
 {
 	if(length(tpc)<3)	stop("tpc.sd: only <3 list elements")
