@@ -915,6 +915,7 @@ prj.hpccaller<- function(outdir, outfile, cmd)
 	cmd<- paste("qsub",file)
 	cat( cmd )
 	cat( system(cmd, intern=TRUE) )	
+	Sys.sleep(1)
 }
 ###############################################################################
 prj.simudata.cmd<- function(dir.name, loc, acute, base, rep, sIdx, sE,cluster.tw)
