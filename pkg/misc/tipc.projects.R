@@ -864,16 +864,18 @@ prj.pipeline<- function()
 		cluster.tw	<- 3
 		cmd			<-	sapply(seq_along(acute),function(i)
 							{
-								prj.simudata.cmd(dir.name, "Town II", acute[i], base[i], 100, sIdx, sE, cluster.tw)
+								cmd			<- prj.simudata.cmd(dir.name, "Town II", acute[i], base[i], 100, sIdx, sE, cluster.tw)
+								cmd			<- prj.hpcwrapper(cmd, hpc.walltime=3, hpc.mem="400mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q=NA)
+								cat(cmd)
+								
+								signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
+								outdir		<- paste(CODE.HOME,"misc",sep='/')
+								outfile		<- paste("phd",signat,"qsub",sep='.')
+								prj.hpccaller(outdir, outfile, cmd)
+								stop()
 							})
-		cmd			<- paste(cmd,sep='',collapse='')
-		cmd			<- prj.hpcwrapper(cmd, hpc.walltime=3, hpc.mem="400mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q=NA)
-		cat(cmd)
-			
-		signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
-		outdir		<- paste(CODE.HOME,"misc",sep='/')
-		outfile		<- paste("phd",signat,"qsub",sep='.')
-		prj.hpccaller(outdir, outfile, cmd)
+		#cmd			<- paste(cmd,sep='',collapse='')
+		
 	}
 	
 }

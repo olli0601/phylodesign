@@ -1,6 +1,11 @@
-acute.MAX.TIPC.SIZE<<- 10
+#' this file contains the likelihood functions for each model
+
+acute.MAX.TIPC.SIZE<- 10
+
 popart.CLUSTERP.ACHG<<- matrix(c(0.2,0.05,0.05,0.4/3,0.1/3,0.1/3,0.2/3,0.05/3,0.05/3),3,3,dimnames=list(c("U","T","O"),c("1","2","3")))
+
 popart.CLUSTERP.ACLW<<- matrix(c(825/1800,495/1800,165/1800,50/1800,30/1800,10/1800,25/1800,15/1800,5/1800),3,3,dimnames=list(c("U","T","O"),c("1","2","3")))
+
 ###############################################################################
 acute.get.rates<- function(ibm.pop, ibm.beta, per.capita.i= 0)
 {
@@ -20,10 +25,10 @@ acute.get.rates<- function(ibm.pop, ibm.beta, per.capita.i= 0)
 }	
 ###############################################################################
 #' Compute the likelihood of a transmission chain with \code{nx} transmissions from the index case and \code{ni} transmissions from non-index cases under the \code{Acute} model
+#' There are 1+nx+ni NODES in this tree.
 #' @param nx	number of transmissions from donor with risk group X, nx=0 is possible
 #' @param ni	number of transmissions from donor with risk group I, ni=0 is possible
 #' @export 
-#' There are 1+nx+ni NODES in this tree.
 acute.lkl.tree.xk.ik<- function(nx,ni,rx,ri,dT, log=0)
 {
 	if(length(rx)!=1 || length(ri)!=1 || length(nx)!=1 || length(ni)!=1)	stop("acute.lkl.tree.xk.ik: not vectorized")
