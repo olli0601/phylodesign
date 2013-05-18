@@ -872,7 +872,6 @@ prj.pipeline<- function()
 								outdir		<- paste(CODE.HOME,"misc",sep='/')
 								outfile		<- paste("phd",signat,"qsub",sep='.')
 								prj.hpccaller(outdir, outfile, cmd)
-								stop()
 							})
 		#cmd			<- paste(cmd,sep='',collapse='')
 		
@@ -938,7 +937,7 @@ prj.simudata<- function()
 	loc.type			<- "Town II"
 	m.popsize			<- NA
 	resume				<- 1
-	verbose				<- 1
+	verbose				<- 0
 	record.tpc			<- 1
 	tpc.repeat			<- 2
 	cluster.tw			<- 1
