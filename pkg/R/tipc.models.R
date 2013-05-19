@@ -7,19 +7,18 @@ popart.CLUSTERP.ACHG<<- matrix(c(0.2,0.05,0.05,0.4/3,0.1/3,0.1/3,0.2/3,0.05/3,0.
 popart.CLUSTERP.ACLW<<- matrix(c(825/1800,495/1800,165/1800,50/1800,30/1800,10/1800,25/1800,15/1800,5/1800),3,3,dimnames=list(c("U","T","O"),c("1","2","3")))
 
 ###############################################################################
-acute.get.rates<- function(ibm.pop, ibm.beta, per.capita.i= 0)
+acute.get.rates<- function(ibm.beta, ibm.pop= NULL, pop.n=nrow(ibm.pop), state.n= as.matrix(table(subset(ibm.pop,select=status))), per.capita.i= 0)
 {
 	#in model 'Acute', rates are ' base * rel. infectiousness * S / N '
-	attr.counts			<- as.matrix(table(subset(ibm.pop,select=status)))
-	if(!setequal( names(ibm.beta[['i']][[1]]),rownames(attr.counts) ))	stop("expected same covariates in init.pop and beta")
-	attr.counts			<- attr.counts[names(ibm.beta[['i']][[1]]),]		#re-order covariates
-	infecteds			<- attr.counts
+	if(!setequal( names(ibm.beta[['i']][[1]]),rownames(state.n) ))	stop("expected same covariates in init.pop and beta")
+	state.n				<- state.n[names(ibm.beta[['i']][[1]]),]		#re-order covariates
+	infecteds			<- state.n
 	if(per.capita.i)	
 		infecteds[]		<- 1
 	#ibm.beta[['i']][[1]] is relative transmission rates per covariate, ie s i t u   --> compute beta per covariate
-	propens				<- ibm.beta[['i']][[1]]*infecteds*ibm.beta[["base"]]
+	propens				<- ibm.beta[['i']][[1]]*infecteds*ibm.beta[["base"]]	
 	#ibm.beta[['s']][[1]] is relative susceptibility per covariate; ONLY s is susceptible and we ASSUME no re-infection
-	propens				<- propens %*% t(ibm.beta[['s']][[1]] * attr.counts / nrow(ibm.pop)) 
+	propens				<- propens %*% t(ibm.beta[['s']][[1]] * state.n / pop.n) 
 	rownames(propens)	<- colnames(propens)
 	propens
 }	

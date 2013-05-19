@@ -171,7 +171,7 @@ ibm.init.pop<- function(attr, distr)
 }
 ###############################################################################
 #' @export
-ibm.init.model<- function(m.type,loc.type,m.popsize,theta,save='', resume= 1)
+ibm.init.model<- function(m.type, loc.type, m.popsize, theta, save='', resume= 1, init.pop=1)
 {	
 	data(popart.phylo.com)
 	
@@ -193,17 +193,23 @@ ibm.init.model<- function(m.type,loc.type,m.popsize,theta,save='', resume= 1)
 	}
 	if(!resume || inherits(readAttempt, "try-error"))
 	{
-		ibm				<- vector("list",3)
-		names(ibm)		<- c("init.pop","curr.pop","beta")		
-		ibm.att			<- ibm.init.attributes(m.type)
-		ibm$beta		<- ibm.init.beta(ibm.att)					
-		ibm$beta		<- ibm.set.modelbeta(m.type, ibm$beta, theta)
+		ibm						<- vector("list",4)
+		names(ibm)				<- c("init.pop","init.pop.distr","curr.pop","beta")		
+		ibm.att					<- ibm.init.attributes(m.type)
+		ibm$beta				<- ibm.init.beta(ibm.att)					
+		ibm$beta				<- ibm.set.modelbeta(m.type, ibm$beta, theta)
 		if(loc.type%in%popart.phylo.com)
-			ibm.distr	<- ibm.init.popinitdistributions.popart(ibm.att, loc.type)
+			ibm.distr			<- ibm.init.popinitdistributions.popart(ibm.att, loc.type)
 		else
-			ibm.distr	<- ibm.init.popinitdistributions.vanilla(ibm.att, loc.type,m.popsize)
-		ibm$init.pop	<- ibm.init.pop(ibm.att,ibm.distr)
-		ibm$curr.pop<- ibm$init.pop		
+			ibm.distr			<- ibm.init.popinitdistributions.vanilla(ibm.att, loc.type,m.popsize)
+		if(init.pop)
+		{
+			ibm$init.pop		<- ibm.init.pop(ibm.att,ibm.distr)
+			ibm$curr.pop		<- ibm$init.pop
+		}
+		else
+			ibm$init.pop.distr	<- ibm.distr
+		
 		if(nchar(save))
 		{
 			cat(paste("\nibm.init.model: save ibm to",save))
@@ -237,20 +243,22 @@ ibm.as.data.table<- function(ibm)
 }
 ###############################################################################
 #' @export
-ibm.collapse<-function(ibm)
+ibm.collapse<- function(ibm)
 {
-	inc.i<- sapply(ibm[["beta"]][['i']],function(x)	any(x!=1)	)
-	inc.s<- sapply(ibm[["beta"]][['s']],function(x)	any(x!=1)	)
-	inc.m<- sapply(ibm[["beta"]][['m']],function(x)	any(x!=1)	)
-	collapse.to<- which( inc.i | inc.s | inc.m )
+	inc.i					<- sapply(ibm[["beta"]][['i']],function(x)	any(x!=1)	)
+	inc.s					<- sapply(ibm[["beta"]][['s']],function(x)	any(x!=1)	)
+	inc.m					<- sapply(ibm[["beta"]][['m']],function(x)	any(x!=1)	)
+	collapse.to				<- which( inc.i | inc.s | inc.m )
 	if(!length(collapse.to))	stop("ibm.collapse: error at 1a")
 	
-	ibm[["beta"]][['s']]<- lapply(collapse.to, function(i)	ibm[["beta"]][['s']][[i]]	)
-	ibm[["beta"]][['i']]<- lapply(collapse.to, function(i)	ibm[["beta"]][['i']][[i]]	)
-	ibm[["beta"]][['m']]<- lapply(collapse.to, function(i)	ibm[["beta"]][['m']][[i]]	)
+	ibm[["beta"]][['s']]	<- lapply(collapse.to, function(i)	ibm[["beta"]][['s']][[i]]	)
+	ibm[["beta"]][['i']]	<- lapply(collapse.to, function(i)	ibm[["beta"]][['i']][[i]]	)
+	ibm[["beta"]][['m']]	<- lapply(collapse.to, function(i)	ibm[["beta"]][['m']][[i]]	)
 	
-	collapse.to<- c("id",names(ibm[["beta"]][['s']]))
-	ibm[["curr.pop"]]<- ibm[["curr.pop"]][,collapse.to,with=FALSE]
-	ibm[["init.pop"]]<- ibm[["init.pop"]][,collapse.to,with=FALSE]	
+	collapse.to				<- c("id",names(ibm[["beta"]][['s']]))
+	if(!is.null(ibm[["curr.pop"]]))
+		ibm[["curr.pop"]]	<- ibm[["curr.pop"]][,collapse.to,with=FALSE]
+	if(!is.null(ibm[["init.pop"]]))
+		ibm[["init.pop"]]	<- ibm[["init.pop"]][,collapse.to,with=FALSE]	
 	ibm
 }

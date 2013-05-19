@@ -669,13 +669,14 @@ prj.acute.loglklsurface<- function()
 	#- unknown population states ?
 	
 	m.type				<- "Acute"
-	loc.type			<- "ZA-C"
-	m.popsize			<- 6e4
-	m.known.states		<- 0
-	theta0				<- c(8, 0.09, 0, 0)
+	loc.type			<- "Town II"
+	m.popsize			<- NA
+	m.known.states		<- 1
+	theta0				<- c(8, 0.05, 0, 0)
 	names(theta0)		<- c("acute","base","m.st1","m.st2")
 	sample.prob			<- c(0.5,0.5)
-	names(sample.prob)	<- c("Idx","E")	
+	names(sample.prob)	<- c("Idx","E")
+	cluster.tw			<- 3
 	m.repeat			<- 1
 	resume				<- 1
 	verbose				<- 1	
@@ -693,6 +694,10 @@ prj.acute.loglklsurface<- function()
 						{	switch(substr(arg,2,2),
 									n= return(as.numeric(substr(arg,4,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) m.popsize<- tmp[1]
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,11),
+									cluster.tw= return(as.numeric(substr(arg,13,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) cluster.tw<- tmp[1]
 		tmp<- na.omit(sapply(args,function(arg)
 						{	switch(substr(arg,2,6),
 									acute= return(as.numeric(substr(arg,8,nchar(arg)))),NA)	}))
@@ -733,69 +738,62 @@ prj.acute.loglklsurface<- function()
 	if(resume)
 	{
 		options(show.error.messages = FALSE)
-		dir.name<- paste(DATA,"acutelkl",sep='/')
-		f.name<- paste(dir.name,paste("tpclkl_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_st",m.known.states,"_si",acute.MAX.TIPC.SIZE,sep=''),sep='/')
+		dir.name	<- paste(DATA,"acutelkl",sep='/')
+		f.name		<- paste(dir.name,paste("tpclkl_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_st",m.known.states,"_si",acute.MAX.TIPC.SIZE,sep=''),sep='/')
 				
 		cat(paste("\ntry load ",paste(f.name,".R",sep='')))				
-		readAttempt<-try(suppressWarnings(load(paste(f.name,".R",sep=''))))
+		readAttempt	<-try(suppressWarnings(load(paste(f.name,".R",sep=''))))
 		options(show.error.messages = TRUE)
 		if(!inherits(readAttempt, "try-error"))
 			cat(paste("\nresumed file ",paste(f.name,".R",sep='')))
 	}
 	if(!resume || inherits(readAttempt, "try-error"))
 	{
-		dir.name<- paste(DATA,"simudata",sep='/')
-		f.name<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],sep=''),sep='/')					
-		#tmp<- paste(f.name,"_example_contingencytable_upto3.R",sep='')	
-		tmp<- paste(f.name,".R",sep='')
-		cat(paste("\nload ",tmp))		
-		load(tmp)
-		#for(r in seq_along(tpc))			#not any longer needed
-		#	tpc[[r]][["ibm"]]<- ibm.as.data.table(tpc[[r]][["ibm"]]) 
-		if(m.popsize!=nrow(tpc[[1]][["ibm"]][["init.pop"]]))	
-			stop("m.popsize does not match")
+		dir.name	<- paste(DATA,"acutesimu",sep='/')
+		f.name		<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_median",sep=''),sep='/')
+		cat(paste("\nload ",paste(f.name,".R",sep='')))		
+		load(paste(f.name,".R",sep=''))
 		
-		#define parameter space
-		if(loc.type=="ZA-A")
-		{
-			theta.acute	<- 	seq(1,10,0.25)#30
-			theta.base	<-	seq(0.03,0.15,0.01)#0.15			
-		}
-		else if(loc.type=="ZA-C")
-		{
-			theta.acute	<- 	seq(1,10,0.25)#10
-			theta.base	<-	seq(0.03,0.16,0.01)#0.16				
-		}
-		else
-			stop("prj.acute.loglklsurface: loc.type not implemented")
+			
+		theta.acute		<- seq(1,10,1)
+		theta.base		<- theta0[2]
+		theta			<- expand.grid(acute= theta.acute, base= theta.base)
+		print(theta)
 		
-		theta	<- expand.grid(acute= theta.acute, base= theta.base)
-		
+		ibm				<- ibm.init.model(m.type, loc.type, NA, theta0, save='', resume= 0, init.pop=0)
+		ibm				<- ibm.collapse(ibm)
+		state.n			<- ibm$init.pop.distr$status * ibm$init.pop.distr$npop
+		pop.n			<- ibm$init.pop.distr$npop
+		print(pop.n)
+		print(as.matrix(state.n))
+
 		#evaluate likelihood over parameter space
 		lkl		<- sapply(seq_len(nrow(theta)),function(i)
 				{
 					i<- 5
 					cat(paste("\nprocess theta",theta[i,"acute"], theta[i,"base"]))														
-					ans	<- sapply(seq_len(min(length(tpc),m.repeat)), function(r)
-						{
-							cat(paste("\nprocess theta",theta[i,"acute"], theta[i,"base"],"replicate",r))
-							ibm		<- tpc[[r]][["ibm"]]
-							if(!m.known.states)
-							{
-								ibm	<- ibm.init.model(m.type, loc.type, m.popsize, theta0, resume= 0)
-								ibm	<- ibm.collapse(ibm)								
-							}	
-							ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]
-							ibm[["beta"]][["base"]]					<- theta[i,"base"]	
+
+					if(!m.known.states)
+					{
+						ibm	<- ibm.init.model(m.type, loc.type, m.popsize, theta0, resume= 0)
+						ibm	<- ibm.collapse(ibm)
+						stop("not fully implemented")
+					}	
+					ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]
+					ibm[["beta"]][["base"]]					<- theta[i,"base"]	
+							
+					beta.stratified							<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)
+					print(beta.stratified)
+					stop()
+							
 							beta.stratified							<- acute.get.rates(ibm, per.capita.i=1)
 							tipc.table								<- tpc[[r]][["tpc.table.all"]]
 							print(beta.stratified)
 							print(tipc.table)
-							tmp										<- acute.loglkl(tipc.table, beta.stratified, sample.prob, tpc[[r]][["ibm"]][["beta"]][["dT"]])
+					tmp										<- acute.loglkl(tipc.table, beta.stratified, sample.prob, tpc[[r]][["ibm"]][["beta"]][["dT"]])
 							
-							stop()
-							tmp
-						})
+					
+					tmp					
 					names(ans)<- paste('r',seq_along(ans),sep='')
 					ans
 				})
@@ -857,15 +855,15 @@ prj.pipeline<- function()
 	if(1)
 	{
 		dir.name	<- CODE.HOME
-		acute		<- c(0.065, 0.058, 0.053, 0.05)
-		base		<- c(2,4,6,8)
+		acute		<- c(2,4,6,8)
+		base		<- c(0.065, 0.058, 0.053, 0.05)
 		sIdx		<- 0.5
 		sE			<- 0.5
 		cluster.tw	<- 3
 		cmd			<-	sapply(seq_along(acute),function(i)
 							{
-								cmd			<- prj.simudata.cmd(dir.name, "Town II", acute[i], base[i], 100, sIdx, sE, cluster.tw)
-								cmd			<- prj.hpcwrapper(cmd, hpc.walltime=3, hpc.mem="400mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q=NA)
+								cmd			<- prj.simudata.cmd(dir.name, "Town II", acute[i], base[i], 50, sIdx, sE, cluster.tw)
+								cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q=NA)
 								cat(cmd)
 								
 								signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
@@ -873,8 +871,7 @@ prj.pipeline<- function()
 								outfile		<- paste("phd",signat,"qsub",sep='.')
 								prj.hpccaller(outdir, outfile, cmd)
 							})
-		#cmd			<- paste(cmd,sep='',collapse='')
-		
+		#cmd			<- paste(cmd,sep='',collapse='')		
 	}
 	
 }
@@ -933,7 +930,7 @@ prj.simudata.cmd<- function(dir.name, loc, acute, base, rep, sIdx, sE,cluster.tw
 prj.simudata<- function()
 {		
 	require(phylodesign)
-	#call with eg pkg/misc/phdes.startme.R -exeSIMU.DATA -acute=8 -baseline=0.09 -r=1 -v=1 -l=ZA-C -sIdx=0.7 -sE=0.7
+	#call with eg pkg/misc/phdes.startme.R -exeSIMU.DATA -v1 -acute=8 -baseline=0.05 -r=1 -sIdx=0.5 -sE=0.5 -cluster.tw=3
 	m.type				<- "Acute"
 	loc.type			<- "Town II"
 	m.popsize			<- NA
@@ -1011,15 +1008,13 @@ prj.simudata<- function()
 			cat(paste("\nprj.simudata: resumed file ",paste(f.name,".R",sep='')))
 	}
 	if(!resume || inherits(readAttempt, "try-error"))
-	{
-		
+	{		
 		tpc<- lapply(seq_len(tpc.repeat),function(i)
 			{
 				cat(paste("\nprj.simudata: replicate",i))
 				ans			<- vector("list",4)
-				names(ans)	<- c("ibm","tpc.internal","tpc.table.all","tpc.table.sample")
-				
-				ibm			<- ibm.init.model( m.type, loc.type, m.popsize, theta, resume= 0 )	
+				names(ans)	<- c("ibm","tpc.internal","tpc.table.all","tpc.table.sample")				
+				ibm			<- ibm.init.model( m.type, loc.type, m.popsize, theta, resume= 0 )
 				ans[["ibm"]]<- ibm.collapse( ibm )
 				tpc.data	<- ssa.run(ans[["ibm"]], ssa.ctime= 0, ssa.etime= cluster.tw,record.tpc= record.tpc, verbose= verbose, resume= 0)
 				if(record.tpc)
@@ -1036,16 +1031,42 @@ prj.simudata<- function()
 		save(tpc,file=paste(f.name,".R",sep=''))
 	}
 	
+	print( summary( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc.internal"]][["attack.rate"]]) ))
+	
+	table.name				<- "tpc.table.all"
+	max.ntr					<- max(sapply(seq_along(tpc), function(i) ncol(tpc[[i]][[table.name]]) ))
+	tpc.table				<- sapply(seq_along(tpc), function(i)
+								{
+									c( as.vector(tpc[[i]][[table.name]]), rep(0, nrow(tpc[[i]][[table.name]]) * (max.ntr - ncol(tpc[[i]][[table.name]]))) )			
+								})
+	tpc.table				<- matrix( round(apply(tpc.table, 1, median )), ncol=max.ntr )
+	tpc.table				<- tpc.table[ , apply(tpc.table,2,function(x)  any(x!=0) ) ]		
+	dimnames(tpc.table)		<- list(rownames(tpc[[1]][[table.name]]), paste("n",seq.int(0,ncol(tpc.table)-1),sep=''))
+	tpc.table.all.median	<- tpc.table
+	print(tpc.table.all.median)
+	
+	table.name				<- "tpc.table.sample"
+	max.ntr					<- max(sapply(seq_along(tpc), function(i) ncol(tpc[[i]][[table.name]]) ))
+	tpc.table				<- sapply(seq_along(tpc), function(i)
+								{
+									c( as.vector(tpc[[i]][[table.name]]), rep(0, nrow(tpc[[i]][[table.name]]) * (max.ntr - ncol(tpc[[i]][[table.name]]))) )			
+								})
+	tpc.table				<- matrix( round(apply(tpc.table, 1, median )), ncol=max.ntr )
+	tpc.table				<- tpc.table[ , apply(tpc.table,2,function(x)  any(x!=0) ) ]		
+	dimnames(tpc.table)		<- list(rownames(tpc[[1]][[table.name]]), paste("ns",seq.int(0,ncol(tpc.table)-1),sep=''))
+	tpc.table.sample.median	<- tpc.table
+	print(tpc.table.sample.median)
+	
+	f.name<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta[1],"_b",theta[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_median",sep=''),sep='/')
+	cat(paste("\nprj.simudata: write tpc data medians to file",paste(f.name,".R",sep='')))
+	save(tpc.table.all.median,tpc.table.sample.median,file=paste(f.name,".R",sep=''))		
 	#tmp<- tpc.tabulate( tpc[[1]][["tpc.internal"]] )
 	#print(tmp)
 	#print( clu.sample(tmp, sample.prob, rtn.exp=1) )
-	#stop()
-	
-	#print( summary( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc"]]) ) )	
-	print( summary( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc.internal"]][["attack.rate"]]) ))
-	print( lapply(seq_along(tpc), function(i) tpc[[i]][["tpc.table.all"]]) )
-	print( lapply(seq_along(tpc), function(i) tpc[[i]][["tpc.table.sample"]]) )
-	
+	#stop()	
+	#print( summary( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc"]]) ) )		
+	#print( lapply(seq_along(tpc), function(i) tpc[[i]][["tpc.table.all"]]) )
+	#print( lapply(seq_along(tpc), function(i) tpc[[i]][["tpc.table.sample"]]) )	
 }
 ###############################################################################
 
