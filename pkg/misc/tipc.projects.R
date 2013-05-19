@@ -679,7 +679,7 @@ prj.acute.loglklsurface<- function()
 	cluster.tw			<- 3
 	m.repeat			<- 1
 	resume				<- 1
-	verbose				<- 1	
+	verbose				<- 0	
 	if(exists("args"))
 	{		
 		tmp<- na.omit(sapply(args,function(arg)
@@ -755,7 +755,7 @@ prj.acute.loglklsurface<- function()
 		load(paste(f.name,".R",sep=''))
 		
 			
-		theta.acute		<- seq(1,10,1)
+		theta.acute		<- seq(1,16,1)
 		theta.base		<- theta0[2]
 		theta			<- expand.grid(acute= theta.acute, base= theta.base)
 		print(theta)
@@ -768,11 +768,9 @@ prj.acute.loglklsurface<- function()
 		print(as.matrix(state.n))
 
 		#evaluate likelihood over parameter space
-		lkl		<- sapply(seq_len(nrow(theta)),function(i)
+		loglkl			<- sapply(seq_len(nrow(theta)),function(i)
 				{
-					i<- 5
-					cat(paste("\nprocess theta",theta[i,"acute"], theta[i,"base"]))														
-
+					if(verbose) cat(paste("\nprocess theta",theta[i,"acute"], theta[i,"base"]))														
 					if(!m.known.states)
 					{
 						ibm	<- ibm.init.model(m.type, loc.type, m.popsize, theta0, resume= 0)
@@ -780,24 +778,15 @@ prj.acute.loglklsurface<- function()
 						stop("not fully implemented")
 					}	
 					ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]
-					ibm[["beta"]][["base"]]					<- theta[i,"base"]	
-							
+					ibm[["beta"]][["base"]]					<- theta[i,"base"]								
 					beta.stratified							<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)
-					print(beta.stratified)
-					stop()
-							
-							beta.stratified							<- acute.get.rates(ibm, per.capita.i=1)
-							tipc.table								<- tpc[[r]][["tpc.table.all"]]
-							print(beta.stratified)
-							print(tipc.table)
-					tmp										<- acute.loglkl(tipc.table, beta.stratified, sample.prob, tpc[[r]][["ibm"]][["beta"]][["dT"]])
-							
-					
-					tmp					
-					names(ans)<- paste('r',seq_along(ans),sep='')
-					ans
+					sample.prob[]							<- c(1,1)	
+					ans										<- acute.loglkl(tpc.table.all.median, beta.stratified, sample.prob, ibm[["beta"]][["dT"]])
+					ans[["table.lkl"]]
 				})
-		colnames(lkl)<- apply(theta,1,function(x) paste(x,collapse='_')) 		
+		names(loglkl)	<- apply(theta,1,function(x) paste(x,collapse='_'))
+		print(loglkl)
+		stop()
 		
 		dir.name<- paste(DATA,"acutelkl",sep='/')
 		f.name<- paste(dir.name,paste("tpc_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_s",m.known.states,sep=''),sep='/')		

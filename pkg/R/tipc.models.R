@@ -7,7 +7,7 @@ popart.CLUSTERP.ACHG<<- matrix(c(0.2,0.05,0.05,0.4/3,0.1/3,0.1/3,0.2/3,0.05/3,0.
 popart.CLUSTERP.ACLW<<- matrix(c(825/1800,495/1800,165/1800,50/1800,30/1800,10/1800,25/1800,15/1800,5/1800),3,3,dimnames=list(c("U","T","O"),c("1","2","3")))
 
 ###############################################################################
-acute.get.rates<- function(ibm.beta, ibm.pop= NULL, pop.n=nrow(ibm.pop), state.n= as.matrix(table(subset(ibm.pop,select=status))), per.capita.i= 0)
+acute.get.rates<- function(ibm.beta, ibm.pop= NULL, ibm.initpop= NULL, pop.n=nrow(ibm.pop), state.n= as.matrix(table(subset(ibm.pop,select=status))), per.capita.i= 0, debug=0)
 {
 	#in model 'Acute', rates are ' base * rel. infectiousness * S / N '
 	if(!setequal( names(ibm.beta[['i']][[1]]),rownames(state.n) ))	stop("expected same covariates in init.pop and beta")
@@ -18,7 +18,13 @@ acute.get.rates<- function(ibm.beta, ibm.pop= NULL, pop.n=nrow(ibm.pop), state.n
 	#ibm.beta[['i']][[1]] is relative transmission rates per covariate, ie s i t u   --> compute beta per covariate
 	propens				<- ibm.beta[['i']][[1]]*infecteds*ibm.beta[["base"]]	
 	#ibm.beta[['s']][[1]] is relative susceptibility per covariate; ONLY s is susceptible and we ASSUME no re-infection
-	propens				<- propens %*% t(ibm.beta[['s']][[1]] * state.n / pop.n) 
+	if(!debug)
+		propens			<- propens %*% t(ibm.beta[['s']][[1]] * state.n / pop.n)
+	else
+	{
+		state.n			<- as.matrix(table(subset(ibm.initpop,select=status)))[names(ibm.beta[['i']][[1]]),]
+		propens			<- propens %*% t(ibm.beta[['s']][[1]] * state.n / pop.n)
+	}		 
 	rownames(propens)	<- colnames(propens)
 	propens
 }	
@@ -29,7 +35,7 @@ acute.get.rates<- function(ibm.beta, ibm.pop= NULL, pop.n=nrow(ibm.pop), state.n
 #' @param ni	number of transmissions from donor with risk group I, ni=0 is possible
 #' @export 
 acute.lkl.tree.xk.ik<- function(nx,ni,rx,ri,dT, log=0)
-{
+{	
 	if(length(rx)!=1 || length(ri)!=1 || length(nx)!=1 || length(ni)!=1)	stop("acute.lkl.tree.xk.ik: not vectorized")
 	k<- seq.int(0,nx+ni)
 	if(log)
@@ -42,7 +48,6 @@ acute.lkl.tree.xk.ik<- function(nx,ni,rx,ri,dT, log=0)
 #' Compute the log likelihood of a tip cluster table under the \code{Acute} model
 acute.loglkl<- function(tpc, rate.m, sample.prob, dT, clu.n=NULL)
 {
-#print(tpc); print(rate.m)		
 	ans			<- numeric(2)
 	tpc.n.mx	<- ncol(tpc)-1														#max number of transmissions in tip cluster  	
 	tpc.closure	<- ifelse(all(sample.prob==1), tpc.n.mx+1, acute.MAX.TIPC.SIZE)		#without sampling, need to compute probabilities only up to the largest number of transmissions + 1 in the any tip cluster
@@ -51,7 +56,6 @@ acute.loglkl<- function(tpc, rate.m, sample.prob, dT, clu.n=NULL)
 	if(is.null(clu.n))	
 		clu.n	<- clu.n.of.tchain(tpc.closure)
 #print(clu.n)
-		
 	#get transmission chain likelihoods for those that start with 'U'
 	chain.lkl	<- sapply(seq.int(0,ncol(clu.n)-1),function(ntrm)
 			{				

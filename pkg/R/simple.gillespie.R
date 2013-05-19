@@ -6,7 +6,7 @@ ssa.get.transition.compartmental<- function(ibm, verbose=0)
 	if(ncol(ibm[["curr.pop"]])>2)	stop("ssa.get.transprob: error at 1a")
 	ans					<- vector("list",4)
 	names(ans)			<- c("from","from.attr","to","time")
-	propens				<- acute.get.rates(ibm[["beta"]], ibm.pop=ibm[["curr.pop"]])
+	propens				<- acute.get.rates(ibm[["beta"]], ibm.pop=ibm[["curr.pop"]], ibm.initpop=ibm[["init.pop"]], debug=1)
 	#determine transition by risk group x->y	 from: donor risk group x, to: recipient risk group y
 	tmp 				<- my.sample(seq_len(length(propens)), size = 1, prob = as.vector(propens), replace= 1)
 	ans[["from.attr"]]	<- colnames(propens)[ (tmp-1)%%nrow(propens)+1 ]	
