@@ -1,12 +1,12 @@
 ###############################################################################
-ssa.get.transition.compartmental<- function(ibm, verbose=0)
+ssa.get.transition.compartmental<- function(ibm, verbose=0, debug=0)
 {
 #print(ibm)	
 	#st.lv<- levels( ibm[["init.pop"]][["status"]] )
 	if(ncol(ibm[["curr.pop"]])>2)	stop("ssa.get.transprob: error at 1a")
 	ans					<- vector("list",4)
 	names(ans)			<- c("from","from.attr","to","time")
-	propens				<- acute.get.rates(ibm[["beta"]], ibm.pop=ibm[["curr.pop"]], ibm.initpop=ibm[["init.pop"]], debug=1)
+	propens				<- acute.get.rates(ibm[["beta"]], ibm.pop=ibm[["curr.pop"]], ibm.initpop=ibm[["init.pop"]], debug=debug)
 	#determine transition by risk group x->y	 from: donor risk group x, to: recipient risk group y
 	tmp 				<- my.sample(seq_len(length(propens)), size = 1, prob = as.vector(propens), replace= 1)
 	ans[["from.attr"]]	<- colnames(propens)[ (tmp-1)%%nrow(propens)+1 ]	
@@ -25,7 +25,7 @@ ssa.get.transition.compartmental<- function(ibm, verbose=0)
 	ans
 }
 ###############################################################################
-ssa.run<- function(ibm, ssa.ctime= 0, ssa.etime= 1, verbose= 0, save= '', resume= 1, record.tpc= 1)
+ssa.run<- function(ibm, ssa.ctime= 0, ssa.etime= 1, verbose= 0, save= '', resume= 1, record.tpc= 1, debug=0)
 {
 	#catch<-try({ 
 	
@@ -46,7 +46,7 @@ ssa.run<- function(ibm, ssa.ctime= 0, ssa.etime= 1, verbose= 0, save= '', resume
 	{
 		ssa.attackrate<- 0
 		ssa.nevent<- 0
-		
+		if(debug)	cat("\nssa.run debug")
 		if(record.tpc)
 		{ 
 			tpc.data		<- tpc.init(ibm)
@@ -58,7 +58,7 @@ ssa.run<- function(ibm, ssa.ctime= 0, ssa.etime= 1, verbose= 0, save= '', resume
 		while(ssa.ctime<ssa.etime)
 		{
 			#determine next infection
-			ssa.update		<- ssa.get.transition.compartmental(ibm, verbose=0)
+			ssa.update		<- ssa.get.transition.compartmental(ibm, verbose=0, debug=debug)
 			#update and store
 			ibm[["curr.pop"]][ssa.update$to,"status"]	<- 'i'
 			if(is.na(tpc.tree.idx[ssa.update$from]))	stop("ssa.run: cannot find tree index")

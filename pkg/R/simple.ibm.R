@@ -171,7 +171,7 @@ ibm.init.pop<- function(attr, distr)
 }
 ###############################################################################
 #' @export
-ibm.init.model<- function(m.type, loc.type, m.popsize, theta, save='', resume= 1, init.pop=1)
+ibm.init.model<- function(m.type, loc.type, m.popsize, theta, save='', resume= 1, init.pop=1, debug=0)
 {	
 	data(popart.phylo.com)
 	
@@ -202,6 +202,12 @@ ibm.init.model<- function(m.type, loc.type, m.popsize, theta, save='', resume= 1
 			ibm.distr			<- ibm.init.popinitdistributions.popart(ibm.att, loc.type)
 		else
 			ibm.distr			<- ibm.init.popinitdistributions.vanilla(ibm.att, loc.type,m.popsize)
+		if(debug)
+		{
+			cat("\nibm.init.model debug")
+			ibm.distr[["status"]]['u']		<- ibm.distr[["status"]]['u']+ibm.distr[["status"]]['t']
+			ibm.distr[["status"]]['t']		<- 0		
+		}
 		if(init.pop)
 		{
 			ibm$init.pop		<- ibm.init.pop(ibm.att,ibm.distr)

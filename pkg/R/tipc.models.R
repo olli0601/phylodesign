@@ -21,7 +21,7 @@ acute.get.rates<- function(ibm.beta, ibm.pop= NULL, ibm.initpop= NULL, pop.n=nro
 	if(!debug)
 		propens			<- propens %*% t(ibm.beta[['s']][[1]] * state.n / pop.n)
 	else
-	{
+	{		
 		state.n			<- as.matrix(table(subset(ibm.initpop,select=status)))[names(ibm.beta[['i']][[1]]),]
 		propens			<- propens %*% t(ibm.beta[['s']][[1]] * state.n / pop.n)
 	}		 
