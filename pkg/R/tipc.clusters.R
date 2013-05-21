@@ -1,57 +1,73 @@
 ###############################################################################
+#' For a given number \code{nIdx} of free slots, compute all possible combinations of subtrees whose total size is \code{nE}.
 #' @export
-clu.subchains<- function(n.subtr, n.nodes)
+clu.subtrees.find<- function(nIdx, nE)
 {
-	if(n.subtr<1)	stop("invalid n.subtr")
-	if(n.subtr==1)	return( list(c(n.nodes)) )
-	if(n.nodes<0)	stop("invalid n.nodes")
-	if(n.nodes==0)	return(list())
-	
-	dec<- n.nodes%/%2
-	ans<- lapply(seq_len(dec),function(i)
-			{
-				lapply(rev(seq_len(ceiling(n.nodes/i)))[-1],function(j)
-						{
-							c(n.nodes-j*i,rep(i,j))
-						})				
-			})
-	ans<- do.call(c,ans)
-	ans<- as.list(do.call(c,list(ans,c(n.nodes))))
-	ans[ which(sapply(ans,length)<=n.subtr) ]
+	if(nIdx<1)					stop("invalid nIdx")
+	else if(nIdx==1)			return( matrix(nE,1,1) )
+	if(nE<0)					stop("invalid nE")
+	else if(nE==0)				return(matrix(rep(0,nIdx), ncol=1))
+	else if(nE==1)				return(matrix(c(1,rep(0,nIdx-1)), ncol=1 ))	
+	odd			<- seq.int(1,2^(nE-1)-1,2)					 
+	odd.binary	<- as.matrix( sapply(odd, function(x) rev(as.integer(intToBits(as.integer(x))))) )	
+	sticks		<- odd.binary[seq.int(nrow(odd.binary)-nE+1,nrow(odd.binary)),,drop=0]
+	sticks		<- cbind(sticks, rep(1,ncol(sticks)))
+	sticks.keep	<- apply(sticks, 2, function(x)
+					{
+						y				<- rle(x)						#exclude sticks for which there is a longer run of 0's to the right
+						tmp				<- y$values==0
+						y$lengths[tmp]	<- y$lengths[tmp] + 1			
+						tmp				<- y$values==1 & y$lengths>1	#if there are two consecutive 1's there is a 0 inbetween
+						y$values[tmp]	<- 0
+						y$lengths[tmp]	<- 1
+						y				<- y$lengths[ y$values==0 ]
+						all( order(y, decreasing=1)==seq_along(y) )
+					})
+	sticks		<- t( sticks[,sticks.keep] )	
+	comb		<- apply(sticks, 1, function(x)
+					{
+						tmp<- which(x==1)
+						c( tmp[1],diff(tmp),rep(0,ncol(sticks)-length(tmp)) )
+					})
+	if(nIdx<nrow(comb))		
+		comb	<- comb[seq_len(nIdx), apply(comb[seq.int(nIdx+1,nrow(comb)),,drop=0]==0,2,all) ]
+	else if(nIdx>nrow(comb))
+		comb	<- rbind(comb, matrix(0,nIdx-nrow(comb),ncol(comb)))
+	comb		
+}
+###############################################################################
+#' For a matrix of subtrees (across col), compute the number of possible subtree combinations
+clu.subtrees.n<- function(subtrees)
+{
+	nE	<- sum(subtrees[,1])
+	apply(subtrees, 2, function(x)
+		{
+			cnt	<- tabulate(x+1)
+			df	<- length(x)-c(0,cumsum( cnt[-length(cnt)] ))
+			ans	<- prod( choose(df,cnt) )						#Comb(unique(J));			all ways the different subtrees can be arranged onto the free slots
+			cnt	<- x[x!=0]
+			df	<- nE-c(0,cumsum(cnt[-length(cnt)]))
+			ans	<- ans*prod( choose(df,cnt) )					#times Comb(J); 			all ways the individuals are distributed into trees 
+			ans*prod( (x+1)^(x-1) )								#times prod_{j\inJ} N(j)	all ways how subtrees of size j could look like
+		})
 }
 ###############################################################################
 #' For each tip cluster with \code{n} transmissions (col) return the number of spanning trees that correspond to \code{i} transmissions from the index case (row)
 #' @export
-clu.n.of.tchain<- function(max.ntransm)
+clu.tipc.n<- function(closure)
 {
-	total.given.ntr	<- numeric(max.ntransm)	
-	clu.n			<- matrix(NA,ncol=max.ntransm,nrow=max.ntransm, dimnames=list(paste("idx",1:max.ntransm,sep=''),paste("n",1:max.ntransm,sep='')))
-	clu.n[,1]		<- 0
-	clu.n[1,1]		<- 1
-	
-	for(ntr in seq_len(ncol(clu.n))[-1])
-	{		
-		for(nidxtr in seq_len(ntr-1))
-		{
-			#print(c("HE",ntr,nidxtr,ntr-nidxtr))
-			subchains.n<- clu.subchains(nidxtr,ntr-nidxtr)
-			#print(subchains.n)
-			subchains.comb<- sapply(seq_along(subchains.n),function(i)
-					{
-						#print(subchains.n[[i]])
-						prod( sapply(subchains.n[[i]], function(x) apply(clu.n[,x,drop=0],2,sum) ) )	*
-								prod( seq.int(nidxtr-length( subchains.n[[i]] )+1,nidxtr) )
-					})
-			clu.n[nidxtr,ntr]<- choose(ntr,nidxtr) * sum( subchains.comb )					
-		}
-		clu.n[ntr:nrow(clu.n),ntr]	<- 0
-		clu.n[ntr,ntr]				<- 1				
-	}
-	clu.n			<- cbind( rep(0,nrow(clu.n)), clu.n )
-	clu.n			<- rbind( c(1,rep(0,ncol(clu.n)-1)), clu.n )
-	colnames(clu.n) <- paste('n',seq.int(0,ncol(clu.n)-1),sep='')
-	rownames(clu.n) <- paste('idx',seq.int(0,nrow(clu.n)-1),sep='')
-	clu.n
+	comb			<- sapply(seq.int(1,closure),function(edges)
+						{
+							c( 	sapply(seq.int(1,edges),function(nIdx)
+											{												
+												choose(edges,nIdx) * sum( clu.subtrees.n( clu.subtrees.find(nIdx,edges-nIdx) ) )	
+											}),
+								rep(0,closure-edges) )
+						})
+	comb			<- cbind(rep(0,nrow(comb)),comb )
+	comb			<- rbind(c(1,rep(0,ncol(comb)-1)),comb)
+	dimnames(comb)	<- list(paste('idx',seq.int(0,closure),sep=''), paste('n',seq.int(0,closure),sep=''))
+	comb
 }
 ###############################################################################
 #' @export

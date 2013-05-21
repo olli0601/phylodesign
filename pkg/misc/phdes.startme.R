@@ -60,8 +60,9 @@ default.fun	<- "prj.popart.tchain_test"
 #default.fun<- "prj.popart.powercalc_link_consenting"
 #default.fun<- "prj.plotfisherhettransm"
 #default.fun<- "prj.simudata"
-#default.fun<- "prj.acute.loglklsurface"
-default.fun<- "prj.pipeline"
+default.fun<- "prj.acute.loglklsurface"
+#default.fun<- "prj.pipeline"
+#default.fun<- "prj.acute.test"
 
 ###############################################################################
 #if(length(args) && !is.loaded("tipc_tabulate_after_sample"))

@@ -1,6 +1,6 @@
 #' this file contains the likelihood functions for each model
 
-acute.MAX.TIPC.SIZE<- 10
+acute.MAX.TIPC.SIZE<- 15
 
 popart.CLUSTERP.ACHG<<- matrix(c(0.2,0.05,0.05,0.4/3,0.1/3,0.1/3,0.2/3,0.05/3,0.05/3),3,3,dimnames=list(c("U","T","O"),c("1","2","3")))
 
@@ -29,6 +29,27 @@ acute.get.rates<- function(ibm.beta, ibm.pop= NULL, ibm.initpop= NULL, pop.n=nro
 	propens
 }	
 ###############################################################################
+acute.subtree.lkl.PartNT<- function(ntrs,rIdx,rE,cl.timewindow)
+{
+	ans			<- sapply(ntrs,function(ntr)
+					{
+						k	<- seq.int(0,ntr)
+						ans	<- choose(ntr,k) * (-1)^k * exp(-(k*rE+rIdx)*cl.timewindow)								
+						sum(ans) / factorial(ntr)			
+					})	
+	names(ans)	<- paste('n',ntrs,sep='')
+	ans
+}
+###############################################################################
+acute.subtree.lkl.PartIdx<- function(ntr,rIdx,rE)
+{
+	ans				<- round(upper.tri(matrix(1, ntr, ntr),diag=T)) * (rIdx/rE)^seq.int(1,ntr)
+	ans				<- cbind(rep(0,nrow(ans)),ans)
+	ans				<- rbind(rep(1,ncol(ans)), ans)
+	dimnames(ans)	<- list(paste('idx',seq.int(0,nrow(ans)-1),sep=''),paste('n',seq.int(0,ncol(ans)-1),sep=''))
+	ans
+}
+###############################################################################
 #' Compute the likelihood of a transmission chain with \code{nx} transmissions from the index case and \code{ni} transmissions from non-index cases under the \code{Acute} model
 #' There are 1+nx+ni NODES in this tree.
 #' @param nx	number of transmissions from donor with risk group X, nx=0 is possible
@@ -54,18 +75,20 @@ acute.loglkl<- function(tpc, rate.m, sample.prob, dT, clu.n=NULL)
 	if(tpc.n.mx>tpc.closure)	
 		stop(paste("\nfound tip cluster sizes",tpc.n.mx,"while max supported is",tpc.closure))
 	if(is.null(clu.n))	
-		clu.n	<- clu.n.of.tchain(tpc.closure)
+		clu.n	<- clu.tipc.n(tpc.closure)
+	else
+		clu.n	<- clu.n[seq_len(tpc.closure+1),seq_len(tpc.closure+1)]
 #print(clu.n)
+#print(tpc.closure)
 	#get transmission chain likelihoods for those that start with 'U'
-	chain.lkl	<- sapply(seq.int(0,ncol(clu.n)-1),function(ntrm)
-			{				
-				tmp<- sapply( 	seq.int(0,ntrm), function(nx){		acute.lkl.tree.xk.ik(nx,ntrm-nx,rate.m['u','s'],rate.m['i','s'],dT,log=0) 			})
-				c(tmp,rep(0, ncol(clu.n)-1-ntrm))
-			})
+	part1				<- acute.subtree.lkl.PartNT(seq.int(0,ncol(clu.n)-1),rate.m['u','s'],rate.m['i','s'],dT)
+	part1				<- matrix(part1,nrow(clu.n),length(part1),byrow=1)
+	part2				<- acute.subtree.lkl.PartIdx(ncol(clu.n)-1,rate.m['u','s'],rate.m['i','s'])
+	chain.lkl			<- part1 * part2		
 	#multiply with possible number of combinations
 	chain.lkl			<- chain.lkl * clu.n
-	colnames(chain.lkl)	<- paste('n',seq.int(0,ncol(chain.lkl)-1),sep='')
-	rownames(chain.lkl)	<- paste('idx',seq.int(0,nrow(chain.lkl)-1),sep='')	
+	dimnames(chain.lkl)	<- dimnames(part2)
+#print(chain.lkl)
 	if(any(sample.prob!=1))
 		chain.lkl		<- clu.p.of.tchain.rnd.sampling(chain.lkl, sample.prob, mx.s.ntr=min(tpc.n.mx+1,tpc.closure), log=0, clu.p.norm=0, rtn.only.closure.sum=0 )
 #print(chain.lkl)	
@@ -73,21 +96,20 @@ acute.loglkl<- function(tpc, rate.m, sample.prob, dT, clu.n=NULL)
 	tipc.lkl.E			<- c( chain.lkl[1,seq.int(2,ncol(chain.lkl))] )
 	chain.lkl[1,seq.int(2,ncol(chain.lkl))]	<- 0	
 	chain.lkl			<- chain.lkl[,-ncol(chain.lkl)]
+#print(chain.lkl)	
 	#integrate transmission chains out
 	tipc.lkl.U			<- apply(chain.lkl,2,function(x) sum(x, na.rm=1))
-#print(tipc.lkl.U)	
+#print(tipc.lkl.U)
 	#
 	#get transmission chain likelihoods for those that start with 'T'
 	#
-	chain.lkl	<- sapply(seq.int(0,ncol(clu.n)-1),function(ntrm)
-			{				
-				tmp<- sapply( 	seq.int(0,ntrm), function(nx){		acute.lkl.tree.xk.ik(nx,ntrm-nx,rate.m['t','s'],rate.m['i','s'],dT,log=0) 			})
-				c(tmp,rep(0, ncol(clu.n)-1-ntrm))
-			})
+	part1				<- acute.subtree.lkl.PartNT(seq.int(0,ncol(clu.n)-1),rate.m['t','s'],rate.m['i','s'],dT)
+	part1				<- matrix(part1,nrow(clu.n),length(part1),byrow=1)
+	part2				<- acute.subtree.lkl.PartIdx(ncol(clu.n)-1,rate.m['t','s'],rate.m['i','s'])
+	chain.lkl			<- part1 * part2		
 	#multiply with possible number of combinations
-	chain.lkl			<- chain.lkl * clu.n	
-	colnames(chain.lkl)	<- paste('n',seq.int(0,ncol(chain.lkl)-1),sep='')
-	rownames(chain.lkl)	<- paste('idx',seq.int(0,nrow(chain.lkl)-1),sep='')
+	chain.lkl			<- chain.lkl * clu.n
+	dimnames(chain.lkl)	<- dimnames(part2)
 	if(any(sample.prob!=1))
 		chain.lkl		<- clu.p.of.tchain.rnd.sampling(chain.lkl, sample.prob, mx.s.ntr=min(tpc.n.mx+1,tpc.closure), log=0, clu.p.norm=0, rtn.only.closure.sum=0 )
 #print(chain.lkl)		
@@ -98,13 +120,17 @@ acute.loglkl<- function(tpc, rate.m, sample.prob, dT, clu.n=NULL)
 #print(tipc.lkl.E)	
 	chain.lkl[1,seq.int(2,ncol(chain.lkl))]	<- 0	
 	chain.lkl			<- chain.lkl[,-ncol(chain.lkl)]
+#print(chain.lkl)	
 	#integrate transmission chains out
 	tipc.lkl.T			<- apply(chain.lkl,2,function(x) sum(x, na.rm=1))
 #print(tipc.lkl.T)			
 	#multinomial observation model	
 	tipc.lkl			<- rbind(tipc.lkl.E,rbind(tipc.lkl.U,tipc.lkl.T))
-	rownames(tipc.lkl)	<- c('i','u','t')
-#print(tipc.lkl); print(tpc)	
+	rownames(tipc.lkl)	<- c('i','u','t')	
+	tpc					<- tpc[rownames(tipc.lkl),]
+	tipc.lkl['t',]		<- 0
+#print(tipc.lkl); print(tpc)
+#stop()
 	if(ncol(tipc.lkl)!=ncol(tpc))	stop("columns of tipc.lkl and tpc do not match")
 	if(nrow(tipc.lkl)!=nrow(tpc))	stop("rows of tipc.lkk and tpc do not match")
 #print(tipc.lkl); print(tpc)
