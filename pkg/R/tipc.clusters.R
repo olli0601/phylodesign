@@ -3,6 +3,7 @@
 #' @export
 clu.subtrees.find<- function(nIdx, nE)
 {
+	options(warn=2)
 	if(nIdx<1)					stop("invalid nIdx")
 	else if(nIdx==1)			return( matrix(nE,1,1) )
 	if(nE<0)					stop("invalid nE")
@@ -11,7 +12,8 @@ clu.subtrees.find<- function(nIdx, nE)
 	odd			<- seq.int(1,2^(nE-1)-1,2)					 
 	odd.binary	<- as.matrix( sapply(odd, function(x) rev(as.integer(intToBits(as.integer(x))))) )	
 	sticks		<- odd.binary[seq.int(nrow(odd.binary)-nE+1,nrow(odd.binary)),,drop=0]
-	sticks		<- cbind(sticks, rep(1,ncol(sticks)))
+	sticks		<- cbind(sticks, rep(1,nrow(sticks)))
+	
 	sticks.keep	<- apply(sticks, 2, function(x)
 					{
 						y				<- rle(x)						#exclude sticks for which there is a longer run of 0's to the right
@@ -99,45 +101,66 @@ clu.p.of.tchain<- function(clu.n, p, log=0 )
 }
 ###############################################################################
 #' @export
-clu.p.of.tchain.rnd.sampling<- function(clu.p, s, mx.s.ntr=ncol(clu.p)-1, log=0, clu.p.norm=0, rtn.only.closure.sum=0 )
-{
-	if(any(clu.p[!is.na(clu.p)]<0))		stop("invalid clu.p - not log(clu.p) (?)")
+clu.p.of.tchain.rnd.sampling<- function(clu.p, s, mx.s.ntr=ncol(clu.p)-1, log=0 )
+{	
 	if(any(s<0) | any(s>1))				stop("invalid s")
 	if(!all(c("Idx","E")%in%names(s)))	stop("invalid names of s")
 	if(mx.s.ntr>ncol(clu.p)-1)			stop("mx.s.ntr must be <= the max number of transmissions")
-	
+print(log(clu.p))
+stop()
 	s.Idx		<- s["Idx"]
 	s.E			<- s["E"]
 	closure		<- ncol(clu.p)-1
-	if(clu.p.norm)
-	{
-		norm	<- apply(clu.p,2,function(x)  sum(x,na.rm=1))
-		clu.p	<- clu.p / matrix( rep(norm,each=nrow(clu.p)), nrow(clu.p), closure )		
-	}
 	clu.ps	<- sapply(seq.int(0,mx.s.ntr),function(sntr)			#for each column in new incomplete clu.p; sntr ~ sampled number transmissions
 			{
 				#print(paste("sntr",sntr))
-				clu.ps<- sapply(seq.int(0,sntr),function(index)		#consider the upper triangular part of the matrix including diagonal
-						{
-							sum( sapply(seq.int(0,closure-sntr),function(missed)				#sum over complete clusters with ntr= sntr+missed
-											{
-												#print(paste("missed",missed))
-												tmp<- clu.p[seq.int(index,index+missed)+1, sntr+missed+1]
-												#print(tmp)
-												#print(choose(missed,seq.int(0,missed)))
-												tmp<- tmp * choose(missed,seq.int(0,missed)) 
-												sum(tmp)*(1-s.E)^missed							#since in model 'Acute' U and T occur only at baseline, can only miss E					
-											}) )
-						})
-				if(!rtn.only.closure.sum)		
+				if(log)
+				{
+					clu.ps<- sapply(seq.int(0,sntr),function(index)		#consider the upper triangular part of the matrix including diagonal
+							{
+								tmp<- sapply(seq.int(0,closure-sntr),function(missed)				#sum over complete clusters with ntr= sntr+missed
+												{
+													#print(paste("missed",missed))
+													tmp<- clu.p[seq.int(index,index+missed)+1, sntr+missed+1]	+ 
+															lchoose(seq.int(index,index+missed), index)			+
+															lchoose(seq.int(sntr+missed-index, sntr+missed-(index+missed)), sntr-index)
+#print(missed)
+#print(lchoose(missed,seq.int(0,missed)))
+#print(tmp)													
+													log( sum(exp(tmp)) ) + log(1-s.E)*missed							#since in model 'Acute' U and T occur only at baseline, can only miss E					
+												}) 
+								sum(exp(tmp))
+							})
+#					print( clu.ps )
+					clu.ps<- log(clu.ps) + log(s.E)*sntr + log(s.Idx) 
+				}
+				else
+				{
+					clu.ps<- sapply(seq.int(0,sntr),function(index)		#consider the upper triangular part of the matrix including diagonal
+							{
+								#print("AAAAAAAAAAA")
+								tmp<- sum( sapply(seq.int(0,closure-sntr),function(missed)				#sum over complete clusters with ntr= sntr+missed
+												{
+													#see if correct rows/cols seleced:
+													#print("HERE")
+													#print(c(sntr+1, index+1, missed)); print("clu.p entries"); print(seq.int(index+1,index+1+missed)); print(sntr+1+missed)
+													#print("first choose"); print(seq.int(index,index+missed)); print(index)
+													#print("second choose"); print(seq.int(sntr+missed-index, sntr+missed-(index+missed))); print(sntr-index)													
+													tmp<- clu.p[seq.int(index+1,index+1+missed), sntr+1+missed]
+													#print(tmp)													
+													tmp<- tmp * choose(seq.int(index,index+missed), index) #this is  * (i+j, i)													
+													tmp<- tmp * choose(seq.int(sntr+missed-index, sntr+missed-(index+missed)), sntr-index) #this is  * (n+miss-(i+j), n-i)
+													sum(tmp)*(1-s.E)^missed							#since in model 'Acute' U and T occur only at baseline, can only miss E					
+												}) )
+								#if(index==1) stop()
+								tmp
+							})
 					clu.ps<- clu.ps * ( s.E^sntr * s.Idx )
-				c(clu.ps, rep(NA,mx.s.ntr-sntr))				
-			})
+				}	
+				
+				c(clu.ps, rep(ifelse(log,-Inf,0),mx.s.ntr-sntr))				
+			})			
 	dimnames(clu.ps)<- list(paste("idx",seq.int(0,mx.s.ntr),sep=''),paste("ns",seq.int(0,mx.s.ntr),sep=''))
-	if(clu.p.norm)
-		clu.ps		<- clu.ps / sum(clu.ps, na.rm=1)
-	if(log)
-		clu.ps		<- log(clu.ps)
 	clu.ps
 }
 ###############################################################################

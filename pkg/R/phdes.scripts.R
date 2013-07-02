@@ -498,40 +498,43 @@ prj.popart.powercalc_tipc_test_residual<- function(p.phylosignal=0.7,p.nocontam=
 	cat(paste("\nopt.power",opt.power))
 	cat(paste("\nopt.sampling",opt.sampling))
 	
-	sites<-	popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug )
+	sites<-	popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug, rtn.phylostudy=1 )
 	sites<-	popart.getdata.randomized.n(sites, cohort.size, cohort.dur, rtn.exp=debug)	
 	print(sites)
-	
+	 
 	#compute complete tip cluster probs under H0 and H1
-	clu.n		<- clu.n.of.tchain(opt.clu.closure)	
-	theta.H0	<- clu.p.init(theta.EE.H0, theta.UE, theta.TE, 1-p.nocontam)
-	theta.H1	<- clu.p.init(theta.EE.H1, theta.UE, theta.TE, 1-p.nocontam)
-	tipc.p.H0	<- clu.probabilities(clu.n, theta.H0, with.ntr.weight= 1)
-	tipc.p.H1	<- clu.probabilities(clu.n, theta.H1, with.ntr.weight= 1)
+	#clu.n		<- clu.n.of.tchain(opt.clu.closure)	
+	#theta.H0	<- clu.p.init(theta.EE.H0, theta.UE, theta.TE, 1-p.nocontam)
+	#theta.H1	<- clu.p.init(theta.EE.H1, theta.UE, theta.TE, 1-p.nocontam)
+	#tipc.p.H0	<- clu.probabilities(clu.n, theta.H0, with.ntr.weight= 1)
+	#tipc.p.H1	<- clu.probabilities(clu.n, theta.H1, with.ntr.weight= 1)
 	
 	#for H1 (high E->E), get n(E->E) and n(x->E) for each arm under residual sampling scenario
 	if(1)
 	{
-		p.lab			<- 0.7			#set lower as discussed		
-		p.consent.coh	<- 0.9
+		p.lab			<- 0.7*0.9			#set lower as discussed		
+		p.consent.coh	<- 0.9				
 		p.consent.clu	<- 1
-		p.vhcc.prev.AB	<- 0.95
-		p.vhcc.inc.AB	<- 0.8
-		p.vhcc.prev.C	<- 0.4
-		p.vhcc.inc.C	<- 0.4/2					
+		p.vhcc.prev.AB	<- 1				#already in PopART model estimate
+		p.vhcc.inc.AB	<- 1				#already in PopART model estimate
+		p.vhcc.prev.C	<- 1				#already in PopART model estimate
+		p.vhcc.inc.C	<- 1				#already in PopART model estimate		
 		p.contam		<- seq(0.05,0.2,0.025)
 		opt.sampling	<- "PC and HCC"	
-		#opt.sampling	<- "only HCC"		
+		opt.sampling	<- "PC after yr 1 and HCC"		
 		ans			<- lapply(p.contam,function(x)
 				{
+					sampling<- popart.sampling.init.PopARTmodel(sites,  p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)
+					print(sampling[c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Kuyasa","Luvuyo","Town II","Ikhwezi","Bloekombos","Delft South"),])
+					print(sampling[,"total prev"]*sampling[,"total inc"]*(1-x))
+					stop()
+										
 					theta.H0	<- clu.p.init(theta.EE.H0, theta.UE, theta.TE, x)
 					theta.H1	<- clu.p.init(theta.EE.H1, theta.UE, theta.TE, x)
 					tipc.p.H0	<- clu.probabilities(clu.n, theta.H0, with.ntr.weight=1)
 					tipc.p.H1	<- clu.probabilities(clu.n, theta.H1, with.ntr.weight=1)
 					
-					sampling<- popart.sampling.init(sites,  p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)
-					print(sampling)
-					stop()
+					#sampling<- popart.sampling.init(sites,  p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)
 					#print(xtable(sampling, digits=2), floating=FALSE)
 					ntr.hg<- popart.get.sampled.transmissions.from.tipc(sites, tipc.p.H1, clu.n, theta.H1, sampling, opt.sampling, mx.sampled.ntr=6, exclude.O= 1, rtn.int=!debug)
 					#print(ntr.hg)						
@@ -1939,7 +1942,7 @@ prj.popart.tchain_test<- function()
 		clu.trans.H0<- sapply(cl.inc, function(incidence)
 						{
 							clu.p		<- clu.probabilities(clu.n, theta.H0)
-							clu.sim		<- clu.simulate(clu.p, incidence)
+							clu.sim		<- clu.simulate(clu.p, incidence)							
 							clu.sim		<- clu.sample(clu.sim, sampling, rtn.exp=1)
 							tmp			<- clu.exp.transmissions(clu.sim, clu.n, theta.H0, sampling, mx.s.ntr, exclude.O= 0)
 							c( tmp["E2E"] / sum(tmp), tmp["E2E"], sum(tmp) ) 

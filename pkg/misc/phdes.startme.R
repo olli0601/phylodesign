@@ -45,13 +45,14 @@ CODE.HOME<<- "/Users/Oliver/git/phylodesign/pkg"
 HOME<<- "/Users/Oliver/workspace_sandbox/popart"
 #HOME<<- "/home/koelle/or7/popart"
 #HOME<<- "/work/or105/popart"
-DATA<<- paste(HOME,"data",sep='/')
-PHDES.DEBUG<<- 0
-default.fun	<- "prj.popart.tchain_test"
+DATA		<<- paste(HOME,"data",sep='/')
+PHDES.DEBUG	<<- 0
+EPS			<<- .Machine$double.eps
+#default.fun	<- "prj.popart.tchain_test"
 #default.fun	<- "prj.popart.powercalc_link_consenting"
 #default.fun	<- "prj.popart.powercalc_tipc_test"
-#default.fun		<- "prj.popart.powercalc_tipc_test_ukhivrdb"
-#default.fun		<- "prj.popart.powercalc_tipc_test_residual"
+#default.fun	<- "prj.popart.powercalc_tipc_test_ukhivrdb"
+#default.fun	<- "prj.popart.powercalc_tipc_test_residual"
 #default.fun	<- "prj.popart.powercalc_tipc_consenting"
 #default.fun	<- "prj.popart.power_test"
 #default.fun	<- "prj.popart.powercalc_cmp_link_tipc"
@@ -60,9 +61,9 @@ default.fun	<- "prj.popart.tchain_test"
 #default.fun<- "prj.popart.powercalc_link_consenting"
 #default.fun<- "prj.plotfisherhettransm"
 #default.fun<- "prj.simudata"
-default.fun<- "prj.acute.loglklsurface"
+#default.fun<- "prj.acute.loglklsurface"
 #default.fun<- "prj.pipeline"
-#default.fun<- "prj.acute.test"
+default.fun<- "prj.acute.test"
 
 ###############################################################################
 #if(length(args) && !is.loaded("tipc_tabulate_after_sample"))

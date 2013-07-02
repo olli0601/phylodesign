@@ -7,14 +7,17 @@
 #' @param rtn.fixed		indicator if a fixed allocation of arms is returned (for debugging)
 #' @return data frame of trial sites with allocated arms
 #' @examples	popart.getdata.randomized.arm(1)
-popart.getdata.randomized.arm<- function( randomize.n, rtn.fixed=0 )
+popart.getdata.randomized.arm<- function( randomize.n, rtn.fixed=0, rtn.phylostudy=1 )
 {	
 	data(popart.triplets.130207)					
 	# select studies for phylogenetics
 	#in ZA chose small high prevalence triplets outside of Lusaka
 	#5 is Khayelitsha triplet in SA 
 	#6 is High prevalence triplet in SA			
-	simul	<- popart.triplets.130207[rep(which(popart.triplets.130207$triplet %in% c(1,4,5,6)),randomize.n),]
+	if(rtn.phylostudy)
+		simul	<- popart.triplets.130207[rep(which(popart.triplets.130207$triplet %in% c(1,4,5,6)),randomize.n),]
+	else
+		simul	<- popart.triplets.130207[rep(seq_len(nrow(popart.triplets.130207)),randomize.n),]
 	# randomise communities arms
 	#if(!rtn.fixed)
 	#	simul$random	<- runif(nrow(simul))
@@ -28,7 +31,7 @@ popart.getdata.randomized.arm<- function( randomize.n, rtn.fixed=0 )
 	#simul			<- simul[,!names(simul) %in% drops]
 	simul$inc.rate	<- sapply(simul$arm,function(x){(x %in% "A")*0.0056+(x %in% "B")*0.01+(x %in% "C")*0.013})
 	simul$p.adults	<- ifelse(simul$country==1,0.5,0.6)
-	simul$rid		<- rep(1:randomize.n, each=3*4)
+	#simul$rid		<- rep(1:randomize.n, each=3*4)
 	simul
 }
 ###############################################################################
@@ -282,6 +285,88 @@ popart.get.sampled.transmissions<- function(x, method="PC and HCC", rtn.int=1, p
 	x2i					<- (seq.PC.inc + seq.nonPC.inc)*seq.prev.coverage*p.community
 	if(rtn.int)	x2i		<- floor(x2i)
 	x2i
+}
+###############################################################################
+popart.sampling.init.PopARTmodel<- function(x, p.consent.PC, p.consent.HCC, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method="PC and HCC")
+{
+	#assuming central targets for linkage and consenting
+	first.CD4.HCC		<- matrix( c(	2397, 289, 3078, 604, 705, 57, 
+										3960, 477, 2270, 445, 771, 62, 
+										2231, 197, 3482, 412, 793, 24, 
+										7567, 325, 4578, 303, 773, 26), nrow=12, ncol=2, byrow=1, 
+										dimnames=list(	c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Kuyasa","Luvuyo","Town II","Ikhwezi","Bloekombos","Delft South"),
+														c("HCC Total","HCC Incident")))
+	first.CD4.PC		<- matrix( c(	307, 42, 320, 74, 333, 107, 
+										307, 42, 320, 74, 333, 107, 
+										343, 30, 352, 53, 359, 77, 
+										343, 30, 352, 53, 359, 77), nrow=12, ncol=2, byrow=1, 
+										dimnames=list(	c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Kuyasa","Luvuyo","Town II","Ikhwezi","Bloekombos","Delft South"),
+														c("PC Total","PC Incident")))
+	#no loss due to linkage and consenting									
+	first.CD4.All		<- matrix( c(	2410, 332, 3237, 750, 2985, 957, 
+										3981, 549, 2386, 553, 3262, 1046, 
+										2281, 199, 3735, 562, 4253, 917, 
+										7736, 677, 4910, 738, 4144, 893), nrow=12, ncol=2, byrow=1, 
+										dimnames=list(	c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Kuyasa","Luvuyo","Town II","Ikhwezi","Bloekombos","Delft South"),
+														c("total prev","total inc")))
+										
+										
+	first.CD4			<- cbind(first.CD4.PC,first.CD4.HCC)
+	first.CD4			<- first.CD4[as.character(x$comid_old),]
+	first.CD4.All		<- first.CD4.All[as.character(x$comid_old),]
+#print(first.CD4)
+#print(first.CD4.All)		 
+	x$CD4.1st.PC.prev	<- first.CD4[,"PC Total"] - first.CD4[,"PC Incident"] 
+	x$CD4.1st.PC.inc	<- first.CD4[,"PC Incident"] 
+	x$CD4.1st.HCC.prev	<- first.CD4[,"HCC Total"] - first.CD4[,"HCC Incident"] 
+	x$CD4.1st.HCC.inc	<- first.CD4[,"HCC Incident"]
+#print(x)
+
+	s<- matrix(NA,nrow=nrow(x),ncol=9,dimnames= list(x$comid_old, c("visit.prev","visit.inc","PC.prev","nonPC.prev","PC.inc","nonPC.inc","baseline","total prev","total inc")))	
+	s[x$arm!="C", "visit.prev"]	<- p.vhcc.prev.AB
+	s[x$arm=="C", "visit.prev"]	<- p.vhcc.prev.C
+	s[x$arm!="C", "visit.inc"]	<- p.vhcc.inc.AB
+	s[x$arm=="C", "visit.inc"]	<- p.vhcc.inc.C
+	
+	s[, "PC.prev"]		<- p.consent.PC*p.lab
+	s[, "PC.inc"]		<- p.consent.PC*p.lab
+	s[, "nonPC.prev"]	<- s[,"visit.prev"]*p.consent.HCC*p.lab		
+	s[, "nonPC.inc"]	<- s[,"visit.inc"]*p.consent.HCC*p.lab		
+	
+	s[, "nonPC.inc"]	<- round(switch(	method,
+									"PC and HCC"				= x$CD4.1st.HCC.inc * s[, "nonPC.inc"],
+									"PC after yr 1 and HCC"		= (x$CD4.1st.HCC.inc + x$CD4.1st.PC.inc/3) * s[, "nonPC.inc"],
+									"PC only incident and HCC"	= x$CD4.1st.HCC.inc * s[, "nonPC.inc"],
+									"only HCC"					= (x$CD4.1st.HCC.inc + x$CD4.1st.PC.inc/3) * s[, "nonPC.inc"],
+									NA
+									))						
+	s[, "nonPC.prev"]	<- round(switch(	method,
+									"PC and HCC"				= x$CD4.1st.HCC.prev * s[, "nonPC.prev"],
+									"PC after yr 1 and HCC"		= (x$CD4.1st.HCC.prev+x$CD4.1st.PC.prev/3) * s[, "nonPC.prev"],
+									"PC only incident and HCC"	= (x$CD4.1st.HCC.prev+x$CD4.1st.PC.prev) * s[, "nonPC.prev"],
+									"only HCC"					= (x$CD4.1st.HCC.prev+x$CD4.1st.PC.prev) * s[, "nonPC.prev"],
+									NA
+									))									
+	s[, "PC.prev"]		<- round(switch(	method,
+									"PC and HCC"				= x$CD4.1st.PC.prev*s[, "PC.prev"],
+									"PC after yr 1 and HCC"		= x$CD4.1st.PC.prev*s[, "PC.prev"],
+									"PC only incident and HCC"	= 0,
+									"only HCC"					= 0,
+									NA
+									))										
+	s[, "PC.inc"]		<- round(switch(	method,
+									"PC and HCC"				= x$CD4.1st.PC.inc*s[, "PC.inc"],
+									"PC after yr 1 and HCC"		= x$CD4.1st.PC.inc*2/3*s[, "PC.inc"],
+									"PC only incident and HCC"	= x$CD4.1st.PC.inc*s[, "PC.inc"],
+									"only HCC"					= 0,
+									NA
+									))
+	s[, "total prev"]	<- apply(s[, c("PC.prev","nonPC.prev")],1,sum)	/ 	first.CD4.All[,"total prev"]
+	s[, "total inc"]	<- apply(s[, c("PC.inc","nonPC.inc")],1,sum)	/ 	first.CD4.All[,"total inc"]
+						
+	#if(any(is.na(s[, "baseline"])))	stop("unknown method")								
+	#s[, "baseline"]		<- s[, "baseline"] / x$n.prev		#coverage at baseline is sampled HIV+ at baseline / total HIV+ at baseline	
+	as.data.frame(s[,-c(1,2)])	
 }
 ###############################################################################
 popart.sampling.init<- function(x, p.consent.PC, p.consent.HCC, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method="PC and HCC")

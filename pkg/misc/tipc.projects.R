@@ -220,6 +220,455 @@ print(	(proc.time()-simu.time)[3] )
 	stop()	
 }
 ###############################################################################
+prj.acute.test.lkl.nosampling.bothUandT	<- function()
+{
+	require(RColorBrewer)
+	fixed.susc			<- 0
+	m.type				<- "Acute"
+	loc.type			<- "Town II"
+	m.popsize			<- NA
+	m.known.states		<- 1
+	theta0				<- c(8, 0.05, 0, 0)
+	theta0				<- c(4, 0.058, 0, 0)
+	theta0				<- c(2, 0.065, 0, 0)
+	names(theta0)		<- c("acute","base","m.st1","m.st2")
+	sample.prob			<- c(0.5,0.5)
+	names(sample.prob)	<- c("Idx","E")
+	cluster.tw			<- 3
+	m.repeat			<- 1
+	resume				<- 0
+	verbose				<- 0	
+	
+	if(fixed.susc)
+		dir.name		<- paste(DATA,"acutesimu_fxs",sep='/')
+	else
+		dir.name		<- paste(DATA,"acutesimu_nofxs",sep='/')
+	f.name				<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_median",sep=''),sep='/')
+	cat(paste("\nload ",paste(f.name,".R",sep='')))		
+	load(paste(f.name,".R",sep=''))
+	print(tpc.table.all.median)
+	
+	
+	if(resume)
+	{
+		options(show.error.messages = FALSE)
+		f.name			<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_lkl",sep=''),sep='/')		
+		cat(paste("\ntry load ",paste(f.name,".R",sep='')))				
+		readAttempt		<-try(suppressWarnings(load(paste(f.name,".R",sep=''))))
+		options(show.error.messages = TRUE)
+		if(!inherits(readAttempt, "try-error"))
+			cat(paste("\nresumed file ",paste(f.name,".R",sep='')))
+	}
+	
+	theta.acute		<- seq(1,20,0.25)
+	theta.base		<- seq(0.03,0.085,0.002)
+	theta			<- expand.grid(acute= theta.acute, base= theta.base)
+	
+	if(!resume || inherits(readAttempt, "try-error"))
+	{
+		
+		#theta			<- matrix( c(2,4,6,8,    0.065, 0.058, 0.053, 0.05), 4,2, dimnames=list(c(),c("acute","base")) )		
+		clu.n			<- clu.tipc.n(acute.MAX.TIPC.SIZE)
+		
+		ibm				<- ibm.collapse( ibm.init.model(m.type, loc.type, NA, theta0, save='', resume= 0, init.pop=0) )
+	
+		state.n			<- ibm$init.pop.distr$status * ibm$init.pop.distr$npop
+		pop.n			<- ibm$init.pop.distr$npop
+		print(pop.n)
+		print(state.n)
+		print(nrow(theta))
+		#evaluate likelihood over parameter space
+		tipc.lkl		<- sapply(seq_len(nrow(theta)),function(i)
+				{				
+					ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]
+					ibm[["beta"]][["base"]]					<- theta[i,"base"]	
+					rate.m									<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)
+					sample.prob[]							<- c(1,1)	
+					dT										<- cluster.tw
+					tpc										<- tpc.table.all.median				
+					if(1)
+					{
+						lkl				<- acute.loglkl(tpc.table.all.median, rate.m, dT)[["table.lkl"]]
+					}
+					else
+					{
+						tpc.n.mx		<- ncol(tpc)-1														#max number of transmissions in tip cluster  	
+						tpc.closure		<- ifelse(all(sample.prob==1), tpc.n.mx, acute.MAX.TIPC.SIZE)		#without sampling, need to compute probabilities only up to the largest number of transmissions + 1 in the any tip cluster
+						clu.n			<- clu.n[seq_len(tpc.closure+1),seq_len(tpc.closure+1)]
+						clu.n.sum		<- apply(clu.n,2,sum)	#cheaper than 'seq_len(ncol(clu.n))^seq.int(-1,ncol(clu.n)-2)'
+						clu.n			<- clu.n / matrix(clu.n.sum, nrow=nrow(clu.n), ncol=length(clu.n.sum), byrow=1)								
+						part1			<- acute.subtree.lkl.PartNT(seq.int(0,ncol(clu.n)-1),rate.m['u','s'],rate.m['i','s'],dT, log=1)
+						part1			<- matrix(part1,nrow(clu.n),length(part1),byrow=1,dimnames=list(paste('idx',seq.int(0,nrow(clu.n)-1),sep=''),paste('n',seq.int(0,length(part1)-1),sep='')))
+						part2			<- acute.subtree.lkl.PartIdx(ncol(clu.n)-1,rate.m['u','s'],rate.m['i','s'], log=1)
+						lkl.U			<- part1 + part2 + log(clu.n)
+						dimnames(lkl.U)	<- dimnames(part2)
+						lkl.U			<- apply(lkl.U,2,function(x) log(sum(exp(x), na.rm=1)))
+						
+						part1			<- acute.subtree.lkl.PartNT(seq.int(0,ncol(clu.n)-1),rate.m['t','s'],rate.m['i','s'],dT, log=1)
+						part1			<- matrix(part1,nrow(clu.n),length(part1),byrow=1,dimnames=list(paste('idx',seq.int(0,nrow(clu.n)-1),sep=''),paste('n',seq.int(0,length(part1)-1),sep='')))
+						part2			<- acute.subtree.lkl.PartIdx(ncol(clu.n)-1,rate.m['t','s'],rate.m['i','s'], log=1)
+						lkl.T			<- part1 + part2 + log(clu.n)
+						dimnames(lkl.T)	<- dimnames(part2)
+						lkl.T			<- apply(lkl.T,2,function(x) log(sum(exp(x), na.rm=1)))
+						
+						init.freq.mle	<- apply(tpc.table.all.median,1,sum) / sum(tpc.table.all.median)
+						lkl.U			<- lkl.U + log(init.freq.mle)['u']
+						lkl.T			<- lkl.T + log(init.freq.mle)['t']
+						
+						lkl				<- rbind(rep(0,length(lkl.U)),lkl.T,lkl.U)
+						lkl				<- sum( tpc.table.all.median * lkl )
+					}
+	#print(lkl); print(init.freq.mle); stop()
+					lkl
+				})	
+		names(tipc.lkl)<- apply(theta,1,function(x)	paste(x,collapse='_',sep='') )
+		f.name			<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_lkl",sep=''),sep='/')		
+		cat(paste("\nsave tipc.lkl to file ",paste(f.name,".R",sep='')))
+		save(tipc.lkl, file=paste(f.name,".R",sep=''))		
+	}
+	
+	if(0)	#compute log likelihood of tip cluster table
+	{
+		#print(tipc.lkl)
+		#print(tpc.table.all.median)
+		
+		x		<- theta.acute
+		y		<- tipc.lkl
+		plot(1,1,type='n',bty='n',xlim=range(x),ylim=range(y),xlab=expression(beta[EE]/beta[UE]),ylab="tipc log likelihood")
+		lines(x,y)
+		abline(v=theta0[1], col="red")
+		theta.mle<- theta[which.max(y), ]
+		abline(v=theta.mle[1])
+		print(theta.mle)
+		stop()
+	}			
+	if(1)
+	{
+		theta		<- sapply( strsplit(names(tipc.lkl),'_',fixed=1), as.numeric )
+		theta.acute	<- unique(theta[1,])
+		theta.base	<- unique(theta[2,])	
+		print(theta.acute)
+		print(theta.base)
+		#stop()
+		#note: theta.acute runs first in lkls
+		
+		#lkls.mean<- apply(lkl,2,mean)
+		#lkls.mean<- apply(lkls,2,function(x) sd(x)/mean(x))
+		tipc.lkl.m	<- matrix(tipc.lkl, nrow= length(theta.acute), ncol= length(theta.base), dimnames=list(theta.acute,theta.base))
+		cat(paste("\nmax lkl is ",max(tipc.lkl.m)))
+		theta.mle	<- as.numeric(strsplit(names(tipc.lkl)[which.max(tipc.lkl)],'_')[[1]])
+		print(theta.mle)
+		f.name		<- paste(dir.name,paste("tpc_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_s",m.known.states,sep=''),sep='/')
+		cat(paste("\nplot",paste(f.name,"_2D.pdf",sep='')))
+		pdf(paste(f.name,"_2D.pdf",sep=''),version="1.4",width=4,height=4)
+		my.image(theta.acute,theta.base,tipc.lkl.m, xlab=expression(beta[EE]/beta[UE]),ylab=expression(beta[0]),nlevels=10)			
+		abline(v=theta.mle[1],lty=2)
+		abline(h=theta.mle[2],lty=2)
+		points(theta0[1],theta0[2], pch=19, col="red")
+		dev.off()		
+	}
+}
+###############################################################################
+prj.acute.test.lkl.wsampling.onlyU<- function()
+{
+	require(RColorBrewer)
+	m.type				<- "Acute"
+	loc.type			<- "Town II"
+	m.popsize			<- NA
+	m.known.states		<- 1
+	theta0				<- c(8, 0.05, 0, 0)
+	names(theta0)		<- c("acute","base","m.st1","m.st2")
+	sample.prob			<- c(0.5,0.5)
+	names(sample.prob)	<- c("Idx","E")
+	cluster.tw			<- 3
+	m.repeat			<- 1
+	resume				<- 1
+	verbose				<- 0	
+	dir.name			<- paste(DATA,"acutesimu_fxs_onlyu",sep='/')
+	f.name				<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_median",sep=''),sep='/')
+	cat(paste("\nload ",paste(f.name,".R",sep='')))		
+	load(paste(f.name,".R",sep=''))
+	print(tpc.table.all.median)
+	print(tpc.table.sample.median)
+	if(any(diff(sample.prob)!=0))	stop("cannot handle unequal sampling probabilities")
+	
+	theta.acute		<- seq(1,20,1)
+	theta.base		<- theta0[2]
+	theta			<- expand.grid(acute= theta.acute, base= theta.base)
+	
+	#theta			<- matrix( c(2,4,6,8,    0.065, 0.058, 0.053, 0.05), 4,2, dimnames=list(c(),c("acute","base")) )			
+	ibm				<- ibm.collapse( ibm.init.model(m.type, loc.type, NA, theta0, save='', resume= 0, init.pop=0) )	
+	state.n			<- ibm$init.pop.distr$status * ibm$init.pop.distr$npop
+	pop.n			<- ibm$init.pop.distr$npop	
+	print(pop.n)
+	print(state.n)	
+	
+	acute.MAX.TIPC.SIZE<<- 15 
+	clu.n			<- clu.tipc.n(acute.MAX.TIPC.SIZE)			
+	clu.n.sum		<- apply(clu.n,2,sum)																	#faster than seq_len(ncol(clu.n))^seq.int(-1,ncol(clu.n)-2)
+	lclu.n			<- log( clu.n / matrix(clu.n.sum, nrow=nrow(clu.n), ncol=length(clu.n.sum), byrow=1) ) 		
+	#evaluate likelihood over parameter space
+	tipc.lkl		<- sapply(seq_len(nrow(theta)),function(i)
+			{				
+#i<- 2
+#print(theta[i,])
+				ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]
+				ibm[["beta"]][["base"]]					<- theta[i,"base"]	
+				rate.m									<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)	
+				dT										<- cluster.tw
+				lkl										<- acutesampled.loglkl(tpc.table.sample.median, rate.m, sample.prob[1], dT, lclu.n=lclu.n)[["table.lkl"]]				
+#print(lkl); stop()
+				lkl
+			})	
+	names(tipc.lkl)<- apply(theta,1,function(x)	paste(x,collapse='_',sep='') )	
+	print(tipc.lkl)
+	if(0)	#compute log likelihood of tip cluster table
+	{
+		print(tipc.lkl)		
+		x		<- theta.acute
+		y		<- tipc.lkl
+		plot(1,1,type='n',bty='n',xlim=range(x),ylim=range(y),xlab=expression(beta[EE]/beta[UE]),ylab="tipc log likelihood")
+		lines(x,y)
+		abline(v=theta0[1], col="red")
+		theta.mle<- theta[which.max(y), ]
+		abline(v=theta.mle[1])
+		print(theta.mle)
+		stop()
+	}	
+	stop()
+}
+###############################################################################
+prj.acute.test.lkl.wsampling.bothUandT	<- function()
+{
+	require(RColorBrewer)
+	m.type				<- "Acute"
+	loc.type			<- "Town II"
+	m.popsize			<- NA
+	m.known.states		<- 1
+	theta0				<- c(8, 0.05, 0, 0)
+	names(theta0)		<- c("acute","base","m.st1","m.st2")
+	sample.prob			<- c(0.5,0.5)
+	names(sample.prob)	<- c("Idx","E")
+	cluster.tw			<- 3
+	m.repeat			<- 1
+	resume				<- 1
+	verbose				<- 0	
+	dir.name			<- paste(DATA,"acutesimu_fxs",sep='/')
+	f.name				<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_median",sep=''),sep='/')
+	cat(paste("\nload ",paste(f.name,".R",sep='')))		
+	load(paste(f.name,".R",sep=''))
+	print(tpc.table.all.median)
+	print(tpc.table.sample.median)
+			
+	theta.acute		<- seq(1,20,0.25)
+	theta.base		<- seq(0.03,0.085,0.002)
+	theta			<- expand.grid(acute= theta.acute, base= theta.base)
+				
+	if(resume)
+	{
+		options(show.error.messages = FALSE)
+		f.name			<- paste(dir.name,paste("tpcsampled_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_lkl",sep=''),sep='/')		
+		cat(paste("\ntry load ",paste(f.name,".R",sep='')))				
+		readAttempt		<-try(suppressWarnings(load(paste(f.name,".R",sep=''))))
+		options(show.error.messages = TRUE)
+		if(!inherits(readAttempt, "try-error"))
+			cat(paste("\nresumed file ",paste(f.name,".R",sep='')))
+	}
+	if(!resume || inherits(readAttempt, "try-error"))
+	{		
+		acute.MAX.TIPC.SIZE	<<- 20 
+		ibm				<- ibm.collapse( ibm.init.model(m.type, loc.type, NA, theta0, save='', resume= 0, init.pop=0) )
+		state.n			<- ibm$init.pop.distr$status * ibm$init.pop.distr$npop
+		pop.n			<- ibm$init.pop.distr$npop	
+		print(pop.n)
+		print(state.n)	
+#stop()
+		clu.n			<- clu.tipc.n(acute.MAX.TIPC.SIZE)			
+		clu.n.sum		<- apply(clu.n,2,sum)																	#faster than seq_len(ncol(clu.n))^seq.int(-1,ncol(clu.n)-2)
+		lclu.n			<- log( clu.n / matrix(clu.n.sum, nrow=nrow(clu.n), ncol=length(clu.n.sum), byrow=1) ) 		
+		#evaluate likelihood over parameter space
+		tipc.lkl		<- sapply(seq_len(nrow(theta)),function(i)
+				{				
+#i<- 2
+print(theta[i,])
+					ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]
+					ibm[["beta"]][["base"]]					<- theta[i,"base"]	
+					rate.m									<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)	
+					dT										<- cluster.tw
+					lkl										<- acutesampled.loglkl(tpc.table.sample.median, rate.m, sample.prob[1], dT, lclu.n=lclu.n)[["table.lkl"]]				
+#print(lkl); stop()
+					lkl
+				})	
+		names(tipc.lkl)<- apply(theta,1,function(x)	paste(x,collapse='_',sep='') )
+		
+		f.name			<- paste(dir.name,paste("tpcsampled_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_lkl",sep=''),sep='/')		
+		cat(paste("\nsave tipc.lkl to file ",paste(f.name,".R",sep='')))
+		save(tipc.lkl, file=paste(f.name,".R",sep=''))				
+	}
+	print(tipc.lkl)	
+	if(1)
+	{
+		theta		<- sapply( strsplit(names(tipc.lkl),'_',fixed=1), as.numeric )
+		theta.acute	<- unique(theta[1,])
+		theta.base	<- unique(theta[2,])	
+		print(theta.acute)
+		print(theta.base)
+		#stop()
+		#note: theta.acute runs first in lkls
+		
+		#lkls.mean<- apply(lkl,2,mean)
+		#lkls.mean<- apply(lkls,2,function(x) sd(x)/mean(x))
+		tipc.lkl.m	<- matrix(tipc.lkl, nrow= length(theta.acute), ncol= length(theta.base), dimnames=list(theta.acute,theta.base))
+		cat(paste("\nmax lkl is ",max(tipc.lkl.m)))
+		theta.mle	<- as.numeric(strsplit(names(tipc.lkl)[which.max(tipc.lkl)],'_')[[1]])
+		print(theta.mle)
+		f.name		<- paste(dir.name,paste("tpc_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_s",m.known.states,sep=''),sep='/')
+		cat(paste("\nplot",paste(f.name,"_2D.pdf",sep='')))
+		#pdf(paste(f.name,"_2D.pdf",sep=''),version="1.4",width=4,height=4)
+		my.image(theta.acute,theta.base,tipc.lkl.m, xlab=expression(beta[EE]/beta[UE]),ylab=expression(beta[0]),nlevels=10)			
+		abline(v=theta.mle[1],lty=2)
+		abline(h=theta.mle[2],lty=2)
+		points(theta0[1],theta0[2], pch=19, col="red")
+		#dev.off()		
+	}
+	stop()
+}
+###############################################################################
+prj.acute.test.lkl.nosampling.onlyU	<- function()
+{
+		require(RColorBrewer)
+		m.type				<- "Acute"
+		loc.type			<- "Town II"
+		m.popsize			<- NA
+		m.known.states		<- 1
+		theta0				<- c(8, 0.05, 0, 0)
+		names(theta0)		<- c("acute","base","m.st1","m.st2")
+		sample.prob			<- c(0.5,0.5)
+		names(sample.prob)	<- c("Idx","E")
+		cluster.tw			<- 3
+		m.repeat			<- 1
+		resume				<- 1
+		verbose				<- 0	
+		dir.name			<- paste(DATA,"acutesimu_fxs_onlyu",sep='/')
+		f.name				<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_median",sep=''),sep='/')
+		cat(paste("\nload ",paste(f.name,".R",sep='')))		
+		load(paste(f.name,".R",sep=''))
+		print(tpc.table.all.median)
+		
+		theta.acute		<- seq(1,20,1)
+		theta.base		<- theta0[2]
+		theta			<- expand.grid(acute= theta.acute, base= theta.base)
+		
+		#theta			<- matrix( c(2,4,6,8,    0.065, 0.058, 0.053, 0.05), 4,2, dimnames=list(c(),c("acute","base")) )		
+		clu.n			<- clu.tipc.n(acute.MAX.TIPC.SIZE)
+		
+		ibm				<- ibm.collapse( ibm.init.model(m.type, loc.type, NA, theta0, save='', resume= 0, init.pop=0) )
+		#simplify problem: INITIAL FREQUENCY OF U IS 1
+		ibm$init.pop.distr$status['u']<- ibm$init.pop.distr$status['u']+ibm$init.pop.distr$status['t']
+		ibm$init.pop.distr$status['t']<- 0
+		state.n			<- ibm$init.pop.distr$status * ibm$init.pop.distr$npop
+		pop.n			<- ibm$init.pop.distr$npop
+		print(pop.n)
+		print(state.n)
+		log				<- 1
+		#stop()
+		#evaluate likelihood over parameter space
+		chain.lkl		<- lapply(seq_len(nrow(theta)),function(i)
+				{					
+					ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]
+					ibm[["beta"]][["base"]]					<- theta[i,"base"]	
+					rate.m									<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)
+					sample.prob[]							<- c(1,1)	
+					dT										<- cluster.tw
+					tpc										<- tpc.table.all.median															
+					tpc.n.mx		<- ncol(tpc)-1														#max number of transmissions in tip cluster  	
+					tpc.closure		<- ifelse(all(sample.prob==1), tpc.n.mx, acute.MAX.TIPC.SIZE)		#without sampling, need to compute probabilities only up to the largest number of transmissions + 1 in the any tip cluster
+					clu.n			<- clu.n[seq_len(tpc.closure+1),seq_len(tpc.closure+1)]
+					clu.n.sum		<- apply(clu.n,2,sum)	#cheaper than 'seq_len(ncol(clu.n))^seq.int(-1,ncol(clu.n)-2)'
+					clu.n			<- clu.n / matrix(clu.n.sum, nrow=nrow(clu.n), ncol=length(clu.n.sum), byrow=1)					
+					part1			<- acute.subtree.lkl.PartNT(seq.int(0,ncol(clu.n)-1),rate.m['u','s'],rate.m['i','s'],dT, log=log)
+					part1			<- matrix(part1,nrow(clu.n),length(part1),byrow=1,dimnames=list(paste('idx',seq.int(0,nrow(clu.n)-1),sep=''),paste('n',seq.int(0,length(part1)-1),sep='')))
+					part2			<- acute.subtree.lkl.PartIdx(ncol(clu.n)-1,rate.m['u','s'],rate.m['i','s'], log=log)
+#print(part1); print(part2); print(log(clu.n)); stop()
+					if(log)
+						ans			<- part1 + part2 + log(clu.n)
+					else
+						ans			<- part1 * part2 * clu.n
+					dimnames(ans)	<- dimnames(part2)
+					#ans				<- ans / sum(ans)	-- DON T KNOW normalizing constant - this goes to n=Inf
+					ans
+				})
+		#plot tipc likelihoods to see if they make sense - yes they do
+		if(log)
+		{
+			tipc.lkl	<- sapply(seq_along(chain.lkl), function(i)   apply(chain.lkl[[i]],2,function(x) log(sum(exp(x), na.rm=1)))   )	
+		}
+		else
+		{
+			tipc.lkl	<- sapply(seq_along(chain.lkl), function(i)   apply(chain.lkl[[i]],2,function(x) sum(x[x!=-Inf], na.rm=1))   )
+			tipc.lkl	<- log(tipc.lkl)
+		}
+		colnames(tipc.lkl)<- apply(theta,1,function(x)	paste(x,collapse='_',sep='') )	
+		
+		if(0)	#compute log likelihood of tip cluster table
+		{
+			print(tipc.lkl)
+			print(tpc.table.all.median)
+			
+			cnts	<- matrix( tpc.table.all.median['u',], nrow=ncol(tpc.table.all.median), ncol=ncol(tipc.lkl), dimnames=dimnames(tipc.lkl) )
+			lkl		<- apply( tipc.lkl[seq_len(nrow(cnts)),] * cnts,2,sum)
+			
+			x		<- theta.acute
+			y		<- lkl
+			plot(1,1,type='n',bty='n',xlim=range(x),ylim=range(y),xlab=expression(beta[EE]/beta[UE]),ylab="tipc log likelihood")
+			lines(x,y)
+			abline(v=theta0[1], col="red")
+			theta.mle<- theta[which.max(lkl), ]
+			abline(v=theta.mle[1])
+			print(theta.mle)
+			stop()
+		}		
+		if(0)	#x-axis is theta[,"acute"]
+		{			
+			m	<- tipc.lkl
+			x	<- theta[,"acute"]
+			xlim<- range(x)		
+			ylim<- range(m)
+			cols<- brewer.pal(nrow(m), "Set3")
+			plot(1,1,type='n',bty='n',xlim=xlim,ylim=ylim,xlab=expression(beta[EE]/beta[UE]),ylab="log tipc probability")
+			sapply(seq_len(nrow(m)),function(i)
+					{
+						lines(x,m[i,],col=cols[i])			
+					})
+			legend("bottomright", fill=c("transparent",cols), border=NA, legend= c("#transmissions",seq.int(0,nrow(m)-1)), bty='n')
+			stop()
+		}
+		if(1)	#x-axis is total transmissions
+		{			
+			dT	<- cluster.tw
+			ibm[["beta"]][['i']][["status"]]['i']	<- 1
+			ibm[["beta"]][["base"]]					<- theta0["base"]	
+			rate.m									<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)
+			lambda									<- rate.m['u','s']
+			m										<- tipc.lkl
+			z										<- exp(-lambda*dT)*(1-exp(-lambda*dT))^seq.int(0,nrow(m)-1)
+						
+			x	<- seq.int(0,nrow(m)-1)
+			xlim<- range(x)		
+			ylim<- range(m)
+			cols<- colorRampPalette(c("red", "orange", "blue"), space = "Lab")( ncol(m) ) 
+			plot(1,1,type='n',bty='n',xlim=xlim,ylim=ylim,xlab="total transmissions in tip cluster (one U, others E)",ylab="log tipc probability")
+			sapply(seq_len(ncol(m)),function(j)
+					{
+						lines(x,m[,j],col=cols[j])			
+					})
+			#lines(x, log(z))
+			lines(seq.int(0,ncol(tpc.table.all.median)-1),log( tpc.table.all.median['u',]/sum(tpc.table.all.median['u',] )))
+			legend("bottomleft", fill=c("transparent",cols), border=NA, legend= c(expression(beta[EE]/beta[UE]),theta[,"acute"]), bty='n')
+			stop()
+		}	
+}
+###############################################################################
 prj.acute.test	<- function()
 {
 	require(RColorBrewer)
@@ -270,94 +719,21 @@ prj.acute.test	<- function()
 		print(tmp)	
 		stop()
 	}
+	if(0)
+	{
+		prj.acute.test.lkl.nosampling.onlyU()		
+	}
+	if(0)
+	{
+		prj.acute.test.lkl.nosampling.bothUandT()
+	}
+	if(0)
+	{
+		prj.acute.test.lkl.wsampling.onlyU()
+	}
 	if(1)
 	{
-		m.type				<- "Acute"
-		loc.type			<- "Town II"
-		m.popsize			<- NA
-		m.known.states		<- 1
-		theta0				<- c(8, 0.05, 0, 0)
-		names(theta0)		<- c("acute","base","m.st1","m.st2")
-		sample.prob			<- c(0.5,0.5)
-		names(sample.prob)	<- c("Idx","E")
-		cluster.tw			<- 3
-		m.repeat			<- 1
-		resume				<- 1
-		verbose				<- 0	
-		dir.name			<- paste(DATA,"acutesimu_fxs",sep='/')
-		f.name				<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_median",sep=''),sep='/')
-		cat(paste("\nload ",paste(f.name,".R",sep='')))		
-		load(paste(f.name,".R",sep=''))
-		print(tpc.table.all.median)
-		
-		theta.acute		<- seq(1,20,2)
-		theta.base		<- theta0[2]
-		theta			<- expand.grid(acute= theta.acute, base= theta.base)
-		
-		#theta			<- matrix( c(2,4,6,8,    0.065, 0.058, 0.053, 0.05), 4,2, dimnames=list(c(),c("acute","base")) )
-		
-		
-		clu.n			<- clu.tipc.n(acute.MAX.TIPC.SIZE)
-						
-		ibm				<- ibm.collapse( ibm.init.model(m.type, loc.type, NA, theta0, save='', resume= 0, init.pop=0) )		
-		state.n			<- ibm$init.pop.distr$status * ibm$init.pop.distr$npop
-		pop.n			<- ibm$init.pop.distr$npop
-		print(pop.n)
-		print(state.n)
-		#evaluate likelihood over parameter space
-		chain.lkl		<- lapply(seq_len(nrow(theta)),function(i)
-				{					
-					ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]
-					ibm[["beta"]][["base"]]					<- theta[i,"base"]	
-					rate.m									<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)
-					sample.prob[]							<- c(1,1)	
-					dT										<- 5#cluster.tw
-					tpc										<- tpc.table.all.median															
-					tpc.n.mx		<- ncol(tpc)-1														#max number of transmissions in tip cluster  	
-					tpc.closure		<- ifelse(all(sample.prob==1), tpc.n.mx+1, acute.MAX.TIPC.SIZE)		#without sampling, need to compute probabilities only up to the largest number of transmissions + 1 in the any tip cluster
-					clu.n			<- clu.n[seq_len(tpc.closure+1),seq_len(tpc.closure+1)]
-#print(clu.n)
-					part1			<- acute.subtree.lkl.PartNT(seq.int(0,ncol(clu.n)-1),rate.m['u','s'],rate.m['i','s'],dT)
-					part1			<- matrix(part1,nrow(clu.n),length(part1),byrow=1)
-					print(part1)
-					part2			<- acute.subtree.lkl.PartIdx(ncol(clu.n)-1,rate.m['u','s'],rate.m['i','s'])
-					print(part2)
-					ans				<- part1 * part2 * clu.n
-					dimnames(ans)	<- dimnames(part1)
-					ans				<- ans / sum(ans)
-					ans
-				})
-		#plot tipc likelihoods to see if they make sense - yes they do
-		tipc.lkl<- sapply(seq_along(chain.lkl), function(i)   apply(chain.lkl[[i]],2,function(x) sum(x, na.rm=1))   )
-		#tipc.lkl<- log(tipc.lkl)
-		print(tipc.lkl)
-		#x-axis is theta[,"acute"]
-		m	<- tipc.lkl
-		x	<- theta[,"acute"]
-		xlim<- range(x)		
-		ylim<- range(m)
-		cols<- brewer.pal(nrow(m), "Set3")
-		plot(1,1,type='n',bty='n',xlim=xlim,ylim=ylim,xlab=expression(beta[EE]/beta[UE]),ylab="tipc probability")
-		sapply(seq_len(nrow(m)),function(i)
-				{
-					lines(x,m[i,],col=cols[i])			
-				})
-		legend("bottomright", fill=c("transparent",cols), border=NA, legend= c("#transmissions",seq.int(0,nrow(m)-1)), bty='n')
-		stop()
-		
-		#x-axis is total transmissions
-		m	<- tipc.lkl
-		x	<- seq.int(0,nrow(m)-1)
-		xlim<- range(x)		
-		ylim<- range(m)
-		cols<- brewer.pal(ncol(m), "Set3")
-		plot(1,1,type='n',bty='n',xlim=xlim,ylim=ylim,xlab="total transmissions in tip cluster",ylab="tipc probability")
-		sapply(seq_len(ncol(m)),function(j)
-				{
-					lines(x,m[,j],col=cols[j])			
-				})
-		legend("bottomleft", fill=c("transparent",cols), border=NA, legend= c(expression(beta[EE]/beta[UE]),theta[,"acute"]), bty='n')
-		
+		prj.acute.test.lkl.wsampling.bothUandT()
 	}
 	
 }
@@ -786,7 +1162,7 @@ prj.acute.clusterdistribution<- function()
 							tipc.table								<- tpc[[r]][["tpc.table.all"]]
 							#print(beta.stratified)
 							#print(tipc.table)
-							tipc.lkl								<- acute.loglkl(tipc.table, beta.stratified, sample.prob2, tpc[[r]][["ibm"]][["beta"]][["dT"]])[["tipc.lkl"]]
+							tipc.lkl								<- acute.loglkl(tipc.table, beta.stratified, tpc[[r]][["ibm"]][["beta"]][["dT"]])[["tipc.lkl"]]
 							tipc.lkl #/ sum(tipc.lkl)							
 						})
 				names(ans)<- paste('r',seq_along(ans),sep='')
@@ -921,9 +1297,8 @@ prj.acute.loglklsurface<- function()
 					}	
 					ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]
 					ibm[["beta"]][["base"]]					<- theta[i,"base"]								
-					beta.stratified							<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)
-					sample.prob[]							<- c(1,1)						
-					ans										<- acute.loglkl(tpc.table.all.median, beta.stratified, sample.prob, cluster.tw, clu.n=tipc.n)
+					beta.stratified							<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)					
+					ans										<- acute.loglkl(tpc.table.all.median, beta.stratified, cluster.tw, clu.n=tipc.n)
 					ans[["table.lkl"]]
 				})
 		names(loglkl)	<- apply(theta,1,function(x) paste(x,collapse='_'))

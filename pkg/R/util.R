@@ -112,13 +112,18 @@ my.plot.persplocfit<- function(x, y, z, theta= 30, phi= 10, palette= "gray",...)
 	list(pmat=pmat, x= x, y= y, z= z)
 }
 ###############################################################################
-my.image<- function(x,y,z, palette= "gray",...)
+my.image<- function(x,y,z, palette= "YlGnBu",nlevels=5,...)
 {
+	require(RColorBrewer)
+	
 	par(mar=c(4,4,0.5,0.5))
 	if(palette=="topo")					image(x,y,z, col=tail( topo.colors(trunc(50*1.4)), 50 ),...)
-	else if(palette=="gray")			image(x,y,z, col=head( rev(gray(seq(0,.95,len=trunc(50*1.4)))), 50),...)					
-	else								image(x,y,z, col=heat.colors( 50 ),...)
-	contour(x,y,z,add=TRUE, nlevels= 5)	
+	else if(palette=="gray")			image(x,y,z, col=head( rev(gray(seq(0.05,.98,len=trunc(50*1.4)))), 50),...)					
+	else
+	{		
+		image(x,y,z, col=colorRampPalette(c("red", "orange", "blue"), space = "Lab")( 50 ),...)			
+	}
+	contour(x,y,z,add=TRUE, nlevels=nlevels)	
 }
 ###############################################################################
 my.image.smooth<- function(x,y,z,xlab,ylab,nrow=50,palette="gray",ncol=50,nlevel=50,theta=.25)

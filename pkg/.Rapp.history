@@ -1,3 +1,221 @@
+rep( (3 - theta)/2, 2)
+0.17*.3
+?data.frame
+30*4 + 508/2 + 1152/2
+30*4 + 508/1 + 1152/1
+ssa.d
+m<- matrix(1:9,3,3)
+sample(1:9,4,replace=1)
+sample(1:9,4,replace=1)/3
+sample(1:9,4,replace=1)%/%3
+sample(1:9,4,replace=1)%%3
+x<- sample(1:9,4,replace=1)
+x
+x%%3
+(x-1)%%3
+(x-1)%%3+1
+x%/%3
+?select
+?subset
+0.0125 * 1e4
+1/ (0.0125 * 1e4)
+50/1500
+?read.tree
+library(ape)
+?read.tree
+read.tree(text="(A:1,B:1):10;")
+read.tree(text="(A:1,B:1,C:1):10;")
+plot(read.tree(text="(A:1,B:1,C:1):10;"))
+example of using 'incomparables'#
+x <- data.frame(k1=c(NA,NA,3,4,5), k2=c(1,NA,NA,4,5), data=1:5)#
+y <- data.frame(k1=c(NA,2,NA,4,5), k2=c(NA,NA,3,4,5), data=1:5)
+x
+y
+merge(x, y, by=c("k1","k2")) # NA's match
+library(compiler)
+2013-2000
+3500/13
+3500/13 * 0.25
+require(abc.n)
+sim<- {tmp<-c(0.01218,0.01267,0.01273,0.01309,0.01364,0.0138,0.01397,0.0132,0.0139,0.01374,0.01513,0.01515,0.01557,0.01579,0.01596,0.01565,0.01566,0.01589,0.01532,0.01556,0.01593,0.01583,0.01595,0.01538,0.01654,0.01614,0.01502,0.01547,0.01555,0.01546,0.01534,0.01557,0.01577,0.0158,0.01637,0.01558,0.01572,0.01557,0.01529,0.01504); names(tmp)<- c(\"30.000000\", \"32.000000\", \"34.000000\", \"36.000000\", \"38.000000\", \"40.000000\", \"42.000000\", \"44.000000\", \"46.000000\", \"48.000000\", \"50.000000\", \"52.000000\", \"54.000000\", \"56.000000\", \"58.000000\", \"60.000000\", \"62.000000\", \"64.000000\", \"66.000000\", \"68.000000\", \"70.000000\", \"72.000000\", \"74.000000\", \"76.000000\", \"78.000000\", \"80.000000\", \"82.000000\", \"84.000000\", \"86.000000\", \"88.000000\", \"90.000000\", \"92.000000\", \"94.000000\", \"96.000000\", \"98.000000\", \"100.000000\", \"102.000000\", \"104.000000\", \"106.000000\", \"108.000000\"); tmp}
+sim<- {tmp<-c(0.01218,0.01267,0.01273,0.01309,0.01364,0.0138,0.01397,0.0132,0.0139,0.01374,0.01513,0.01515,0.01557,0.01579,0.01596,0.01565,0.01566,0.01589,0.01532,0.01556,0.01593,0.01583,0.01595,0.01538,0.01654,0.01614,0.01502,0.01547,0.01555,0.01546,0.01534,0.01557,0.01577,0.0158,0.01637,0.01558,0.01572,0.01557,0.01529,0.01504); names(tmp)<- c("30.000000", "32.000000", "34.000000", "36.000000", "38.000000", "40.000000", "42.000000", "44.000000", "46.000000", "48.000000", "50.000000", "52.000000", "54.000000", "56.000000", "58.000000", "60.000000", "62.000000", "64.000000", "66.000000", "68.000000", "70.000000", "72.000000", "74.000000", "76.000000", "78.000000", "80.000000", "82.000000", "84.000000", "86.000000", "88.000000", "90.000000", "92.000000", "94.000000", "96.000000", "98.000000", "100.000000", "102.000000", "104.000000", "106.000000", "108.000000"); tmp}
+obs<- {tmp<-c(0.01293,0.01278,0.01286,0.01278,0.01261,0.01301,0.01297,0.01251); names(tmp)<- c("30.000000", "32.000000", "34.000000", "36.000000", "38.000000", "40.000000", "42.000000", "44.000000"); tmp}
+obs.n<- length(obs)
+s.of.lkl<- sqrt( var(obs)*(obs.n-1)/obs.n  * (obs.n-1)/(obs.n-3)	)
+s.of.lkl
+sd(obs)
+sim.sd	<- sd(sim)
+mx.pw<- 0.9; alpha<- 0.01; annealing<- 5
+nabc.mutost.onesample.n.of.y(obs.n, s.of.lkl, mx.pw, sim.sd, alpha, tau.u.ub=0.0003*annealing, tol= s.of.lkl*s.of.lkl*1e-3)
+nabc.mutost.onesample.n.of.y(obs.n, s.of.lkl, mx.pw, sim.sd, alpha, tau.u.ub=0.0003, tol= s.of.lkl*s.of.lkl*1e-3)
+sqrt(s.of.lkl)
+s.of.lkl^2
+s.of.lkl^2 * 1e-3
+3.700529e-08 - 3.748281e-08
+.packages()
+search()
+detach("package:abc.n")
+search()
+nabc.mutost.onesample.n.of.y(obs.n, s.of.lkl, mx.pw, sim.sd, alpha, tau.u.ub=0.0003, tol= s.of.lkl*s.of.lkl*1e-3)
+require(abc.n)
+nabc.mutost.onesample.n.of.y(obs.n, s.of.lkl, mx.pw, sim.sd, alpha, tau.u.ub=0.0003, tol= s.of.lkl*s.of.lkl*1e-3)
+require(abc.n)#
+#
+sim<- {tmp<-c(0.01218,0.01267,0.01273,0.01309,0.01364,0.0138,0.01397,0.0132,0.0139,0.01374,0.01513,0.01515,0.01557,0.01579,0.01596,0.01565,0.01566,0.01589,0.01532,0.01556,0.01593,0.01583,0.01595,0.01538,0.01654,0.01614,0.01502,0.01547,0.01555,0.01546,0.01534,0.01557,0.01577,0.0158,0.01637,0.01558,0.01572,0.01557,0.01529,0.01504); names(tmp)<- c("30.000000", "32.000000", "34.000000", "36.000000", "38.000000", "40.000000", "42.000000", "44.000000", "46.000000", "48.000000", "50.000000", "52.000000", "54.000000", "56.000000", "58.000000", "60.000000", "62.000000", "64.000000", "66.000000", "68.000000", "70.000000", "72.000000", "74.000000", "76.000000", "78.000000", "80.000000", "82.000000", "84.000000", "86.000000", "88.000000", "90.000000", "92.000000", "94.000000", "96.000000", "98.000000", "100.000000", "102.000000", "104.000000", "106.000000", "108.000000"); tmp}#
+#
+obs<- {tmp<-c(0.01293,0.01278,0.01286,0.01278,0.01261,0.01301,0.01297,0.01251); names(tmp)<- c("30.000000", "32.000000", "34.000000", "36.000000", "38.000000", "40.000000", "42.000000", "44.000000"); tmp}#
+#
+obs.n<- length(obs)#
+s.of.lkl<- sqrt( var(obs)*(obs.n-1)/obs.n  * (obs.n-1)/(obs.n-3)	)#
+sim.sd	<- sd(sim); mx.pw<- 0.9; alpha<- 0.01; annealing<- 5
+nabc.mutost.onesample.n.of.y(obs.n, s.of.lkl, mx.pw, sim.sd, alpha, tau.u.ub=0.0003, tol= s.of.lkl*s.of.lkl*1e-3)
+require(abc.n)#
+#
+sim<- {tmp<-c(0.01218,0.01267,0.01273,0.01309,0.01364,0.0138,0.01397,0.0132,0.0139,0.01374,0.01513,0.01515,0.01557,0.01579,0.01596,0.01565,0.01566,0.01589,0.01532,0.01556,0.01593,0.01583,0.01595,0.01538,0.01654,0.01614,0.01502,0.01547,0.01555,0.01546,0.01534,0.01557,0.01577,0.0158,0.01637,0.01558,0.01572,0.01557,0.01529,0.01504); names(tmp)<- c("30.000000", "32.000000", "34.000000", "36.000000", "38.000000", "40.000000", "42.000000", "44.000000", "46.000000", "48.000000", "50.000000", "52.000000", "54.000000", "56.000000", "58.000000", "60.000000", "62.000000", "64.000000", "66.000000", "68.000000", "70.000000", "72.000000", "74.000000", "76.000000", "78.000000", "80.000000", "82.000000", "84.000000", "86.000000", "88.000000", "90.000000", "92.000000", "94.000000", "96.000000", "98.000000", "100.000000", "102.000000", "104.000000", "106.000000", "108.000000"); tmp}#
+#
+obs<- {tmp<-c(0.01293,0.01278,0.01286,0.01278,0.01261,0.01301,0.01297,0.01251); names(tmp)<- c("30.000000", "32.000000", "34.000000", "36.000000", "38.000000", "40.000000", "42.000000", "44.000000"); tmp}#
+#
+obs.n<- length(obs)#
+s.of.lkl<- sqrt( var(obs)*(obs.n-1)/obs.n  * (obs.n-1)/(obs.n-3)	)#
+sim.sd	<- sd(sim); mx.pw<- 0.9; alpha<- 0.01; annealing<- 5#
+nabc.mutost.onesample.n.of.y(obs.n, s.of.lkl, mx.pw, sim.sd, alpha, tau.u.ub=0.0003, tol= s.of.lkl*s.of.lkl*1e-3)
+outdir<- "/Users/Oliver/duke/2013_HIV_NL/ATHENA_2013/data/tmp"
+signat.out	<- signat.in	<- "Wed_May__1_17/08/15_2013"
+file								<- paste(outdir,"/ATHENA_2013_03_FirstAliSequences_HXB2PROTRT_",gsub('/',':',signat.out),".fasta.clustalo",sep='')#
+		if(verbose) cat(paste("\nread ",file))#
+		seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+require(ape)
+seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+dim(seq.PROT.RT)
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3495, c("g","-","-","-","g"))
+hivx.seq.find<- function(char.matrix, pos0= NA, from= c(), verbose=1)#
+{#
+	if(is.na(pos0)) 	stop("start position of token to be replaced is missing")#
+	if(!length(from))	stop("token to be replaced is missing")#
+	query.colidx	<- seq.int(pos0,pos0+length(from)-1)#
+	query.yes		<- which( apply(char.matrix, 1, function(x)	all(x[query.colidx]==from) ) )#
+	query.yes	#
+}
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3495, c("g","-","-","-","g"))
+query.yes
+seq.PROT.RT[query.yes,3495:3499]<- matrix( c("g","g","-","-","-"), nrow=length(query.yes), ncol=5, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("-","t","a"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("a","-"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3502, c("a","-"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("-","t","a"))
+query.yes
+seq.PROT.RT[345, 3500:3520]
+write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
+file
+file<- "/Users/Oliver/duke/2013_HIV_NL/ATHENA_2013/data/tmp/ATHENA_2013_03_FirstAliSequences_HXB2PROTRT_Wed_May__1_17:08:15_2013.fasta.clustalo2"
+seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3495, c("g","-","-","-","g"))
+query.yes
+seq.PROT.RT[query.yes,3495:3499]<- matrix( c("g","g","-","-","-"), nrow=length(query.yes), ncol=5, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("-","t","a"))
+query.yes
+seq.PROT.RT[query.yes,3501:3503]<- matrix( c("t","a","-"), nrow=length(query.yes), ncol=3, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3502, c("-","a"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3502, c("a","-"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("a","-"))
+query.yes
+seq.PROT.RT[query.yes,3501:3502]<- matrix( c("-","a"), nrow=length(query.yes), ncol=2, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3505, c("-","-","-","-","a"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3504, c("g","a","c"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3507, c("-","-","-","g","a"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3551, c("g","g"))
+query.yes
+query.yes[1:10]
+for(i in query.yes)#
+			seq.PROT.RT[i,3551:3600]		<-	c("-",seq.PROT.RT[i,3551:3599])
+write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3552, c("g","c"))
+query.yes
+for(i in query.yes)#
+			seq.PROT.RT[i,3552:3600]		<-	c("-",seq.PROT.RT[i,3552:3599])
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("-","t","t"))
+query.yes
+for(i in query.yes)#
+			seq.PROT.RT[i,3501:3600]		<-	c("-",seq.PROT.RT[i,3501:3599])
+seq.PROT.RT[17,3501:3510]
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3498, c("c","g","t"))
+query.yes
+for(i in query.yes)#
+			seq.PROT.RT[i,3498:3520]		<-	c("-",seq.PROT.RT[i,3498:3519])
+write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3552, c("-","g","g"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3549, c("-","c","a"))
+query.yes
+seq.PROT.RT[query.yes,3549:3551]<- matrix( c("c","a","-"), nrow=length(query.yes), ncol=3, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a"))
+query.yes
+seq.PROT.RT[query.yes,3543:3545]<- matrix( c("c","a","-"), nrow=length(query.yes), ncol=3, byrow=1 )
+seq.PROT.RT[query.yes,3543:3545]<- matrix( c("-","c","a"), nrow=length(query.yes), ncol=3, byrow=1 )
+seq.PROT.RT[query.yes,3543:3555]
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a","g","g","g","g","c","a"))
+query.yes
+seq.PROT.RT[query.yes,3543:3551]<- matrix( c("c","a","g","g","g","g","c","a","-"), nrow=length(query.yes), ncol=9, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a"))
+query.yes
+seq.PROT.RT[query.yes,3543:3555]
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a","g","g","a","g","c","a"))#
+		if(length(query.yes))#
+			seq.PROT.RT[query.yes,3543:3551]<- matrix( c("c","a","g","g","a","g","c","a","-"), nrow=length(query.yes), ncol=9, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a","k","g","g","a","c","a"))#
+		if(length(query.yes))#
+			seq.PROT.RT[query.yes,3543:3551]<- matrix( c("c","a","k","g","g","a","c","a","-"), nrow=length(query.yes), ncol=9, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a"))
+query.yes
+seq.PROT.RT[query.yes,3543:3555]
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a","g","g","g","g","g","a"))
+seq.PROT.RT[query.yes,3543:3551]<- matrix( c("c","a","g","g","g","g","g","a","-"), nrow=length(query.yes), ncol=9, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","t"))
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a","g","g","g","g","g","a"))
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","t"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3549, c("a","a","-"))
+query.yes
+seq.PROT.RT[query.yes,3549:3551]<- matrix( c("-","-","-"), nrow=length(query.yes), ncol=3, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3551, c("g","a","c"))
+seq.PROT.RT[query.yes,3551:3560]
+for(i in query.yes)#
+			seq.PROT.RT[i,3551:3560]		<-	c("-",seq.PROT.RT[i,3551:3559])
+seq.PROT.RT[query.yes,3551:3560]
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3551, c("g","a","y"))
+query.yes
+seq.PROT.RT[query.yes,3551:3560]
+if(length(query.yes))#
+			seq.PROT.RT[query.yes,3551:3554]<- matrix( c("-","g","a","y"), nrow=length(query.yes), ncol=4, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3549, c("-","c","c"))
+query.yes
+seq.PROT.RT[query.yes,3549:3560]
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3549, c("-","c","c","g","g"))
+query.yes
+seq.PROT.RT[query.yes,3549:3551]<- matrix( c("c","-","c"), nrow=length(query.yes), ncol=3, byrow=1 )
+write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
+file
+seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+dim(seq.PROT.RT)
+seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+dim(seq.PROT.RT)
+file
+seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+dim(seq.PROT.RT)
+seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+dim(seq.PROT.RT)
+seq.PROT.RT							<- seq.PROT.RT[,2253:ncol(seq.PROT.RT)]
+dim(seq.PROT.RT)
+3877-2253
+seq.PROT.RT[1:5,1620:1630]
 ncol(seq.PROT.RT)<- 1624
 dim(seq.PROT.RT)[2]<- 1624
 dim(seq.PROT.RT)
@@ -86,481 +304,8 @@ library(roxygen2)#
 DIR_PKG<-"/Users/tonton/Documents/GitProjects/nABC/git_abc.n/pkg"#
 DIR_PKG<-"/Users/Oliver/git/abc.n/pkg"#
 roxygenize(package=paste(DIR_PKG))
-setwd("/Users/Oliver/git/abc.n/pkg")
-source("misc/nabc.startme.R")
-xn <- 60#
-yn <- xn#
-xmean <- 2#
-xsigma <- 1#
-ymean <- 2#
-ysigma <- 0.5#
-#
-obs <- rnorm(xn, xmean, xsigma)#
-obs <- (obs - mean(obs))/sd(obs) * xsigma + xmean#
-sim <- rnorm(yn, ymean, ysigma)#
-#
-n.of.x <- xn#
-s.of.x <- sd(obs)#
-n.of.y <- yn#
-s.of.y <- sd(sim)#
-mx.pw <- 0.9#
-alpha <- 0.01#
-tau.u.ub <- 2
-xn <- 60#
-yn <- xn#
-xmean <- 1#
-xsigma <- 1#
-ymean <- 1#
-ysigma <- 2#
-#
-obs <- rnorm(xn, xmean, xsigma)#
-obs <- (obs - mean(obs))/sd(obs) * xsigma + xmean#
-sim <- rnorm(yn, ymean, ysigma)#
-#
-n.of.x <- xn#
-s.of.x <- sd(obs)#
-n.of.y <- yn#
-s.of.y <- sd(sim)#
-mx.pw <- 0.9#
-alpha <- 0.01#
-tau.u.ub <- 2
-nabc.calibrate.m.and.tau.yesmxpw.yesKL("nabc.mutost.kl", args = list(n.of.x = n.of.x, s.of.x = s.of.x, n.of.y = n.of.y, s.of.y = s.of.y, #
-	mx.pw = mx.pw, alpha = alpha, calibrate.tau.u = T, tau.u = tau.u.ub), plot = T)
-require(ggplot2)
-nabc.calibrate.m.and.tau.yesmxpw.yesKL("nabc.mutost.kl", args = list(n.of.x = n.of.x, s.of.x = s.of.x, n.of.y = n.of.y, s.of.y = s.of.y, #
-	mx.pw = mx.pw, alpha = alpha, calibrate.tau.u = T, tau.u = tau.u.ub), plot = T)
-require(reshape)
-nabc.calibrate.m.and.tau.yesmxpw.yesKL("nabc.mutost.kl", args = list(n.of.x = n.of.x, s.of.x = s.of.x, n.of.y = n.of.y, s.of.y = s.of.y, #
-	mx.pw = mx.pw, alpha = alpha, calibrate.tau.u = T, tau.u = tau.u.ub), plot = T)
-nabc.chisqstretch.kl(n.of.x, s.of.x, n.of.y, s.of.y, mx.pw, alpha, calibrate.tau.u = T, tau.u = tau.u.ub, plot = T)
-require(pscl)
-nabc.chisqstretch.kl(n.of.x, s.of.x, n.of.y, s.of.y, mx.pw, alpha, calibrate.tau.u = T, tau.u = tau.u.ub, plot = T)
-nabc.calibrate.m.and.tau.yesmxpw.yesKL("nabc.chisqstretch.kl", args = list(n.of.x = n.of.x, s.of.x = s.of.x, n.of.y = n.of.y, #
-	s.of.y = s.of.y, mx.pw = mx.pw, alpha = alpha, calibrate.tau.u = T, tau.u = tau.u.ub), plot = T)
-xn <- 60#
-yn <- xn#
-xmean <- 1#
-xsigma <- 1#
-ymean <- 1#
-ysigma <- 2#
-#
-ymean <- xmean <- 0#
-ysigma <- 1#
-#
-obs <- rnorm(xn, xmean, xsigma)#
-obs <- (obs - mean(obs))/sd(obs) * xsigma + xmean#
-sim <- rnorm(yn, ymean, ysigma)#
-#
-n.of.x <- xn#
-s.of.x <- sd(obs)#
-n.of.y <- yn#
-s.of.y <- sd(sim)#
-mx.pw <- 0.9#
-alpha <- 0.01#
-tau.u.ub <- 2
-nabc.calibrate.m.and.tau.yesmxpw.yesKL("nabc.chisqstretch.kl", args = list(n.of.x = n.of.x, s.of.x = s.of.x, n.of.y = n.of.y, #
-	s.of.y = s.of.y, mx.pw = mx.pw, alpha = alpha, calibrate.tau.u = T, tau.u = tau.u.ub), plot = T)
-nabc.calibrate.m.and.tau.yesmxpw.yesKL("nabc.chisqstretch.kl", args = list(n.of.x = n.of.x, s.of.x = s.of.x, n.of.y = n.of.y, #
-	s.of.y = NA, mx.pw = mx.pw, alpha = alpha, calibrate.tau.u = T, tau.u = tau.u.ub), plot = T)
-nabc.calibrate.m.and.tau.yesmxpw.yesKL("nabc.chisqstretch.kl", args = list(n.of.x = n.of.x, s.of.x = s.of.x, n.of.y = n.of.y, #
-	s.of.y = NA, mx.pw = mx.pw, alpha = alpha, calibrate.tau.u = T, tau.u = tau.u.ub, for.mle=1), plot = T)
-library(roxygen2)#
-DIR_PKG<-"/Users/tonton/Documents/GitProjects/nABC/git_abc.n/pkg"#
-DIR_PKG<-"/Users/Oliver/git/abc.n/pkg"#
-roxygenize(package=paste(DIR_PKG))
-library(roxygen2)#
-DIR_PKG<-"/Users/tonton/Documents/GitProjects/nABC/git_abc.n/pkg"#
-DIR_PKG<-"/Users/Oliver/git/abc.n/pkg"#
-roxygenize(package=paste(DIR_PKG))
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-traceback()
-traceback()
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-?optimize
-35000 * 0.0015
-1/0.84
-1/0.848
-1/1.16
-37000*0.8399
-37000*0.844
-37000*0.8443
-37000*0.8443 - 37000*0.8399
-160/37000
-37000*0.846
-37000*0.845
-37000*0.85
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-source("misc/nabc.startme.R")
-0.0289720691211937+0.0355260284565393+0.0289722479523953
-0.0934089544518847+0.0968689133533543+0.0934057893458528
-0.28/0.09
-CODE.HOME<<- "/Users/Oliver/git/phylodesign/pkg"
-roxygenize(CODE.HOME)
-3
-6
-9
-12
-15
-18
-21
-24
-27
-30
-33
-35
 setwd("/Users/Oliver/git/phylodesign/pkg")
 source("misc/phdes.startme.R")
-paste('n',seq.int(0,st.mx), sep='')
-paste('n',seq.int(0,3), sep='')
-source("misc/phdes.startme.R")
-traceback()
-traceback()
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-traceback()
-source("misc/phdes.startme.R")
-traceback()
 source("misc/phdes.startme.R")
 source("misc/phdes.startme.R")
 source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-NA/NA
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-sum(c(NA),na.rm=1)
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-choose(1,0)
-choose(2,0)
-choose(0,0)
-6065*0.7
-str(matrix(NA,2,2))
-str(matrix(NA,1,1))
-str(data.frame(NA,1,1))
-?subset
-?subset.data.table
-?data.table:::subset
-(x <- c(sort(sample(1:20, 9)),NA))#
-(y <- c(sort(sample(3:23, 7)),NA))
-setequal(x,y)
-setequal(x,x)
-factorial(0)
-?dmultinom
-(x <- c(sort(sample(1:20, 9)),NA))#
-(y <- c(sort(sample(3:23, 7)),NA))
-5.8 + 2.2 * 2
-3.55 + 4.57
-10.2 * 3.7
-6.7*8.12
-6.7*8.12 + 10.2 * 3.7
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-m.type				<- "Acute"#
-	loc.type			<- "ZA-C"#
-	m.popsize			<- 6e4#
-	m.known.states		<- 0#
-	theta0				<- c(8, 0.09, 0, 0)#
-	names(theta0)		<- c("acute","base","m.st1","m.st2")#
-	sample.prob			<- c(0.7,0.7)#
-	names(sample.prob)	<- c("Idx","E")	#
-	m.repeat			<- 1#
-	resume				<- 1#
-	verbose				<- 1	#
-	cat(paste("\nm.popsize ",m.popsize))#
-	cat(paste("\nloc.type ",loc.type))	#
-	cat(paste("\nm.known.states ",m.known.states))#
-	cat(paste("\nm.repeat ",m.repeat))#
-	cat(paste("\nacute.MAX.TIPC.SIZE ",acute.MAX.TIPC.SIZE))	#
-	cat(paste("\ntheta0.acute ",theta0[1]))#
-	cat(paste("\ntheta0.base ",theta0[2]))#
-	cat(paste("\nsample.prob.Idx ",sample.prob[1]))#
-	cat(paste("\nsample.prob.E ",sample.prob[2]))#
-	cat(paste("\nverbose ",verbose))#
-	cat(paste("\nresume ",resume))#
-	my.mkdir(DATA,"acutecld")#
-	dir.name<- paste(DATA,"simudata",sep='/')#
-	f.name<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],sep=''),sep='/')					#
-	#tmp<- paste(f.name,"_example_contingencytable_upto3.R",sep='')	#
-	tmp<- paste(f.name,".R",sep='')#
-	cat(paste("\nload ",tmp))		#
-	load(tmp)
-theta.acute	<- 	seq(1,10,0.25)#10#
-		theta.base	<-	seq(0.03,0.16,0.01)#0.16
-theta	<- expand.grid(acute= theta.acute, base= theta0[2])
-theta
-sample.prob2	<- sample.prob#
-	sample.prob2[]	<- c(1,1)
-sample.prob2
-compare tip cluster distribution as 'acute' varies#
-	lkl		<- sapply(seq_len(nrow(theta)),function(i)#
-			{																		#
-				ans	<- sapply(c(1), function(r)#
-						{							#
-							ibm		<- tpc[[r]][["ibm"]]#
-							if(!m.known.states)#
-							{#
-								ibm	<- ibm.init.model(m.type, loc.type, m.popsize, theta0, resume= 0)#
-								ibm	<- ibm.collapse(ibm)								#
-							}	#
-							ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]#
-							ibm[["beta"]][["base"]]					<- theta[i,"base"]	#
-							beta.stratified							<- acute.get.rates(ibm, per.capita.i=1)#
-							tipc.table								<- tpc[[r]][["tpc.table.all"]]#
-							print(beta.stratified)#
-							print(tipc.table)#
-							tmp										<- acute.loglkl(tipc.table, beta.stratified, sample.prob2, tpc[[r]][["ibm"]][["beta"]][["dT"]])[["tipc.lkl"]]#
-							print(tmp)#
-							stop()#
-							tmp#
-						})#
-				names(ans)<- paste('r',seq_along(ans),sep='')#
-				ans#
-			})
-traceback()
-acute.loglkl<- function(tpc, rate.m, sample.prob, dT, clu.n=NULL)#
-{#
-#print(tpc); print(rate.m)		#
-	ans			<- numeric(2)#
-	tpc.n.mx	<- ncol(tpc)-1														#max number of transmissions in tip cluster  	#
-	tpc.closure	<- ifelse(all(sample.prob==1), tpc.n.mx, acute.MAX.TIPC.SIZE)		#without sampling, need to compute probabilities only up to the largest number of transmissions in the any tip cluster#
-	if(tpc.n.mx>tpc.closure)	#
-		stop(paste("\nfound tip cluster sizes",tpc.n.mx,"while max supported is",tpc.closure))#
-	if(is.null(clu.n))	#
-		clu.n	<- clu.n.of.tchain(tpc.closure)#
-#print(clu.n)#
-	#get transmission chain likelihoods for those that start with 'U'#
-	chain.lkl	<- sapply(seq.int(0,ncol(clu.n)-1),function(ntrm)#
-			{				#
-				tmp<- sapply( 	seq.int(0,ntrm), function(nx){		acute.lkl.tree.xk.ik(nx,ntrm-nx,rate.m['u','s'],rate.m['i','s'],dT,log=0) 			})#
-				c(tmp,rep(0, ncol(clu.n)-1-ntrm))#
-			})#
-	#multiply with possible number of combinations#
-	chain.lkl			<- chain.lkl * clu.n#
-	colnames(chain.lkl)	<- paste('n',seq.int(0,ncol(chain.lkl)-1),sep='')#
-	rownames(chain.lkl)	<- paste('idx',seq.int(0,nrow(chain.lkl)-1),sep='')	#
-	if(any(sample.prob!=1))#
-		chain.lkl		<- clu.p.of.tchain.rnd.sampling(chain.lkl, sample.prob, mx.s.ntr=min(tpc.n.mx+1,tpc.closure), log=0, clu.p.norm=0, rtn.only.closure.sum=0 )#
-#print(chain.lkl)	#
-	#the [idx0, seq.int(2,ncol(chain.lkl))] are tip clusters starting with an 'E' index case#
-	tipc.lkl.E			<- c( chain.lkl[1,seq.int(2,ncol(chain.lkl))] )#
-	chain.lkl[1,seq.int(2,ncol(chain.lkl))]	<- 0	#
-	chain.lkl			<- chain.lkl[,-ncol(chain.lkl)]#
-	#integrate transmission chains out#
-	tipc.lkl.U			<- apply(chain.lkl,2,function(x) sum(x, na.rm=1))#
-	##
-	#get transmission chain likelihoods for those that start with 'T'#
-	##
-	chain.lkl	<- sapply(seq.int(0,ncol(clu.n)-1),function(ntrm)#
-			{				#
-				tmp<- sapply( 	seq.int(0,ntrm), function(nx){		acute.lkl.tree.xk.ik(nx,ntrm-nx,rate.m['t','s'],rate.m['i','s'],dT,log=0) 			})#
-				c(tmp,rep(0, ncol(clu.n)-1-ntrm))#
-			})#
-	#multiply with possible number of combinations#
-	chain.lkl			<- chain.lkl * clu.n	#
-	colnames(chain.lkl)	<- paste('n',seq.int(0,ncol(chain.lkl)-1),sep='')#
-	rownames(chain.lkl)	<- paste('idx',seq.int(0,nrow(chain.lkl)-1),sep='')#
-	if(any(sample.prob!=1))#
-		chain.lkl		<- clu.p.of.tchain.rnd.sampling(chain.lkl, sample.prob, mx.s.ntr=min(tpc.n.mx+1,tpc.closure), log=0, clu.p.norm=0, rtn.only.closure.sum=0 )#
-#print(chain.lkl)		#
-	#the [idx0, seq.int(2,ncol(chain.lkl))] are tip clusters starting with an 'E' index case#
-#print(tipc.lkl.E)#
-	tipc.lkl.E			<- tipc.lkl.E + c( chain.lkl[1,seq.int(2,ncol(chain.lkl))] )#
-	names(tipc.lkl.E)	<- paste("ns",seq.int(0,length(tipc.lkl.E)-1))#
-#print(tipc.lkl.E)	#
-	chain.lkl[1,seq.int(2,ncol(chain.lkl))]	<- 0	#
-	chain.lkl			<- chain.lkl[,-ncol(chain.lkl)]#
-	#integrate transmission chains out#
-	tipc.lkl.T			<- apply(chain.lkl,2,function(x) sum(x, na.rm=1))#
-	#multinomial observation model	#
-	tipc.lkl			<- rbind(tipc.lkl.E,rbind(tipc.lkl.U,tipc.lkl.T))#
-	rownames(tipc.lkl)	<- c('i','u','t')#
-	print(tipc.lkl); print(tpc)	#
-	if(ncol(tipc.lkl)!=ncol(tpc))	stop("columns of tipc.lkl and tpc do not match")#
-	if(nrow(tipc.lkl)!=nrow(tpc))	stop("rows of tipc.lkk and tpc do not match")#
-#print(tipc.lkl); print(tpc)#
-	table.lkl<- dmultinom(as.vector(tpc), size=NULL, prob= as.vector(tipc.lkl), log=1)#
-	list(table.lkl= table.lkl, tipc.lkl=tipc.lkl)	#
-}
-compare tip cluster distribution as 'acute' varies#
-	lkl		<- sapply(seq_len(nrow(theta)),function(i)#
-			{																		#
-				ans	<- sapply(c(1), function(r)#
-						{							#
-							ibm		<- tpc[[r]][["ibm"]]#
-							if(!m.known.states)#
-							{#
-								ibm	<- ibm.init.model(m.type, loc.type, m.popsize, theta0, resume= 0)#
-								ibm	<- ibm.collapse(ibm)								#
-							}	#
-							ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]#
-							ibm[["beta"]][["base"]]					<- theta[i,"base"]	#
-							beta.stratified							<- acute.get.rates(ibm, per.capita.i=1)#
-							tipc.table								<- tpc[[r]][["tpc.table.all"]]#
-							print(beta.stratified)#
-							print(tipc.table)#
-							tmp										<- acute.loglkl(tipc.table, beta.stratified, sample.prob2, tpc[[r]][["ibm"]][["beta"]][["dT"]])[["tipc.lkl"]]#
-							print(tmp)#
-							stop()#
-							tmp#
-						})#
-				names(ans)<- paste('r',seq_along(ans),sep='')#
-				ans#
-			})
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-m.type				<- "Acute"#
-	loc.type			<- "ZA-C"#
-	m.popsize			<- 6e4#
-	m.known.states		<- 0#
-	theta0				<- c(8, 0.09, 0, 0)#
-	names(theta0)		<- c("acute","base","m.st1","m.st2")#
-	sample.prob			<- c(0.7,0.7)#
-	names(sample.prob)	<- c("Idx","E")	#
-	m.repeat			<- 1#
-	resume				<- 1#
-	verbose				<- 1	#
-	cat(paste("\nm.popsize ",m.popsize))#
-	cat(paste("\nloc.type ",loc.type))	#
-	cat(paste("\nm.known.states ",m.known.states))#
-	cat(paste("\nm.repeat ",m.repeat))#
-	cat(paste("\nacute.MAX.TIPC.SIZE ",acute.MAX.TIPC.SIZE))	#
-	cat(paste("\ntheta0.acute ",theta0[1]))#
-	cat(paste("\ntheta0.base ",theta0[2]))#
-	cat(paste("\nsample.prob.Idx ",sample.prob[1]))#
-	cat(paste("\nsample.prob.E ",sample.prob[2]))#
-	cat(paste("\nverbose ",verbose))#
-	cat(paste("\nresume ",resume))#
-	my.mkdir(DATA,"acutecld")#
-	dir.name<- paste(DATA,"simudata",sep='/')#
-	f.name<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],sep=''),sep='/')					#
-	#tmp<- paste(f.name,"_example_contingencytable_upto3.R",sep='')	#
-	tmp<- paste(f.name,".R",sep='')#
-	cat(paste("\nload ",tmp))		#
-	load(tmp)
-theta	<- expand.grid(acute= seq(1,10,1), base= theta0[2])#
-	print(theta)#
-	sample.prob2	<- sample.prob#
-	sample.prob2[]	<- c(1,1)#
-	#compare tip cluster distribution as 'acute' varies#
-	cld		<- lapply(seq_len(nrow(theta)),function(i)#
-			{																		#
-				ans	<- lapply(c(1), function(r)#
-						{							#
-							ibm		<- tpc[[r]][["ibm"]]#
-							if(!m.known.states)#
-							{#
-								ibm	<- ibm.init.model(m.type, loc.type, m.popsize, theta0, resume= 0)#
-								ibm	<- ibm.collapse(ibm)								#
-							}	#
-							ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]#
-							ibm[["beta"]][["base"]]					<- theta[i,"base"]	#
-							beta.stratified							<- acute.get.rates(ibm, per.capita.i=1)#
-							tipc.table								<- tpc[[r]][["tpc.table.all"]]#
-							print(beta.stratified)#
-							print(tipc.table)#
-							tipc.lkl								<- acute.loglkl(tipc.table, beta.stratified, sample.prob2, tpc[[r]][["ibm"]][["beta"]][["dT"]])[["tipc.lkl"]]#
-							tipc.lkl / sum(tipc.lkl)							#
-						})#
-				names(ans)<- paste('r',seq_along(ans),sep='')#
-				ans[[1]]#
-			})
-print(cld)
-tmp<- lappl(cld, function(x)   apply(x,2,sum)		)#
-	print(tmp)
-tmp<- lapply(cld, function(x)   apply(x,2,sum)		)#
-	print(tmp)
-tmp<- sapply(cld, function(x)   apply(x,2,sum)		)#
-	print(tmp)
-plot(1,1,type='n',xlim=range(theta.acute),ylim=range(tmp))#
-	cols<- rainbow(ncol(tmp))#
-	sapply(seq_len(ncol(tmp)),function(j)   lines(tmp[,j],col=cols[j]) )
-cld		<- lapply(seq_len(nrow(theta)),function(i)#
-			{																		#
-				ans	<- lapply(c(1), function(r)#
-						{							#
-							ibm		<- tpc[[r]][["ibm"]]#
-							if(!m.known.states)#
-							{#
-								ibm	<- ibm.init.model(m.type, loc.type, m.popsize, theta0, resume= 0)#
-								ibm	<- ibm.collapse(ibm)								#
-							}	#
-							ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]#
-							ibm[["beta"]][["base"]]					<- theta[i,"base"]	#
-							beta.stratified							<- acute.get.rates(ibm, per.capita.i=1)#
-							tipc.table								<- tpc[[r]][["tpc.table.all"]]#
-							#print(beta.stratified)#
-							#print(tipc.table)#
-							tipc.lkl								<- acute.loglkl(tipc.table, beta.stratified, sample.prob2, tpc[[r]][["ibm"]][["beta"]][["dT"]])[["tipc.lkl"]]#
-							tipc.lkl #/ sum(tipc.lkl)							#
-						})#
-				names(ans)<- paste('r',seq_along(ans),sep='')#
-				ans[[1]]#
-			})
-tmp<- sapply(cld, function(x)   apply(x,2,sum)		)#
-	plot(1,1,type='n',xlim=range(theta.acute),ylim=range(tmp))#
-	cols<- rainbow(ncol(tmp))#
-	sapply(seq_len(ncol(tmp)),function(j)   lines(tmp[,j],col=cols[j]) )
-tmp
-cld
-data(popart.triplets.130207)
-popart.triplets.130207
-str(popart.triplets.130207)
-popart.phylo.com<- c("Ikwezi","Bloekombos","Delft South","Town II","Luvuyo","Kuyasa")
-Town 2, Luvuyo and Kuyasa
-popart.phylo.com
-save(popart.phylo.com, file="/Users/Oliver/git/phylodesign/pkg/data/popart.phylo.com.rda")
-popart.triplets.130207[ popart.triplets.130207$comid_old %in% popart.phylo.com, ]
-popart.phylo.com<- c("Ikhwezi","Bloekombos","Delft South","Town II","Luvuyo","Kuyasa")
-save(popart.phylo.com, file="/Users/Oliver/git/phylodesign/pkg/data/popart.phylo.com.rda")
-popart.triplets.130207[ popart.triplets.130207$comid_old %in% popart.phylo.com, ]
-popart.phylo.com	<- popart.triplets.130207[ popart.triplets.130207$comid_old %in% popart.phylo.com, ]
-popart.phylo.com	<- popart.getdata.randomized.n(popart.phylo.com, 2500, 3, rtn.exp=1)
-tmp	<- popart.getdata.randomized.n(popart.phylo.com, 2500, 3, rtn.exp=1)
-tmp
-popart.phylo.com
-popart.getdata.randomized.n
-data(popart.triplets.130207)
-popart.triplets.130207
-popart.triplets.130207$p.adults<- sapply(popart.triplets.130207$arm,function(x){(x %in% "A")*0.0056+(x %in% "B")*0.01+(x %in% "C")*0.013})
-popart.triplets.130207
-popart.triplets.130207$inc.rate<- popart.triplets.130207$p.adults
-popart.triplets.130207
-popart.triplets.130207$p.adults	<- ifelse(popart.triplets.130207$country==1,0.5,0.6)
-popart.triplets.130207
-save(popart.triplets.130207, file="/Users/Oliver/git/phylodesign/pkg/data/popart.triplets.130207.rda")
-70000*0.37
-70000*0.37*0.5
