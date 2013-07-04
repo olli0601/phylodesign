@@ -394,34 +394,78 @@ prj.acute.test.lkl.wsampling.onlyU<- function()
 	
 	theta.acute		<- seq(1,20,1)
 	theta.base		<- theta0[2]
+	theta.acute		<- seq(1,20,0.25)
+	theta.base		<- seq(0.03,0.085,0.002)	
 	theta			<- expand.grid(acute= theta.acute, base= theta.base)
-	
-	#theta			<- matrix( c(2,4,6,8,    0.065, 0.058, 0.053, 0.05), 4,2, dimnames=list(c(),c("acute","base")) )			
-	ibm				<- ibm.collapse( ibm.init.model(m.type, loc.type, NA, theta0, save='', resume= 0, init.pop=0) )	
-	state.n			<- ibm$init.pop.distr$status * ibm$init.pop.distr$npop
-	pop.n			<- ibm$init.pop.distr$npop	
-	print(pop.n)
-	print(state.n)	
-	
-	acute.MAX.TIPC.SIZE<<- 15 
-	clu.n			<- clu.tipc.n(acute.MAX.TIPC.SIZE)			
-	clu.n.sum		<- apply(clu.n,2,sum)																	#faster than seq_len(ncol(clu.n))^seq.int(-1,ncol(clu.n)-2)
-	lclu.n			<- log( clu.n / matrix(clu.n.sum, nrow=nrow(clu.n), ncol=length(clu.n.sum), byrow=1) ) 		
-	#evaluate likelihood over parameter space
-	tipc.lkl		<- sapply(seq_len(nrow(theta)),function(i)
-			{				
+		
+	if(resume)
+	{
+		options(show.error.messages = FALSE)
+		f.name			<- paste(dir.name,paste("tpcsampled_Uonly_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_lkl",sep=''),sep='/')		
+		cat(paste("\ntry load ",paste(f.name,".R",sep='')))				
+		readAttempt		<-try(suppressWarnings(load(paste(f.name,".R",sep=''))))
+		options(show.error.messages = TRUE)
+		if(!inherits(readAttempt, "try-error"))
+			cat(paste("\nresumed file ",paste(f.name,".R",sep='')))
+	}
+	if(!resume || inherits(readAttempt, "try-error"))
+	{		
+		
+		ibm				<- ibm.collapse( ibm.init.model(m.type, loc.type, NA, theta0, save='', resume= 0, init.pop=0) )	
+		state.n			<- ibm$init.pop.distr$status * ibm$init.pop.distr$npop
+		pop.n			<- ibm$init.pop.distr$npop	
+		print(pop.n)
+		print(state.n)	
+				
+		acute.MAX.TIPC.SIZE	<<- 20 			
+		clu.n			<- clu.tipc.n(acute.MAX.TIPC.SIZE)			
+		clu.n.sum		<- apply(clu.n,2,sum)																	#faster than seq_len(ncol(clu.n))^seq.int(-1,ncol(clu.n)-2)
+		lclu.n			<- log( clu.n / matrix(clu.n.sum, nrow=nrow(clu.n), ncol=length(clu.n.sum), byrow=1) ) 		
+		#evaluate likelihood over parameter space
+		tipc.lkl		<- sapply(seq_len(nrow(theta)),function(i)
+				{				
 #i<- 2
-#print(theta[i,])
-				ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]
-				ibm[["beta"]][["base"]]					<- theta[i,"base"]	
-				rate.m									<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)	
-				dT										<- cluster.tw
-				lkl										<- acutesampled.loglkl(tpc.table.sample.median, rate.m, sample.prob[1], dT, lclu.n=lclu.n)[["table.lkl"]]				
+					print(theta[i,])
+					ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]
+					ibm[["beta"]][["base"]]					<- theta[i,"base"]	
+					rate.m									<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)	
+					dT										<- cluster.tw
+					lkl										<- acutesampled.loglkl(tpc.table.sample.median, rate.m, sample.prob[1], dT, lclu.n=lclu.n)[["table.lkl"]]				
 #print(lkl); stop()
-				lkl
-			})	
-	names(tipc.lkl)<- apply(theta,1,function(x)	paste(x,collapse='_',sep='') )	
-	print(tipc.lkl)
+					lkl
+				})	
+		names(tipc.lkl)<- apply(theta,1,function(x)	paste(x,collapse='_',sep='') )
+		
+		f.name			<- paste(dir.name,paste("tpcsampled_Uonly_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_lkl",sep=''),sep='/')		
+		cat(paste("\nsave tipc.lkl to file ",paste(f.name,".R",sep='')))
+		save(tipc.lkl, file=paste(f.name,".R",sep=''))				
+	}
+	print(tipc.lkl)	
+	if(1)
+	{
+		theta		<- sapply( strsplit(names(tipc.lkl),'_',fixed=1), as.numeric )
+		theta.acute	<- unique(theta[1,])
+		theta.base	<- unique(theta[2,])	
+		print(theta.acute)
+		print(theta.base)
+		#stop()
+		#note: theta.acute runs first in lkls
+		
+		#lkls.mean<- apply(lkl,2,mean)
+		#lkls.mean<- apply(lkls,2,function(x) sd(x)/mean(x))
+		tipc.lkl.m	<- matrix(tipc.lkl, nrow= length(theta.acute), ncol= length(theta.base), dimnames=list(theta.acute,theta.base))
+		cat(paste("\nmax lkl is ",max(tipc.lkl.m)))
+		theta.mle	<- as.numeric(strsplit(names(tipc.lkl)[which.max(tipc.lkl)],'_')[[1]])
+		print(theta.mle)
+		f.name		<- paste(dir.name,paste("tpcsampled_Uonly_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_s",m.known.states,sep=''),sep='/')
+		cat(paste("\nplot",paste(f.name,"_2D.pdf",sep='')))
+		pdf(paste(f.name,"_2D.pdf",sep=''),version="1.4",width=4,height=4)
+		my.image(theta.acute,theta.base,tipc.lkl.m, xlab=expression(beta[EE]/beta[UE]),ylab=expression(beta[0]),nlevels=10)			
+		abline(v=theta.mle[1],lty=2)
+		abline(h=theta.mle[2],lty=2)
+		points(theta0[1],theta0[2], pch=19, col="red")
+		dev.off()		
+	}
 	if(0)	#compute log likelihood of tip cluster table
 	{
 		print(tipc.lkl)		
@@ -727,11 +771,11 @@ prj.acute.test	<- function()
 	{
 		prj.acute.test.lkl.nosampling.bothUandT()
 	}
-	if(0)
+	if(1)
 	{
 		prj.acute.test.lkl.wsampling.onlyU()
 	}
-	if(1)
+	if(0)
 	{
 		prj.acute.test.lkl.wsampling.bothUandT()
 	}
@@ -1358,13 +1402,13 @@ prj.wh.sleeper<- function()
 ###############################################################################
 prj.pipeline<- function()
 {
-	if(1)
+	if(0)
 	{
 		dir.name	<- CODE.HOME
 		acute		<- c(2,4,6,8)
 		base		<- c(0.065, 0.058, 0.053, 0.05)
-		sIdx		<- 0.5
-		sE			<- 0.5
+		sIdx		<- 0.2
+		sE			<- 0.2
 		cluster.tw	<- 3
 		cmd			<-	sapply(seq_along(acute),function(i)
 							{
@@ -1379,7 +1423,27 @@ prj.pipeline<- function()
 							})
 		#cmd			<- paste(cmd,sep='',collapse='')		
 	}
-	
+	if(1)
+	{
+		dir.name	<- CODE.HOME
+		acute		<- 1
+		base		<- c(rep(0.07,5), rep(0.05,5))
+		sIdx		<- c(seq(0.2,1,0.2),seq(0.2,1,0.2))
+		sE			<- sIdx
+		cluster.tw	<- 3
+		cmd			<-	sapply(seq_along(base),function(i)
+				{
+					cmd			<- prj.simudata.cmd(dir.name, "Town II", acute, base[i], 50, sIdx[i], sE[i], cluster.tw)
+					cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q=NA)
+					cat(cmd)
+					
+					signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
+					outdir		<- paste(CODE.HOME,"misc",sep='/')
+					outfile		<- paste("phd",signat,"qsub",sep='.')
+					prj.hpccaller(outdir, outfile, cmd)
+				})
+		#cmd			<- paste(cmd,sep='',collapse='')		
+	}
 }
 ###############################################################################
 prj.hpcwrapper<- function(cmd, hpc.walltime=3, hpc.mem="400mb", hpc.load="",hpc.nproc=1, hpc.q=NA)
