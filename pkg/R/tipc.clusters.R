@@ -346,6 +346,7 @@ clu.sample<- function(clu, s, mx.s.ntr=ncol(clu)-1, rtn.exp=0)
 							})					
 					apply(tmp,1,sum) * s.E^sntr					
 				})
+		print(clu.s.noIdx)
 		clu.s			<- clu.s.noIdx * s.Idx
 		clu.addToE		<- c(apply(clu.s.noIdx[clu.noE,]*(1-s.Idx),2,sum)[-1],0)
 		clu.s['i',]		<- clu.s['i',] + clu.addToE

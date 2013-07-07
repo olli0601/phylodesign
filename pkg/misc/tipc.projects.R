@@ -369,6 +369,128 @@ prj.acute.test.lkl.nosampling.bothUandT	<- function()
 	}
 }
 ###############################################################################
+prj.birth.test.lkl.wsampling<- function()
+{
+	require(RColorBrewer)
+	m.type				<- "Acute"
+	loc.type			<- "Town II"
+	m.popsize			<- NA
+	m.known.states		<- 1
+	theta0				<- c(1, 0.05, 0, 0)
+	names(theta0)		<- c("acute","base","m.st1","m.st2")
+	sample.prob0		<- 0.6
+	cluster.tw			<- 3
+	m.repeat			<- 1
+	resume				<- 0
+	verbose				<- 0	
+	dir.name			<- paste(DATA,"acutesimu_fxs_onlyu",sep='/')
+	f.name				<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob0,"_sE",sample.prob0,"_tw",cluster.tw,"_median",sep=''),sep='/')
+	cat(paste("\nload ",paste(f.name,".R",sep='')))		
+	load(paste(f.name,".R",sep=''))	
+	tpc.table.sample.median['u',]	<- tpc.table.sample.median['u',] + tpc.table.sample.median['i',]
+	tpc.table.sample.median['i',]	<- 0
+	
+	print(tpc.table.all.median)
+	#tmp					<- clu.sample(tpc.table.all.median, { tmp<- rep(sample.prob0,2); names(tmp)<- c("Idx","E"); tmp }, rtn.exp=1)
+	#print(round(tmp))
+	print(tpc.table.sample.median)	
+#stop()	
+	theta.base		<- seq(0.03,0.085,0.002)
+	theta.sample	<- seq(0.1,1,0.1)		
+	theta			<- expand.grid(sample= theta.sample, base= theta.base)
+	#f.name.head		<- "tpcsampled_Uonly"
+	f.name.head		<- "tpcsampled_Uonly_bdfun"
+	if(resume)
+	{
+		options(show.error.messages = FALSE)
+		f.name			<- paste(dir.name,paste(f.name.head,"_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob0,"_sE",sample.prob0,"_tw",cluster.tw,"_lkl",sep=''),sep='/')		
+		cat(paste("\ntry load ",paste(f.name,".R",sep='')))				
+		readAttempt		<-try(suppressWarnings(load(paste(f.name,".R",sep=''))))
+		options(show.error.messages = TRUE)
+		if(!inherits(readAttempt, "try-error"))
+			cat(paste("\nresumed file ",paste(f.name,".R",sep='')))
+	}
+	if(!resume || inherits(readAttempt, "try-error"))
+	{		
+		
+		ibm										<- ibm.collapse( ibm.init.model(m.type, loc.type, NA, theta0, save='', resume= 0, init.pop=0) )
+		ibm[["beta"]][['i']][["status"]]['i']	<- 1
+		ibm[["beta"]][['i']][["status"]]['t']	<- 1
+		ibm[["init.pop.distr"]][["status"]]['u']<- ibm[["init.pop.distr"]][["status"]]['t'] + ibm[["init.pop.distr"]][["status"]]['u']
+		ibm[["init.pop.distr"]][["status"]]['t']<- 0		
+		state.n									<- ibm$init.pop.distr$status * ibm$init.pop.distr$npop
+		pop.n									<- ibm$init.pop.distr$npop	
+		print(pop.n)
+		print(state.n)	
+
+		acute.MAX.TIPC.SIZE	<<- 10 			
+		clu.n			<- clu.tipc.n(acute.MAX.TIPC.SIZE)			
+		clu.n.sum		<- apply(clu.n,2,sum)																	#faster than seq_len(ncol(clu.n))^seq.int(-1,ncol(clu.n)-2)
+		lclu.n			<- log( clu.n / matrix(clu.n.sum, nrow=nrow(clu.n), ncol=length(clu.n.sum), byrow=1) ) 		
+		#evaluate likelihood over parameter space
+		tipc.lkl		<- sapply(seq_len(nrow(theta)),function(i)
+				{				
+#i<- 10
+					print(theta[i,])				
+					ibm[["beta"]][["base"]]					<- theta[i,"base"]	
+					s										<- theta[i,"sample"]
+					rate.m									<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)				
+					dT										<- cluster.tw					
+					lkl										<- birthsampled.loglkl(tpc.table.sample.median['u',,drop=0], rate.m['u','s'], s, dT)
+					#lkl2									<- acutesampled.loglkl(tpc.table.sample.median, rate.m, s, dT, lclu.n=lclu.n)				
+#print(lkl[[1]]); print(exp(lkl[[2]])); stop()
+#print(lkl); print(lkl2); stop()
+					lkl[["table.lkl"]]
+				})	
+		names(tipc.lkl)<- apply(theta,1,function(x)	paste(x,collapse='_',sep='') )
+		
+		f.name			<- paste(dir.name,paste(f.name.head,"_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob0,"_sE",sample.prob0,"_tw",cluster.tw,"_lkl",sep=''),sep='/')		
+		cat(paste("\nsave tipc.lkl to file ",paste(f.name,".R",sep='')))
+		save(tipc.lkl, file=paste(f.name,".R",sep=''))				
+	}
+	#print(tipc.lkl)
+	#stop()
+	if(1)
+	{
+		theta		<- sapply( strsplit(names(tipc.lkl),'_',fixed=1), as.numeric )
+		theta.sample<- unique(theta[1,])
+		theta.sample	<- unique(theta[1,])
+		theta.base	<- unique(theta[2,])	
+		#print(theta.sample); print(theta.base)
+		#stop()
+		#note: theta.sample runs first in lkls
+		
+		#lkls.mean<- apply(lkl,2,mean)
+		#lkls.mean<- apply(lkls,2,function(x) sd(x)/mean(x))
+		tipc.lkl.m	<- matrix(tipc.lkl, nrow= length(theta.sample), ncol= length(theta.base), dimnames=list(theta.sample,theta.base))
+		cat(paste("\nmax lkl is ",max(tipc.lkl.m)))
+		theta.mle	<- as.numeric(strsplit(names(tipc.lkl)[which.max(tipc.lkl)],'_')[[1]])
+		print(theta.mle)
+		f.name		<- paste(dir.name,paste(f.name.head,"_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_s",sample.prob0,sep=''),sep='/')
+		cat(paste("\nplot",paste(f.name,"_2D.pdf",sep='')))
+		pdf(paste(f.name,"_2D.pdf",sep=''),version="1.4",width=4,height=4)
+		my.image(theta.sample,theta.base,tipc.lkl.m, xlab="sample",ylab=expression(beta[0]),nlevels=10)			
+		abline(v=theta.mle[1],lty=2)
+		abline(h=theta.mle[2],lty=2)
+		points(sample.prob0,theta0[2], pch=19, col="red")
+		dev.off()		
+	}
+	if(0)	#compute log likelihood of tip cluster table
+	{
+		print(tipc.lkl)		
+		x		<- theta.sample
+		y		<- tipc.lkl
+		plot(1,1,type='n',bty='n',xlim=range(x),ylim=range(y),xlab=expression(beta[EE]/beta[UE]),ylab="tipc log likelihood")
+		lines(x,y)
+		abline(v=theta0[1], col="red")
+		theta.mle<- theta[which.max(y), ]
+		abline(v=theta.mle[1])
+		print(theta.mle)
+		stop()
+	}	
+	stop()
+}
+###############################################################################
 prj.acute.test.lkl.wsampling.onlyU<- function()
 {
 	require(RColorBrewer)
@@ -382,7 +504,7 @@ prj.acute.test.lkl.wsampling.onlyU<- function()
 	names(sample.prob)	<- c("Idx","E")
 	cluster.tw			<- 3
 	m.repeat			<- 1
-	resume				<- 1
+	resume				<- 0
 	verbose				<- 0	
 	dir.name			<- paste(DATA,"acutesimu_fxs_onlyu",sep='/')
 	f.name				<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_median",sep=''),sep='/')
@@ -417,7 +539,7 @@ prj.acute.test.lkl.wsampling.onlyU<- function()
 		print(pop.n)
 		print(state.n)	
 				
-		acute.MAX.TIPC.SIZE	<<- 20 			
+		acute.MAX.TIPC.SIZE	<<- 10 			
 		clu.n			<- clu.tipc.n(acute.MAX.TIPC.SIZE)			
 		clu.n.sum		<- apply(clu.n,2,sum)																	#faster than seq_len(ncol(clu.n))^seq.int(-1,ncol(clu.n)-2)
 		lclu.n			<- log( clu.n / matrix(clu.n.sum, nrow=nrow(clu.n), ncol=length(clu.n.sum), byrow=1) ) 		
@@ -431,7 +553,7 @@ prj.acute.test.lkl.wsampling.onlyU<- function()
 					rate.m									<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)	
 					dT										<- cluster.tw
 					lkl										<- acutesampled.loglkl(tpc.table.sample.median, rate.m, sample.prob[1], dT, lclu.n=lclu.n)[["table.lkl"]]				
-#print(lkl); stop()
+print(lkl); stop()
 					lkl
 				})	
 		names(tipc.lkl)<- apply(theta,1,function(x)	paste(x,collapse='_',sep='') )
@@ -772,6 +894,10 @@ prj.acute.test	<- function()
 		prj.acute.test.lkl.nosampling.bothUandT()
 	}
 	if(1)
+	{
+		prj.birth.test.lkl.wsampling()
+	}
+	if(0)
 	{
 		prj.acute.test.lkl.wsampling.onlyU()
 	}
@@ -1509,7 +1635,7 @@ prj.simudata<- function()
 	record.tpc			<- 1
 	tpc.repeat			<- 2
 	cluster.tw			<- 1
-	theta				<- c(8, 0.1, 0, 0)
+	theta				<- c(8, 0.05, 0, 0)
 	names(theta)		<- c("acute","base","m.st1","m.st2")
 	sample.prob			<- c(0.5,0.5)
 	names(sample.prob)	<- c("Idx","E")
@@ -1564,7 +1690,7 @@ prj.simudata<- function()
 	cat(paste("\nsample.prob.E ",sample.prob[2]))
 	cat(paste("\nverbose ",verbose))
 	cat(paste("\nresume ",resume))
-
+	
 	my.mkdir(DATA,"acutesimu")
 	dir.name<- paste(DATA,"acutesimu",sep='/')
 	f.name<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta[1],"_b",theta[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,sep=''),sep='/')
@@ -1578,7 +1704,7 @@ prj.simudata<- function()
 			cat(paste("\nprj.simudata: resumed file ",paste(f.name,".R",sep='')))
 	}
 	if(!resume || inherits(readAttempt, "try-error"))
-	{		
+	{				
 		tpc<- lapply(seq_len(tpc.repeat),function(i)
 			{
 				cat(paste("\nprj.simudata: replicate",i))
@@ -1590,19 +1716,17 @@ prj.simudata<- function()
 				if(record.tpc)
 					ans[["tpc.internal"]]	<- tpc.collapse(tpc.data)
 				else
-					ans[["tpc.internal"]]	<- tpc.data
-				
-				ans[["tpc.table.all"]]		<- tpc.tabulate( ans[["tpc.internal"]] )				
-				ans[["tpc.table.sample"]]	<- clu.sample(ans[["tpc.table.all"]], sample.prob, rtn.exp=1)
-				
+					ans[["tpc.internal"]]	<- tpc.data				
+				ans[["tpc.table.all"]]		<- tpc.tabulate( ans[["tpc.internal"]] )								
+				ans[["tpc.table.sample"]]	<- tpc.tabulate( tpc.sample( ans[["tpc.internal"]], sample.prob ) )				
 				ans
 			})
 		cat(paste("\nprj.simudata: write tpc data to file",paste(f.name,".R",sep='')))
 		save(tpc,file=paste(f.name,".R",sep=''))
 	}
-	
-	print( summary( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc.internal"]][["attack.rate"]]) ))
-	
+		
+	#print( summary( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc.internal"]][["attack.rate"]]) ))
+
 	table.name				<- "tpc.table.all"
 	max.ntr					<- max(sapply(seq_along(tpc), function(i) ncol(tpc[[i]][[table.name]]) ))
 	tpc.table				<- sapply(seq_along(tpc), function(i)

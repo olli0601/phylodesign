@@ -100,6 +100,40 @@ tpc.tabulate<- function(tpc)
 	ans
 }
 ###############################################################################
+tpc.sample<- function( tpc, sample.prob )
+{
+	s.Idx			<- sample.prob["Idx"]
+	s.E				<- sample.prob["E"]
+	#sample index -- if not sampled, whole transmission chain removed
+	tpc[["trees"]]	<- lapply( which( runif(length(tpc[["trees"]]))<s.Idx ), function(i)	tpc[["trees"]][[i]] )
+	#sample nodes given index sampled
+	tpc[["trees"]]	<- lapply(tpc[["trees"]], function(x)
+			{	 
+				if(!length( x[["edges"]] ))	
+					return(x)
+				tmp				<- runif( nrow(x[["nodes"]])-1 )
+				id.notsampled	<- x[["nodes"]][which(tmp>s.E)+1,"id"]
+				id.sampled		<- x[["nodes"]][which(tmp<=s.E)+1,"id"]								
+				e.sampled		<- x[["edges"]]
+				if(!length(id.sampled))
+					e.sampled	<- na.omit(data.frame(from=NA, to=NA, bl=NA))
+				else
+				{
+					for(z in id.notsampled)
+					{
+						edge.notsampled					<- which(e.sampled[,"to"]==z)		#this should be exactly one
+						if(length(edge.notsampled)!=1)	stop("unexpected edges.notsampled")
+						edges.rewire					<- which(e.sampled[,"from"]==z)							
+						e.sampled[edges.rewire,"from"]	<- rep(e.sampled[edge.notsampled,"from"], length(edges.rewire)) 
+						e.sampled[edges.rewire,"bl"]	<- e.sampled[edges.rewire,"bl"] + e.sampled[edge.notsampled,"bl"]
+						e.sampled						<- e.sampled[-edge.notsampled,]
+					}
+				}
+				list(nodes=x[["nodes"]][c(1,which(tmp<=s.E)+1),], edges=e.sampled)											
+			})
+	tpc
+}
+###############################################################################
 #' @export
 tpc.tabulate.after.sample<- function(tpc, sid)
 {
