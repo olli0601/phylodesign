@@ -1840,7 +1840,7 @@ prj.simudata<- function()
 prj.simudata.match.theta.to.Inc.E2E<- function()
 {
 	require(data.table)
-	require(multicore)
+	#require(multicore)
 		
 	m.type				<- "Acute"
 	loc.type			<- "Town II"
@@ -1876,8 +1876,10 @@ prj.simudata.match.theta.to.Inc.E2E<- function()
 		abc.struct	<- c( runif(abc.nit,prior.acute[1],prior.acute[2]), runif(abc.nit,prior.base[1],prior.base[2]) )
 		abc.struct	<- as.data.table( matrix(abc.struct, ncol=2, nrow= abc.nit, dimnames=list(c(),c("acute","base"))) )		
 		#print(abc.struct)
-		abc.struct	<- mclapply(seq_len(nrow(abc.struct)),function(i)
-				{				
+		#abc.struct	<- mclapply(seq_len(nrow(abc.struct)),function(i)
+		abc.struct	<- lapply(seq_len(nrow(abc.struct)),function(i)
+				{		
+					print(unlist(c(i,abc.struct[i,])))
 					args<<- prj.simudata.cmd(CODE.HOME, loc.type, abc.struct[i,acute], abc.struct[i,base], 1, sample.prob, sample.prob, cluster.tw, save=0, resume=0, verbose=0, debug.susc.const=debug.susc.const, debug.only.u=debug.only.u)
 					args<<- unlist(strsplit(args,' '))
 					tpc	<- prj.simudata()
@@ -1889,7 +1891,8 @@ prj.simudata.match.theta.to.Inc.E2E<- function()
 									}) )
 					ans			<- c(abc.struct[i,acute], abc.struct[i,base], sum.attack, sum.E2E)				
 					ans
-				}, mc.cores= abc.cores)
+				})
+		#}, mc.cores= abc.cores)
 		abc.struct	<- as.data.table( matrix(unlist(tmp),byrow=1,ncol=4,nrow=nrow(abc.struct), dimnames=list(c(),c("acute","base","INC","E2E"))) )
 		cat(paste("\nprj.simudata.match.theta.to.Inc.E2E: write data to file",f.name))
 		save(abc.struct, file=f.name)		

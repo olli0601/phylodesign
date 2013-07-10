@@ -1,5 +1,5 @@
 #! /Library/Frameworks/R.framework/Versions/2.15/Resources/bin/Rscript
-#--DSCR------- #! /opt/apps/R-2.15.1/lib64/R/bin/Rscript
+#--DSCR------- #! /opt/apps/R-2.15.2/lib64/R/bin/Rscript
 #--CX1-------- #! /apps/R/2.15/lib64/R/bin/Rscript
 ###############################################################################
 #
@@ -40,6 +40,7 @@ require(phylodesign)
 
 CODE.HOME<<- "/Users/Oliver/git/phylodesign/pkg"
 #CODE.HOME<<- "/Users/cfraser/git/phylodesign/pkg"
+#CODE.HOME<<- "/home/koelle/or7/libs/phylodesign/pkg"
 #CODE.HOME<<- "/work/or105/libs/phylodesign/pkg"
 #HOME<<- "/Users/cfraser/phylodesign"
 HOME<<- "/Users/Oliver/workspace_sandbox/popart"
