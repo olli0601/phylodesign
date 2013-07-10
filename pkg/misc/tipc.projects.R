@@ -1867,7 +1867,7 @@ prj.simudata.match.theta.to.Inc.E2E<- function()
 	debug.only.u		<- 0
 	target.su.INC		<- 0.01
 	target.su.E2E		<- 0.1
-	abc.nit				<- 10 #5e4
+	abc.nit				<- 5e4
 	abc.cores			<- 8
 	dir.name			<- paste("acutesimu_fxs",debug.susc.const,"_onlyu",debug.only.u,sep='')
 	
@@ -1904,13 +1904,12 @@ prj.simudata.match.theta.to.Inc.E2E<- function()
 					ans
 				})
 		#}, mc.cores= abc.cores)
-		abc.struct	<- as.data.table( matrix(unlist(tmp),byrow=1,ncol=4,nrow=nrow(abc.struct), dimnames=list(c(),c("acute","base","INC","E2E"))) )
+		#print(unlist(abc.struct))
+		abc.struct	<- as.data.table( matrix(unlist(abc.struct),byrow=1,ncol=4,nrow=abc.nit, dimnames=list(c(),c("acute","base","INC","E2E"))) )
 		cat(paste("\nprj.simudata.match.theta.to.Inc.E2E: write data to file",f.name))
 		save(abc.struct, file=f.name)		
 	}	
-	#print(tmp)
-	
-	stop()
+	#print(tmp)	
 }
 ###############################################################################
 
