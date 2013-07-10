@@ -52,7 +52,7 @@ EPS			<<- .Machine$double.eps
 #default.fun	<- "prj.popart.powercalc_link_consenting"
 #default.fun	<- "prj.popart.powercalc_tipc_test"
 #default.fun	<- "prj.popart.powercalc_tipc_test_ukhivrdb"
-default.fun	<- "prj.popart.powercalc_tipc_test_residual"
+#default.fun	<- "prj.popart.powercalc_tipc_test_residual"
 #default.fun	<- "prj.popart.powercalc_tipc_consenting"
 #default.fun	<- "prj.popart.power_test"
 #default.fun	<- "prj.popart.powercalc_cmp_link_tipc"
@@ -60,9 +60,10 @@ default.fun	<- "prj.popart.powercalc_tipc_test_residual"
 #default.fun	<-	"prj.acute.clusterdistribution"
 #default.fun<- "prj.popart.powercalc_link_consenting"
 #default.fun<- "prj.plotfisherhettransm"
-default.fun<- "prj.simudata"
+#default.fun<- "prj.simudata"
 #default.fun<- "prj.acute.loglklsurface"
 default.fun<- "prj.pipeline"
+#default.fun<- "prj.simudata.match.theta.to.Inc.E2E"
 #default.fun<- "prj.acute.test"
 
 ###############################################################################
@@ -155,5 +156,5 @@ if(length(args))
 ###############################################################################
 if(PHDES.DEBUG)	options(error= my.dumpframes)	
 cat(paste("\nphdes.startme.R: ",ifelse(PHDES.DEBUG,"debug",""),"call",default.fun))
-do.call(default.fun,argv) 	
+dummy<- do.call(default.fun,argv) 	
 cat("\ntipc: ",ifelse(PHDES.DEBUG,"debug","")," end\n")

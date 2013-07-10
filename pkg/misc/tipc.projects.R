@@ -1531,25 +1531,52 @@ prj.wh.sleeper<- function()
 ###############################################################################
 prj.pipeline<- function()
 {
-	if(1)
+	if(0)	#simulate debug tip cluster data sets
 	{
-		dir.name	<- CODE.HOME
-		#acute		<- c(2,4,6,8)
-		#base		<- c(0.065, 0.058, 0.053, 0.05)
-		acute		<- c(1.7,	11,		2.7,	15)					#first two: attack 0.014 last two: attack 0.01
-		base		<- c(0.06,	0.03, 	0.042, 	0.03)				#two in row: E2E 0.1 and 0.4
-		sIdx		<- 0.2
-		sE			<- 0.2
-		cluster.tw	<- 3
+		dir.name			<- CODE.HOME
+		#acute				<- c(2,4,6,8)
+		#base				<- c(0.065, 0.058, 0.053, 0.05)
+		acute				<- c(1.7,	11,		2.7,	15)					#first two: attack 0.014 last two: attack 0.01
+		base				<- c(0.06,	0.03, 	0.042, 	0.03)				#two in row: E2E 0.1 and 0.4
+		sIdx				<- 0.2
+		sE					<- 0.2
+		cluster.tw			<- 3
+		debug.susc.const	<- 1
+		debug.only.u		<- 1
 		cmd			<-	sapply(seq_along(acute),function(i)
 							{
-								cmd			<- prj.simudata.cmd(dir.name, "Town II", acute[i], base[i], 50, sIdx, sE, cluster.tw, 1)
+								cmd			<- prj.simudata.cmd(dir.name, "Town II", acute[i], base[i], 50, sIdx, sE, cluster.tw, save=1, debug.susc.const=debug.susc.const, debug.only.u=debug.only.u)
 								cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q=NA)
+								cat(cmd)								
 								signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
 								outdir		<- paste(CODE.HOME,"misc",sep='/')
 								outfile		<- paste("phd",signat,"qsub",sep='.')
 								prj.hpccaller(outdir, outfile, cmd)
 							})
+		#cmd			<- paste(cmd,sep='',collapse='')		
+	}
+	if(1)	#simulate tip cluster data sets
+	{
+		dir.name			<- CODE.HOME
+		#acute				<- c(2,4,6,8)
+		#base				<- c(0.065, 0.058, 0.053, 0.05)
+		acute				<- c(2.2,	15 )
+		base				<- c(0.052,	0.032 )
+		sIdx				<- 0.2
+		sE					<- 0.2
+		cluster.tw			<- 3
+		debug.susc.const	<- 0
+		debug.only.u		<- 0
+		cmd			<-	sapply(seq_along(acute),function(i)
+				{
+					cmd			<- prj.simudata.cmd(dir.name, "Town II", acute[i], base[i], 50, sIdx, sE, cluster.tw, save=1, debug.susc.const=debug.susc.const, debug.only.u=debug.only.u)
+					cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q=NA)
+					cat(cmd)
+					signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
+					outdir		<- paste(CODE.HOME,"misc",sep='/')
+					outfile		<- paste("phd",signat,"qsub",sep='.')
+					prj.hpccaller(outdir, outfile, cmd)
+				})
 		#cmd			<- paste(cmd,sep='',collapse='')		
 	}
 	if(0)
@@ -1562,7 +1589,7 @@ prj.pipeline<- function()
 		cluster.tw	<- 3
 		cmd			<-	sapply(seq_along(base),function(i)
 				{
-					cmd			<- prj.simudata.cmd(dir.name, "Town II", acute, base[i], 50, sIdx[i], sE[i], cluster.tw, 1)
+					cmd			<- prj.simudata.cmd(dir.name, "Town II", acute, base[i], 50, sIdx[i], sE[i], cluster.tw, save=1, debug.susc.const=debug.susc.const, debug.only.u=debug.only.u)
 					cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q=NA)
 					cat(cmd)
 					
@@ -1614,17 +1641,22 @@ prj.hpccaller<- function(outdir, outfile, cmd)
 	Sys.sleep(1)
 }
 ###############################################################################
-prj.simudata.cmd<- function(dir.name, loc, acute, base, rep, sIdx, sE,cluster.tw,save)
+prj.simudata.cmd<- function(dir.name, loc, acute, base, rep, sIdx, sE, cluster.tw, debug.susc.const=0, debug.only.u=0, save=1, resume=1, verbose=1)
 {		
-	cmd<- paste("\n",dir.name,"/misc/phdes.startme.R -exeSIMU.DATA -v1",sep='')
+	cmd<- paste("\n",dir.name,"/misc/phdes.startme.R -exeSIMU.DATA ",sep='')
 	#cmd<- paste(cmd, " -l=",loc,sep='')
 	cmd<- paste(cmd, " -acute=",acute,sep='')
 	cmd<- paste(cmd, " -baseline=",base,sep='')
-	cmd<- paste(cmd, " -r=",rep,sep='')
+	cmd<- paste(cmd, " -rep=",rep,sep='')
 	cmd<- paste(cmd, " -sIdx=",sIdx,sep='')
 	cmd<- paste(cmd, " -sE=",sE,sep='')
 	cmd<- paste(cmd, " -cluster.tw=",cluster.tw,sep='')
 	cmd<- paste(cmd, " -save=",save,sep='')
+	cmd<- paste(cmd, " -resume=",resume,sep='')
+	cmd<- paste(cmd, " -debug.only.u=",debug.only.u,sep='')
+	cmd<- paste(cmd, " -debug.susc.const=",debug.susc.const,sep='')	
+	cmd<- paste(cmd, " -v=",verbose,sep='')
+	cmd
 }
 ###############################################################################
 prj.simudata<- function()
@@ -1645,13 +1677,15 @@ prj.simudata<- function()
 	names(theta)		<- c("acute","base","m.st1","m.st2")
 	sample.prob			<- c(0.6,0.6)
 	names(sample.prob)	<- c("Idx","E")
-	dir.name			<- "acutesimu_fxs_onlyu_tpcsample"
+	debug.susc.const	<- 1
+	debug.only.u		<- 1
+	dir.name			<- paste("acutesimu_fxs",debug.susc.const,"_onlyu",debug.only.u,sep='')
 
 	if(exists("args"))
 	{
 		tmp<- na.omit(sapply(args,function(arg)
-						{	switch(substr(arg,2,2),
-									r= return(as.numeric(substr(arg,4,nchar(arg)))),NA)	}))
+						{	switch(substr(arg,2,4),
+									rep= return(as.numeric(substr(arg,6,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) tpc.repeat<- tmp[1]
 		tmp<- na.omit(sapply(args,function(arg)
 						{	switch(substr(arg,2,2),
@@ -1689,42 +1723,61 @@ prj.simudata<- function()
 						{	switch(substr(arg,2,5),
 									save= return(as.numeric(substr(arg,7,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) save<- tmp[1]
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,8),
+									resume= return(as.numeric(substr(arg,10,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) resume<- tmp[1]
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,17),
+									debug.susc.const= return(as.numeric(substr(arg,19,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) debug.susc.const<- tmp[1]
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,13),
+									debug.only.u= return(as.numeric(substr(arg,15,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) debug.only.u<- tmp[1]
+		
+		dir.name			<- paste("acutesimu_fxs",debug.susc.const,"_onlyu",debug.only.u,sep='')
 	}
-	
-	cat(paste("\nm.popsize ",m.popsize))
-	cat(paste("\nloc.type ",loc.type))
-	cat(paste("\ncluster.tw ",cluster.tw))	
-	cat(paste("\ntpc.repeat ",tpc.repeat))
-	cat(paste("\ntheta0.acute ",theta[1]))
-	cat(paste("\ntheta0.base ",theta[2]))
-	cat(paste("\nsample.prob.Idx ",sample.prob[1]))
-	cat(paste("\nsample.prob.E ",sample.prob[2]))
-	cat(paste("\nverbose ",verbose))
-	cat(paste("\nresume ",resume))
-	cat(paste("\nsave ",save))
-	
+	if(verbose)
+	{
+		cat(paste("\nm.popsize ",m.popsize))
+		cat(paste("\nloc.type ",loc.type))
+		cat(paste("\ncluster.tw ",cluster.tw))	
+		cat(paste("\ntpc.repeat ",tpc.repeat))
+		cat(paste("\ntheta0.acute ",theta[1]))
+		cat(paste("\ntheta0.base ",theta[2]))
+		cat(paste("\nsample.prob.Idx ",sample.prob[1]))
+		cat(paste("\nsample.prob.E ",sample.prob[2]))
+		cat(paste("\ndebug.susc.const ",debug.susc.const))
+		cat(paste("\ndebug.only.u ",debug.only.u))
+		cat(paste("\nverbose ",verbose))
+		cat(paste("\nresume ",resume))
+		cat(paste("\nsave ",save))
+	}
 	my.mkdir(DATA,dir.name)
-	dir.name<- paste(DATA,dir.name,sep='/')
-	f.name<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta[1],"_b",theta[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,sep=''),sep='/')
+	dir.name	<- paste(DATA,dir.name,sep='/')
+	f.name		<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta[1],"_b",theta[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,sep=''),sep='/')
 	if(resume)
 	{
 		options(show.error.messages = FALSE)		
-		cat(paste("\nprj.simudata: try to resume file ",paste(f.name,".R",sep='')))
+		if(verbose)
+			cat(paste("\nprj.simudata: try to resume file ",paste(f.name,".R",sep='')))
 		readAttempt<-	try(suppressWarnings(load(paste(f.name,".R",sep=''))))
 		options(show.error.messages = TRUE)
-		if(!inherits(readAttempt, "try-error"))
+		if(!inherits(readAttempt, "try-error") && verbose)
 			cat(paste("\nprj.simudata: resumed file ",paste(f.name,".R",sep='')))
 	}
 	if(!resume || inherits(readAttempt, "try-error"))
 	{			
 		tpc<- lapply(seq_len(tpc.repeat),function(i)
 			{
-				cat(paste("\nprj.simudata: replicate",i))
+				if(verbose)	
+					cat(paste("\nprj.simudata: replicate",i))
 				ans			<- vector("list",4)
 				names(ans)	<- c("ibm","tpc.internal","tpc.table.all","tpc.table.sample")				
-				ibm			<- ibm.init.model( m.type, loc.type, m.popsize, theta, resume= 0, debug=1 )
+				ibm			<- ibm.init.model( m.type, loc.type, m.popsize, theta, resume= 0, debug=debug.only.u )
 				ans[["ibm"]]<- ibm.collapse( ibm )
-				tpc.data	<- ssa.run(ans[["ibm"]], ssa.ctime= 0, ssa.etime= cluster.tw,record.tpc= record.tpc, verbose= verbose, resume= 0, debug=1)
+				tpc.data	<- ssa.run(ans[["ibm"]], ssa.ctime= 0, ssa.etime= cluster.tw,record.tpc= record.tpc, verbose= 0, resume= 0, debug=debug.susc.const)
 				if(record.tpc)
 					ans[["tpc.internal"]]	<- tpc.collapse(tpc.data)
 				else
@@ -1739,13 +1792,17 @@ prj.simudata<- function()
 			save(tpc,file=paste(f.name,".R",sep=''))	
 		}		
 	}
-		
-	sum.attack	<- summary( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc.internal"]][["attack.rate"]]) )	
-	sum.E2E		<- summary( sapply(seq_along(tpc), function(i)
-					{
-						tmp	<- tpc.proportion.E2E(tpc[[i]][["tpc.internal"]])
-						tmp["E2E"] / tmp["X2E"]
-					}) )
+	if(verbose)
+	{
+		sum.attack	<- summary( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc.internal"]][["attack.rate"]]) )	
+		sum.E2E		<- summary( sapply(seq_along(tpc), function(i)
+						{
+							tmp	<- tpc.proportion.E2E(tpc[[i]][["tpc.internal"]])
+							tmp["E2E"] / tmp["X2E"]
+						}) )
+		print(sum.attack)
+		print(sum.E2E)
+	}
 	if(save)
 	{
 		table.name				<- "tpc.table.all"
@@ -1773,12 +1830,74 @@ prj.simudata<- function()
 		print(tpc.table.sample.median)
 		
 		f.name<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta[1],"_b",theta[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_median",sep=''),sep='/')
-		cat(paste("\nprj.simudata: write tpc data medians to file",paste(f.name,".R",sep='')))
-		save(tpc.table.all.median,tpc.table.sample.median,sum.attack,sum.E2E,file=paste(f.name,".R",sep=''))		
-		
+		if(verbose)
+			cat(paste("\nprj.simudata: write tpc data medians to file",paste(f.name,".R",sep='')))
+		save(tpc.table.all.median,tpc.table.sample.median,sum.attack,sum.E2E,file=paste(f.name,".R",sep=''))				
 	}
+	tpc	
+}
+###############################################################################
+prj.simudata.match.theta.to.Inc.E2E<- function()
+{
+	require(phylodesign)
+	require(data.table)
+	require(multicore)
 	
-	list(sum.attack= sum.attack, sum.E2E=sum.E2E, theta= c(theta,sample.prob))
+	dir.name			<- "acutesimu_fxs_onlyu_tpcsample"
+	m.type				<- "Acute"
+	loc.type			<- "Town II"
+	m.popsize			<- NA
+	resume				<- 1
+	verbose				<- 0
+	record.tpc			<- 1
+	cluster.tw			<- 3
+	save				<- 1
+	prior.acute			<- c(1,20)
+	prior.base			<- c(0.015, 0.09)		
+	sample.prob			<- 1	
+	
+	target.su.INC		<- 0.01
+	target.su.E2E		<- 0.1
+	abc.nit				<- 3
+	abc.cores			<- 8	
+	
+	f.name		<- paste(DATA,'/',dir.name,'/',dir.name,'_',m.type,'_',loc.type,'_',cluster.tw,"_acute_",prior.acute[1],'_',prior.acute[2],"_base_",prior.base[1],'_',prior.base[2],".R",sep='')
+	if(resume)
+	{
+		options(show.error.messages = FALSE)		
+		if(verbose)
+			cat(paste("\nprj.simudata.match.theta.to.Inc.E2E: try to resume file ",paste(f.name,".R",sep='')))
+		readAttempt<-	try(suppressWarnings(load(paste(f.name,".R",sep=''))))
+		options(show.error.messages = TRUE)
+		if(!inherits(readAttempt, "try-error") && verbose)
+			cat(paste("\nprj.simudata.match.theta.to.Inc.E2E: resumed file ",paste(f.name,".R",sep='')))
+	}
+	if(!resume || inherits(readAttempt, "try-error"))
+	{	
+		abc.struct	<- c( runif(abc.nit,prior.acute[1],prior.acute[2]), runif(abc.nit,prior.base[1],prior.base[2]) )
+		abc.struct	<- as.data.table( matrix(abc.struct, ncol=2, nrow= abc.nit, dimnames=list(c(),c("acute","base"))) )		
+		#print(abc.struct)
+		abc.struct	<- mclapply(seq_len(nrow(abc.struct)),function(i)
+				{				
+					args<<- prj.simudata.cmd(CODE.HOME, loc.type, abc.struct[i,acute], abc.struct[i,base], 1, sample.prob, sample.prob, cluster.tw, save=0, resume=0, verbose=0)
+					args<<- unlist(strsplit(args,' '))
+					tpc	<- prj.simudata()
+					sum.attack	<- median( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc.internal"]][["attack.rate"]]) )					
+					sum.E2E		<- median( sapply(seq_along(tpc), function(i)
+									{
+										tmp	<- tpc.proportion.E2E(tpc[[i]][["tpc.internal"]])
+										tmp["E2E"] / tmp["X2E"]
+									}) )
+					ans			<- c(abc.struct[i,acute], abc.struct[i,base], sum.attack, sum.E2E)				
+					ans
+				}, mc.cores= abc.cores)
+		abc.struct	<- as.data.table( matrix(unlist(tmp),byrow=1,ncol=4,nrow=nrow(abc.struct), dimnames=list(c(),c("acute","base","INC","E2E"))) )
+		cat(paste("\nprj.simudata.match.theta.to.Inc.E2E: write data to file",f.name))
+		save(abc.struct, file=f.name)		
+	}	
+	print(tmp)
+	
+	stop()
 }
 ###############################################################################
 
