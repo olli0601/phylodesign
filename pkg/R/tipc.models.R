@@ -1,10 +1,10 @@
 #' this file contains the likelihood functions for each model
 
-acute.MAX.TIPC.SIZE<<- 15
+acute.MAX.TIPC.SIZE<- 15
 
-popart.CLUSTERP.ACHG<<- matrix(c(0.2,0.05,0.05,0.4/3,0.1/3,0.1/3,0.2/3,0.05/3,0.05/3),3,3,dimnames=list(c("U","T","O"),c("1","2","3")))
+popart.CLUSTERP.ACHG<- matrix(c(0.2,0.05,0.05,0.4/3,0.1/3,0.1/3,0.2/3,0.05/3,0.05/3),3,3,dimnames=list(c("U","T","O"),c("1","2","3")))
 
-popart.CLUSTERP.ACLW<<- matrix(c(825/1800,495/1800,165/1800,50/1800,30/1800,10/1800,25/1800,15/1800,5/1800),3,3,dimnames=list(c("U","T","O"),c("1","2","3")))
+popart.CLUSTERP.ACLW<- matrix(c(825/1800,495/1800,165/1800,50/1800,30/1800,10/1800,25/1800,15/1800,5/1800),3,3,dimnames=list(c("U","T","O"),c("1","2","3")))
 
 ###############################################################################
 acute.get.rates<- function(ibm.beta, ibm.pop= NULL, ibm.initpop= NULL, pop.n=nrow(ibm.pop), state.n= as.matrix(table(subset(ibm.pop,select=status))), per.capita.i= 0, debug=0)
