@@ -405,18 +405,21 @@ popart.sampling.init<- function(x, p.consent.PC, p.consent.HCC, p.lab, p.vhcc.pr
 ###############################################################################
 popart.get.sampled.transmissions.from.tipc<- function(x, tipc.p, clu.n, theta, sampling, method="PC and HCC", rtn.int=1, mx.sampled.ntr=ncol(clu.n), exclude.O= 1, verbose=0)
 {	
-	if(abs(sum(tipc.p)-1)>EPS)	stop("invalid tipc.p")
+	if(abs(sum(tipc.p, na.rm=1)-1)>EPS)	stop("invalid tipc.p")
 	
-	tipc.PC		<- lapply( x$PC.inc, 			function(z) clu.simulate(tipc.p, z, rtn.int=rtn.int)  )
-	tipc.nonPC	<- lapply( x$n.inc-x$PC.inc, 	function(z) clu.simulate(tipc.p, z, rtn.int=rtn.int)  )
+	tipc.PC		<- lapply( x$PC.inc, 			function(z){ tmp<- clu.simulate(tipc.p, z, rtn.int=rtn.int); tmp[,1]<- 0; tmp })
+	tipc.nonPC	<- lapply( x$n.inc-x$PC.inc, 	function(z){ tmp<-  clu.simulate(tipc.p, z, rtn.int=rtn.int); tmp[,1]<- 0; tmp }  )
 	#if(verbose)	print( lapply(tipc.nonPC, function(x)	apply(x,1,sum)) )
-	
+	print(tipc.PC[[1]])
+	print("HERE")
 	tipc.PC.s	<- lapply(	seq_along(tipc.PC), function(i)
 						{
 							tmp			<- as.numeric(sampling[i,c("baseline","PC.inc")])
 							names(tmp)	<- c("Idx","E")							
 							clu.sample(tipc.PC[[i]], tmp, rtn.exp=!rtn.int)
-						})			
+						})
+	print(tipc.PC.s[[1]])
+	stop()			
 	tipc.nonPC.s<- lapply(	seq_along(tipc.nonPC), function(i)
 						{
 							tmp			<- as.numeric(sampling[i,c("baseline","nonPC.inc")])

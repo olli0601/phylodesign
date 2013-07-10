@@ -462,6 +462,8 @@ prj.popart.powercalc_tipc_test_residual<- function(p.phylosignal=0.7,p.nocontam=
 {
 	require(binom)
 	require(phylodesign)
+	require(xtable)
+	
 	my.mkdir(DATA,"popartpowercalc_test")
 	dir.name<- paste(DATA,"popartpowercalc_test",sep='/')	
 	resume<- 0
@@ -483,7 +485,7 @@ prj.popart.powercalc_tipc_test_residual<- function(p.phylosignal=0.7,p.nocontam=
 	opt.pooled	<- "pooled across SA"
 	opt.clu.closure	<- 14
 	opt.sampling<- "PC and HCC"#"only HCC"	#"PC and HCC"	#
-	#opt.sampling<- "PC after yr 1 and HCC"
+	opt.sampling<- "PC after yr 1 and HCC"
 	#opt.sampling<- "PC only incident and HCC"
 	opt.power	<-	"All"
 	
@@ -503,39 +505,50 @@ prj.popart.powercalc_tipc_test_residual<- function(p.phylosignal=0.7,p.nocontam=
 	print(sites)
 	 
 	#compute complete tip cluster probs under H0 and H1
-	#clu.n		<- clu.n.of.tchain(opt.clu.closure)	
-	#theta.H0	<- clu.p.init(theta.EE.H0, theta.UE, theta.TE, 1-p.nocontam)
-	#theta.H1	<- clu.p.init(theta.EE.H1, theta.UE, theta.TE, 1-p.nocontam)
-	#tipc.p.H0	<- clu.probabilities(clu.n, theta.H0, with.ntr.weight= 1)
-	#tipc.p.H1	<- clu.probabilities(clu.n, theta.H1, with.ntr.weight= 1)
-	
+	clu.n		<- clu.tipc.n(opt.clu.closure)
+	theta.H0	<- clu.p.init(theta.EE.H0, theta.UE, theta.TE, 1-p.nocontam)
+	theta.H1	<- clu.p.init(theta.EE.H1, theta.UE, theta.TE, 1-p.nocontam)
+	tipc.p.H0	<- clu.probabilities(clu.n, theta.H0, with.ntr.weight= 1)
+	tipc.p.H1	<- clu.probabilities(clu.n, theta.H1, with.ntr.weight= 1)
+	#print(tipc.p.H1)
+	#stop()
 	#for H1 (high E->E), get n(E->E) and n(x->E) for each arm under residual sampling scenario
 	if(1)
 	{
 		p.lab			<- 0.7*0.9			#set lower as discussed		
-		p.consent.coh	<- 0.9				
+		p.consent.coh	<- 0.9*0.9			#90% consent to main study and of those 90% consent to phylo study				
 		p.consent.clu	<- 1
-		p.vhcc.prev.AB	<- 1				#already in PopART model estimate
-		p.vhcc.inc.AB	<- 1				#already in PopART model estimate
-		p.vhcc.prev.C	<- 1				#already in PopART model estimate
-		p.vhcc.inc.C	<- 1				#already in PopART model estimate		
+		if(0)
+		{
+			p.vhcc.prev.AB	<- 1				#already in PopART model estimate
+			p.vhcc.inc.AB	<- 1				#already in PopART model estimate
+			p.vhcc.prev.C	<- 1				#already in PopART model estimate
+			p.vhcc.inc.C	<- 1				#already in PopART model estimate
+		}
+		p.vhcc.prev.AB	<- 0.7				
+		p.vhcc.inc.AB	<- 0.7				
+		p.vhcc.prev.C	<- 0.4				
+		p.vhcc.inc.C	<- 0.4					
+		
 		p.contam		<- seq(0.05,0.2,0.025)
 		opt.sampling	<- "PC and HCC"	
 		opt.sampling	<- "PC after yr 1 and HCC"		
 		ans			<- lapply(p.contam,function(x)
 				{
-					sampling<- popart.sampling.init.PopARTmodel(sites,  p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)
-					print(sampling[c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Kuyasa","Luvuyo","Town II","Ikhwezi","Bloekombos","Delft South"),])
-					print(sampling[,"total prev"]*sampling[,"total inc"]*(1-x))
-					stop()
-										
+					if(0)
+					{
+						sampling<- popart.sampling.init.PopARTmodel(sites,  p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)
+						print(sampling[c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Kuyasa","Luvuyo","Town II","Ikhwezi","Bloekombos","Delft South"),])
+						print(sampling[,"total prev"]*sampling[,"total inc"]*(1-x))
+						stop()
+					}					
 					theta.H0	<- clu.p.init(theta.EE.H0, theta.UE, theta.TE, x)
 					theta.H1	<- clu.p.init(theta.EE.H1, theta.UE, theta.TE, x)
 					tipc.p.H0	<- clu.probabilities(clu.n, theta.H0, with.ntr.weight=1)
 					tipc.p.H1	<- clu.probabilities(clu.n, theta.H1, with.ntr.weight=1)
-					
-					#sampling<- popart.sampling.init(sites,  p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)
+					sampling<- popart.sampling.init(sites,  p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)
 					#print(xtable(sampling, digits=2), floating=FALSE)
+					#stop()
 					ntr.hg<- popart.get.sampled.transmissions.from.tipc(sites, tipc.p.H1, clu.n, theta.H1, sampling, opt.sampling, mx.sampled.ntr=6, exclude.O= 1, rtn.int=!debug)
 					#print(ntr.hg)						
 					list(i2i.s= ntr.hg["i2i.s",], x2i.s=ntr.hg["x2i.s",]) 
@@ -590,6 +603,7 @@ prj.popart.powercalc_tipc_test_residual<- function(p.phylosignal=0.7,p.nocontam=
 					legend("topleft",bty='n',legend=paste("arm",arms[j]))
 					dev.off()
 				})
+		stop()
 	}
 	#if samples available from multiple visits to HCC, how would this change p.lab ?
 	if(0)

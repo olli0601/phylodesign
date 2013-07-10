@@ -81,18 +81,64 @@ birthsampled.subtree.lkl<- function(lkl.complete, sample.prob, birth, cl.timewin
 	if(log)
 	{
 		#tmp	<- (ntrs+1)*log(  sample.prob ) - (ntrs+2)*log( 1 - (1-sample.prob)*(1-exp(-birth*cl.timewindow))  )
-		tmp	<- ntrs*log(  sample.prob ) - (ntrs+1)*log( 1 - (1-sample.prob)*(1-exp(-birth*cl.timewindow))  )  
-		tmp	<- matrix(tmp, ncol=ncol(lkl.complete), nrow=nrow(lkl.complete), byrow=T, dimnames= list(paste('i',seq.int(0,nrow(lkl.complete)-1),sep=''),paste("ns",ntrs,sep='')))
-		ans	<- tmp+log(lkl.complete) 
-		if(sum(exp(ans))>1+EPS)	stop("birthsampled.subtree.lkl: sampled lkl sums to > 1")
+		tmp		<- ntrs*log(  sample.prob ) - (ntrs+1)*log( 1 - (1-sample.prob)*(1-exp(-birth*cl.timewindow))  )  
+		tmp		<- matrix(tmp, ncol=ncol(lkl.complete), nrow=nrow(lkl.complete), byrow=T, dimnames= list(paste('i',seq.int(0,nrow(lkl.complete)-1),sep=''),paste("ns",ntrs,sep='')))
+		ans		<- tmp+log(lkl.complete) 
+		if(sum(exp(ans))>1+EPS)	
+			ans	<- ans - log(sum(exp(ans)))
 	}
 	else
 	{
-		tmp	<- (sample.prob)^ntrs * (  sample.prob  + (1-sample.prob)*exp(-birth*cl.timewindow)  )^-(ntrs+1)
-		tmp	<- matrix(tmp, ncol=ncol(lkl.complete), nrow=nrow(lkl.complete), byrow=T, dimnames= list(paste('i',seq.int(0,nrow(lkl.complete)-1),sep=''),paste("ns",ntrs,sep='')))
-		ans	<- tmp*lkl.complete
-		if(sum(ans)>1+EPS)		stop("birthsampled.subtree.lkl: sampled lkl sums to > 1")
+		tmp		<- (sample.prob)^ntrs / (  1 - (1-sample.prob)*(1-exp(-birth*cl.timewindow))  )^(ntrs+1)
+		tmp		<- matrix(tmp, ncol=ncol(lkl.complete), nrow=nrow(lkl.complete), byrow=T, dimnames= list(paste('i',seq.int(0,nrow(lkl.complete)-1),sep=''),paste("ns",ntrs,sep='')))
+		ans		<- tmp*lkl.complete
+#print(ans); print(sum(ans))		
+		if(sum(ans)>1+EPS)		
+			ans	<- ans/sum(ans)
 	}
+	ans
+}
+###############################################################################
+acutesampled.subtree.binomlkl<- function(part1, part2, clu.n, sample.prob, rIdx, rE, cl.timewindow, dT, log=1)
+{
+	closure					<- ncol(clu.n)-1
+	ntrs					<- seq.int(0,closure)	
+#print(part1); print(part2); print(clu.n); print(tmp); print(sum(part1 * part2 * clu.n))
+	if(rIdx==rE)				
+	{
+		tmp					<- sum(part1[1,,drop=0])
+		if(tmp>1+EPS)	
+			part1			<- part1 / tmp
+#print(part1[1,,drop=0]); print(sum(part1[1,,drop=0]))		
+		ans					<- birthsampled.subtree.lkl(part1[1,,drop=0], sample.prob, rIdx, cl.timewindow, log=0) 
+	}
+	else
+	{
+		lkl.complete		<- part1 * part2 * clu.n
+		tmp					<- sum(lkl.complete)
+		if(tmp>1+EPS)	
+				part1		<- part1 / tmp
+		part.powermissing	<- (1-exp(-rE*cl.timewindow))^seq.int(0,closure)
+		ans					<- sapply(ntrs, function(n)
+								{
+									part.summissing<- sapply(seq.int(0,closure-n), function(m)
+														{																
+															sum( 	part2[seq.int(1,n+m)+1,n+m+1] * clu.n[seq.int(1,n+m)+1,n+m+1] 		)																																									
+														})
+									#print(part.summissing); print(part.summissing * part.powermissing[seq_along(part.summissing)]); print(dbinom(n, n+seq.int(0,closure-n), sample.prob))
+									tmp2	<- sum( part.summissing * part.powermissing[seq_along(part.summissing)] * dbinom(n, n+seq.int(0,closure-n), sample.prob) )
+									#tmp2	<- sum(part.summissing * part.powermissing)
+									tmp2															
+								})
+		ans					<- part1[1,] * ans
+	}
+	tmp					<- sum(ans)
+	if(tmp>1+EPS)
+		ans				<- ans / tmp														
+	if(log)
+		ans				<- log(ans)
+	names(ans)			<- paste("ns",ntrs,sep='')	
+	#print("ans"); print(ans); print(sum(exp(ans)))
 	ans
 }
 ###############################################################################
@@ -120,7 +166,7 @@ acutesampled.subtree.lkl<- function(lkl.complete, sample.prob, rIdx, rE, cl.time
 						})
 				c(tmp, rep(ifelse(log,-Inf,0), closure - n))
 			})
-	colnames(ans)			<- paste('n',ntrs,sep='')
+	colnames(ans)			<- paste("ns",ntrs,sep='')
 	rownames(ans)			<- paste('i',ntrs,sep='')
 	if(!log && sum(ans)>1+EPS)		stop("acutesampled.subtree.lkl: sampled lkl sums to > 1")
 	if(log && sum(exp(ans))>1+EPS)	stop("acutesampled.subtree.lkl: sampled lkl sums to > 1")
@@ -250,7 +296,7 @@ acutesampled.loglkl<- function(tpc, rate.m, sample.prob, dT, lclu.n=NULL)
 {
 	#fix mle for initial frequencies	
 	init.freq.mle		<- apply(tpc,1,sum) / sum(tpc[c('u','t'),])					#TODO still the MLE for the initial values ? 
-print(init.freq.mle)	
+#print(init.freq.mle)	
 	#compute partial mle for rate.m
 	tpc.n.mx	<- ncol(tpc)-1														#max number of transmissions in tip cluster	
 	tpc.ncol	<- max(acute.MAX.TIPC.SIZE,tpc.n.mx+2)									#without sampling, need to compute probabilities only up to the largest number of transmissions + 1 in the any tip cluster
@@ -268,50 +314,22 @@ print(init.freq.mle)
 	else
 		lclu.n			<- lclu.n[seq_len(tpc.ncol),seq_len(tpc.ncol)]
 #print(exp(lclu.n)); print(tpc.ncol); stop()
-	#get transmission chain likelihoods for those that start with 'U'
-	part1				<- acute.subtree.lkl.PartNT(seq.int(0,ncol(lclu.n)-1),rate.m['u','s'],rate.m['i','s'], dT, log=1)
-	part2				<- acute.subtree.lkl.PartIdx(ncol(lclu.n)-1,rate.m['u','s'],rate.m['i','s'], log=1)
-#print(part1)
-#print(part2)
-	chain.lkl			<- part1 + part2 + lclu.n		
-	dimnames(chain.lkl)	<- dimnames(part2)
-	checklsum			<- log1p( sum( exp(chain.lkl) )-1 )
-	if(checklsum>0)
-		chain.lkl		<- chain.lkl - checklsum	
-#print(chain.lkl)	
-	chain.lkl			<- acutesampled.subtree.lkl(exp(chain.lkl), sample.prob, rate.m['u','s'],rate.m['i','s'], dT, log=1)
-#print(chain.lkl)	
-	#the [idx0, seq.int(2,ncol(chain.lkl))] are tip clusters starting with an 'E' index case; account for initial frequency of the U -- currently -Inf because of clu.n
-	tipc.lkl.E			<- exp( chain.lkl[1,seq.int(0,tpc.n.mx)+2] ) * init.freq.mle['u']
-	chain.lkl[1,seq.int(2,ncol(chain.lkl))]	<- -Inf	
-	chain.lkl			<- chain.lkl[,seq.int(0,tpc.n.mx)+1]	
-	#integrate transmission chains out
-	tipc.lkl.U			<- apply(chain.lkl,2,function(x) log(sum(exp(x))))
-	#
-	#get transmission chain likelihoods for those that start with 'T'
-	#
-	part1				<- acute.subtree.lkl.PartNT(seq.int(0,ncol(lclu.n)-1),rate.m['t','s'],rate.m['i','s'],dT, log=1)	
-	part2				<- acute.subtree.lkl.PartIdx(ncol(lclu.n)-1,rate.m['t','s'],rate.m['i','s'], log=1)
-	chain.lkl			<- part1 + part2 + lclu.n		
-	dimnames(chain.lkl)	<- dimnames(part2)
-	checklsum			<- log1p( sum( exp(chain.lkl) )-1 )
-	if(checklsum>0)
-		chain.lkl		<- chain.lkl - checklsum	
-	chain.lkl			<- acutesampled.subtree.lkl(exp(chain.lkl), sample.prob, rate.m['t','s'],rate.m['i','s'], dT, log=1)	
-	#the [idx0, seq.int(2,ncol(chain.lkl))] are tip clusters starting with an 'E' index case
-	tipc.lkl.E			<- log(      tipc.lkl.E    +    exp(chain.lkl[1,seq.int(0,tpc.n.mx)+2]) * init.freq.mle['t']      )
-	names(tipc.lkl.E)	<- paste("ns",seq.int(0,length(tipc.lkl.E)-1),sep='')
-	chain.lkl[1,seq.int(2,ncol(chain.lkl))]	<- -Inf	
-	chain.lkl			<- chain.lkl[,seq.int(0,tpc.n.mx)+1]
-#print(chain.lkl)	
-	#integrate transmission chains out
-	tipc.lkl.T			<- apply(chain.lkl,2,function(x) log(sum(exp(x))))
-#print(tipc.lkl.T)		
+	clu.n				<- exp(lclu.n)	
+	#get transmission chain probabilities for those that start with 'U'
+	part1				<- acute.subtree.lkl.PartNT(seq.int(0,ncol(lclu.n)-1),rate.m['u','s'],rate.m['i','s'], dT, log=0)
+	part2				<- acute.subtree.lkl.PartIdx(ncol(lclu.n)-1,rate.m['u','s'],rate.m['i','s'], log=0)
+	tipc.lkl.U			<- acutesampled.subtree.binomlkl(part1, part2, clu.n, sample.prob, rate.m['u','s'],rate.m['i','s'], dT, log=1)
+	#get transmission chain probabilities for those that start with 'T'
+	part1				<- acute.subtree.lkl.PartNT(seq.int(0,ncol(lclu.n)-1),rate.m['t','s'],rate.m['i','s'],dT, log=0)	
+	part2				<- acute.subtree.lkl.PartIdx(ncol(lclu.n)-1,rate.m['t','s'],rate.m['i','s'], log=0)
+	tipc.lkl.T			<- acutesampled.subtree.binomlkl(part1, part2, clu.n, sample.prob, rate.m['u','s'],rate.m['i','s'], dT, log=1)
+	#MLE for initial frequencies	
 	tipc.lkl.U			<- tipc.lkl.U + log(init.freq.mle)['u']
 	tipc.lkl.T			<- tipc.lkl.T + log(init.freq.mle)['t']
-	
-	tipc.lkl			<- rbind(tipc.lkl.E,rbind(tipc.lkl.U,tipc.lkl.T))	
-	rownames(tipc.lkl)	<- c('i','u','t')	
+	#compute likelihood
+	tipc.lkl			<- rbind(rep(-Inf,length(tipc.lkl.U)),rbind(tipc.lkl.U,tipc.lkl.T))	
+	rownames(tipc.lkl)	<- c('i','u','t')
+	tipc.lkl			<- tipc.lkl[,seq_len(ncol(tpc))]		
 	tpc					<- tpc[rownames(tipc.lkl),]	
 #print(tipc.lkl); print(tpc); #stop()
 	if(ncol(tipc.lkl)!=ncol(tpc))	stop("columns of tipc.lkl and tpc do not match")

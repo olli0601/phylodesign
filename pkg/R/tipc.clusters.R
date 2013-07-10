@@ -82,7 +82,7 @@ clu.p.of.tchain<- function(clu.n, p, log=0 )
 	p.x2E		<- p[which(names(p)!="E2E")]	
 	r.E2E		<- p.E2E/p.x2E
 	max.ntransm	<- ncol(clu.n) - 1								#substract 1 to account for n0 case
-	
+	print(max.ntransm)
 	clu.logp	<- sapply(seq_len(max.ntransm),function(ntr)
 			{
 				tmp<- log(r.E2E)*seq.int(ntr-1,0,-1)
@@ -92,8 +92,9 @@ clu.p.of.tchain<- function(clu.n, p, log=0 )
 			})
 
 	clu.logp			<- cbind( rep(NA,nrow(clu.logp)), clu.logp)		#no probability for singletons can be given
-	dimnames(clu.logp)	<- list(paste("idx",1:max.ntransm,sep=''),paste("n",seq.int(0,max.ntransm),sep=''))				
-	clu.log.x2E			<- sapply(seq.int(0,max.ntransm),function(ntr)	log(p.x2E)*rep(ntr,max.ntransm)	)
+	clu.logp			<- rbind( rep(NA,ncol(clu.logp)), clu.logp)	
+	dimnames(clu.logp)	<- list(paste("idx",0:max.ntransm,sep=''),paste("n",seq.int(0,max.ntransm),sep=''))	
+	clu.log.x2E			<- sapply(seq.int(0,max.ntransm),function(ntr)	log(p.x2E)*rep(ntr,max.ntransm+1)	)
 	clu.logp			<- clu.logp+clu.log.x2E+log(clu.n)
 	if(!log)
 		clu.logp<- exp(clu.logp)	
@@ -252,7 +253,7 @@ clu.probabilities<- function(clu.n, p, with.ntr.weight=0)
 #' @export
 clu.simulate<- function(clu.p, inc, rtn.int=0)
 {
-	tmp				<- sum(apply(clu.p,2,function(x) sum(x, na.rm=1) )*seq_len(ncol(clu.p)))		#sum of incidence in clu.p
+	tmp				<- sum(apply(clu.p,2,function(x) sum(x, na.rm=1) )*seq.int(0,ncol(clu.p)-1))		#sum of incidence in clu.p
 	clu				<- lapply(inc, function(x)  x/tmp*clu.p )
 	if(rtn.int)
 		clu			<- lapply(inc, round)

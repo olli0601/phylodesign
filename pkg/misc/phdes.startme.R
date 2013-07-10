@@ -52,7 +52,7 @@ EPS			<<- .Machine$double.eps
 #default.fun	<- "prj.popart.powercalc_link_consenting"
 #default.fun	<- "prj.popart.powercalc_tipc_test"
 #default.fun	<- "prj.popart.powercalc_tipc_test_ukhivrdb"
-#default.fun	<- "prj.popart.powercalc_tipc_test_residual"
+default.fun	<- "prj.popart.powercalc_tipc_test_residual"
 #default.fun	<- "prj.popart.powercalc_tipc_consenting"
 #default.fun	<- "prj.popart.power_test"
 #default.fun	<- "prj.popart.powercalc_cmp_link_tipc"
@@ -62,7 +62,7 @@ EPS			<<- .Machine$double.eps
 #default.fun<- "prj.plotfisherhettransm"
 default.fun<- "prj.simudata"
 #default.fun<- "prj.acute.loglklsurface"
-#default.fun<- "prj.pipeline"
+default.fun<- "prj.pipeline"
 #default.fun<- "prj.acute.test"
 
 ###############################################################################

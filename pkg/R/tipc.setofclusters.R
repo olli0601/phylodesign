@@ -100,6 +100,19 @@ tpc.tabulate<- function(tpc)
 	ans
 }
 ###############################################################################
+tpc.proportion.E2E<- function(tpc)
+{
+	ntr		<- sapply(tpc[["trees"]], function(x)
+			{
+				ans		<- { tmp<- rep(0,2); names(tmp)<- c("X2E","E2E"); tmp }
+				ans[1]	<- nrow(x$nodes)-1				
+				if(nrow(x$nodes)<3)		return(ans)
+				ans[2]	<- ans[1] - length(which(x[["edges"]][, "from"]==x[["nodes"]][1,"id"]))				
+				ans
+			})
+	apply(ntr,1,sum)
+}	
+###############################################################################
 tpc.sample<- function( tpc, sample.prob )
 {
 	s.Idx			<- sample.prob["Idx"]
