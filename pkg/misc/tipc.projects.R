@@ -1543,10 +1543,8 @@ prj.pipeline<- function()
 		cluster.tw	<- 3
 		cmd			<-	sapply(seq_along(acute),function(i)
 							{
-								cmd			<- prj.simudata.cmd(dir.name, "Town II", acute[i], base[i], 50, sIdx, sE, cluster.tw)
+								cmd			<- prj.simudata.cmd(dir.name, "Town II", acute[i], base[i], 50, sIdx, sE, cluster.tw, 1)
 								cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q=NA)
-								cat(cmd)
-								
 								signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
 								outdir		<- paste(CODE.HOME,"misc",sep='/')
 								outfile		<- paste("phd",signat,"qsub",sep='.')
@@ -1564,7 +1562,7 @@ prj.pipeline<- function()
 		cluster.tw	<- 3
 		cmd			<-	sapply(seq_along(base),function(i)
 				{
-					cmd			<- prj.simudata.cmd(dir.name, "Town II", acute, base[i], 50, sIdx[i], sE[i], cluster.tw)
+					cmd			<- prj.simudata.cmd(dir.name, "Town II", acute, base[i], 50, sIdx[i], sE[i], cluster.tw, 1)
 					cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q=NA)
 					cat(cmd)
 					
@@ -1616,7 +1614,7 @@ prj.hpccaller<- function(outdir, outfile, cmd)
 	Sys.sleep(1)
 }
 ###############################################################################
-prj.simudata.cmd<- function(dir.name, loc, acute, base, rep, sIdx, sE,cluster.tw)
+prj.simudata.cmd<- function(dir.name, loc, acute, base, rep, sIdx, sE,cluster.tw,save)
 {		
 	cmd<- paste("\n",dir.name,"/misc/phdes.startme.R -exeSIMU.DATA -v1",sep='')
 	#cmd<- paste(cmd, " -l=",loc,sep='')
@@ -1625,7 +1623,8 @@ prj.simudata.cmd<- function(dir.name, loc, acute, base, rep, sIdx, sE,cluster.tw
 	cmd<- paste(cmd, " -r=",rep,sep='')
 	cmd<- paste(cmd, " -sIdx=",sIdx,sep='')
 	cmd<- paste(cmd, " -sE=",sE,sep='')
-	cmd<- paste(cmd, " -cluster.tw=",cluster.tw,sep='')		
+	cmd<- paste(cmd, " -cluster.tw=",cluster.tw,sep='')
+	cmd<- paste(cmd, " -save=",save,sep='')
 }
 ###############################################################################
 prj.simudata<- function()
@@ -1640,6 +1639,7 @@ prj.simudata<- function()
 	record.tpc			<- 1
 	tpc.repeat			<- 2
 	cluster.tw			<- 3
+	save				<- 1
 	#theta				<- c(8, 0.05, 0, 0)
 	theta				<- c(2, 0.065, 0, 0)
 	names(theta)		<- c("acute","base","m.st1","m.st2")
@@ -1685,6 +1685,10 @@ prj.simudata<- function()
 						{	switch(substr(arg,2,2),
 									v= return(as.numeric(substr(arg,4,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) verbose<- tmp[1]
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,5),
+									save= return(as.numeric(substr(arg,7,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) save<- tmp[1]
 	}
 	
 	cat(paste("\nm.popsize ",m.popsize))
@@ -1697,6 +1701,7 @@ prj.simudata<- function()
 	cat(paste("\nsample.prob.E ",sample.prob[2]))
 	cat(paste("\nverbose ",verbose))
 	cat(paste("\nresume ",resume))
+	cat(paste("\nsave ",save))
 	
 	my.mkdir(DATA,dir.name)
 	dir.name<- paste(DATA,dir.name,sep='/')
@@ -1727,9 +1732,12 @@ prj.simudata<- function()
 				ans[["tpc.table.all"]]		<- tpc.tabulate( ans[["tpc.internal"]] )								
 				ans[["tpc.table.sample"]]	<- tpc.tabulate( tpc.sample( ans[["tpc.internal"]], sample.prob ) )				
 				ans
-			})
-		cat(paste("\nprj.simudata: write tpc data to file",paste(f.name,".R",sep='')))
-		save(tpc,file=paste(f.name,".R",sep=''))
+			})		
+		if(save)
+		{
+			cat(paste("\nprj.simudata: write tpc data to file",paste(f.name,".R",sep='')))
+			save(tpc,file=paste(f.name,".R",sep=''))	
+		}		
 	}
 		
 	sum.attack	<- summary( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc.internal"]][["attack.rate"]]) )	
@@ -1738,44 +1746,39 @@ prj.simudata<- function()
 						tmp	<- tpc.proportion.E2E(tpc[[i]][["tpc.internal"]])
 						tmp["E2E"] / tmp["X2E"]
 					}) )
+	if(save)
+	{
+		table.name				<- "tpc.table.all"
+		max.ntr					<- max(sapply(seq_along(tpc), function(i) ncol(tpc[[i]][[table.name]]) ))
+		tpc.table				<- sapply(seq_along(tpc), function(i)
+				{
+					c( as.vector(tpc[[i]][[table.name]]), rep(0, nrow(tpc[[i]][[table.name]]) * (max.ntr - ncol(tpc[[i]][[table.name]]))) )			
+				})
+		tpc.table				<- matrix( round(apply(tpc.table, 1, median )), ncol=max.ntr )
+		tpc.table				<- tpc.table[ , apply(tpc.table,2,function(x)  any(x!=0) ) ]		
+		dimnames(tpc.table)		<- list(rownames(tpc[[1]][[table.name]]), paste("n",seq.int(0,ncol(tpc.table)-1),sep=''))
+		tpc.table.all.median	<- tpc.table
+		print(tpc.table.all.median)
+		
+		table.name				<- "tpc.table.sample"
+		max.ntr					<- max(sapply(seq_along(tpc), function(i) ncol(tpc[[i]][[table.name]]) ))
+		tpc.table				<- sapply(seq_along(tpc), function(i)
+				{
+					c( as.vector(tpc[[i]][[table.name]]), rep(0, nrow(tpc[[i]][[table.name]]) * (max.ntr - ncol(tpc[[i]][[table.name]]))) )			
+				})
+		tpc.table				<- matrix( round(apply(tpc.table, 1, median )), ncol=max.ntr )
+		tpc.table				<- tpc.table[ , apply(tpc.table,2,function(x)  any(x!=0) ) ]		
+		dimnames(tpc.table)		<- list(rownames(tpc[[1]][[table.name]]), paste("ns",seq.int(0,ncol(tpc.table)-1),sep=''))
+		tpc.table.sample.median	<- tpc.table
+		print(tpc.table.sample.median)
+		
+		f.name<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta[1],"_b",theta[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_median",sep=''),sep='/')
+		cat(paste("\nprj.simudata: write tpc data medians to file",paste(f.name,".R",sep='')))
+		save(tpc.table.all.median,tpc.table.sample.median,sum.attack,sum.E2E,file=paste(f.name,".R",sep=''))		
+		
+	}
 	
-	print(sum.E2E)
-	print(sum.attack)
-	stop()
-	table.name				<- "tpc.table.all"
-	max.ntr					<- max(sapply(seq_along(tpc), function(i) ncol(tpc[[i]][[table.name]]) ))
-	tpc.table				<- sapply(seq_along(tpc), function(i)
-								{
-									c( as.vector(tpc[[i]][[table.name]]), rep(0, nrow(tpc[[i]][[table.name]]) * (max.ntr - ncol(tpc[[i]][[table.name]]))) )			
-								})
-	tpc.table				<- matrix( round(apply(tpc.table, 1, median )), ncol=max.ntr )
-	tpc.table				<- tpc.table[ , apply(tpc.table,2,function(x)  any(x!=0) ) ]		
-	dimnames(tpc.table)		<- list(rownames(tpc[[1]][[table.name]]), paste("n",seq.int(0,ncol(tpc.table)-1),sep=''))
-	tpc.table.all.median	<- tpc.table
-	print(tpc.table.all.median)
-	
-	table.name				<- "tpc.table.sample"
-	max.ntr					<- max(sapply(seq_along(tpc), function(i) ncol(tpc[[i]][[table.name]]) ))
-	tpc.table				<- sapply(seq_along(tpc), function(i)
-								{
-									c( as.vector(tpc[[i]][[table.name]]), rep(0, nrow(tpc[[i]][[table.name]]) * (max.ntr - ncol(tpc[[i]][[table.name]]))) )			
-								})
-	tpc.table				<- matrix( round(apply(tpc.table, 1, median )), ncol=max.ntr )
-	tpc.table				<- tpc.table[ , apply(tpc.table,2,function(x)  any(x!=0) ) ]		
-	dimnames(tpc.table)		<- list(rownames(tpc[[1]][[table.name]]), paste("ns",seq.int(0,ncol(tpc.table)-1),sep=''))
-	tpc.table.sample.median	<- tpc.table
-	print(tpc.table.sample.median)
-	
-	f.name<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta[1],"_b",theta[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_median",sep=''),sep='/')
-	cat(paste("\nprj.simudata: write tpc data medians to file",paste(f.name,".R",sep='')))
-	save(tpc.table.all.median,tpc.table.sample.median,sum.attack,sum.E2E,file=paste(f.name,".R",sep=''))		
-	#tmp<- tpc.tabulate( tpc[[1]][["tpc.internal"]] )
-	#print(tmp)
-	#print( clu.sample(tmp, sample.prob, rtn.exp=1) )
-	#stop()	
-	#print( summary( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc"]]) ) )		
-	#print( lapply(seq_along(tpc), function(i) tpc[[i]][["tpc.table.all"]]) )
-	#print( lapply(seq_along(tpc), function(i) tpc[[i]][["tpc.table.sample"]]) )	
+	list(sum.attack= sum.attack, sum.E2E=sum.E2E, theta= c(theta,sample.prob))
 }
 ###############################################################################
 
