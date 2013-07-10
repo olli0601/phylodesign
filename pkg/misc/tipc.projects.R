@@ -1555,7 +1555,7 @@ prj.pipeline<- function()
 							})
 		#cmd			<- paste(cmd,sep='',collapse='')		
 	}
-	if(1)	#simulate tip cluster data sets
+	if(0)	#simulate tip cluster data sets
 	{
 		dir.name			<- CODE.HOME
 		#acute				<- c(2,4,6,8)
@@ -1578,6 +1578,17 @@ prj.pipeline<- function()
 					prj.hpccaller(outdir, outfile, cmd)
 				})
 		#cmd			<- paste(cmd,sep='',collapse='')		
+	}
+	if(1)	#start auxiliary job
+	{
+		dir.name	<- CODE.HOME
+		cmd			<- paste("\n",dir.name,"/misc/phdes.startme.R -exeSIMU.MATCH",sep='')
+		cmd			<- prj.hpcwrapper(cmd, hpc.walltime=71, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
+		cat(cmd)
+		signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
+		outdir		<- paste(CODE.HOME,"misc",sep='/')
+		outfile		<- paste("phd",signat,"qsub",sep='.')
+		prj.hpccaller(outdir, outfile, cmd)
 	}
 	if(0)
 	{

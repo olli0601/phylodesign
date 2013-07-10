@@ -64,7 +64,7 @@ EPS			<<- .Machine$double.eps
 #default.fun<- "prj.simudata"
 #default.fun<- "prj.acute.loglklsurface"
 default.fun<- "prj.pipeline"
-default.fun<- "prj.simudata.match.theta.to.Inc.E2E"
+#default.fun<- "prj.simudata.match.theta.to.Inc.E2E"
 #default.fun<- "prj.acute.test"
 
 ###############################################################################
@@ -106,6 +106,7 @@ if(length(args))
 					POPART.POWER.TIPC.CONSENT	= "prj.popart.powercalc_tipc_consenting",
 					TEST						= "prj.test",
 					SIMU.DATA					= "prj.simudata",
+					SIMU.MATCH					= "prj.simudata.match.theta.to.Inc.E2E",
 					ACUTE.LKL					= "prj.acute.loglklsurface",
 					ACUTE.CLD					= "prj.acute.clusterdistribution",
 					ACUTE.ABC					= "prj.acutesampling.rejabc",
