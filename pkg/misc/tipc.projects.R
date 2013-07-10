@@ -1839,38 +1839,37 @@ prj.simudata<- function()
 ###############################################################################
 prj.simudata.match.theta.to.Inc.E2E<- function()
 {
-	require(phylodesign)
 	require(data.table)
 	require(multicore)
-	
-	dir.name			<- "acutesimu_fxs_onlyu_tpcsample"
+		
 	m.type				<- "Acute"
 	loc.type			<- "Town II"
 	m.popsize			<- NA
 	resume				<- 1
-	verbose				<- 0
-	record.tpc			<- 1
+	verbose				<- 1	
 	cluster.tw			<- 3
 	save				<- 1
 	prior.acute			<- c(1,20)
 	prior.base			<- c(0.015, 0.09)		
 	sample.prob			<- 1	
-	
+	debug.susc.const	<- 0
+	debug.only.u		<- 0
 	target.su.INC		<- 0.01
 	target.su.E2E		<- 0.1
-	abc.nit				<- 3
-	abc.cores			<- 8	
+	abc.nit				<- 10 #5e4
+	abc.cores			<- 8
+	dir.name			<- paste("acutesimu_fxs",debug.susc.const,"_onlyu",debug.only.u,sep='')
 	
-	f.name		<- paste(DATA,'/',dir.name,'/',dir.name,'_',m.type,'_',loc.type,'_',cluster.tw,"_acute_",prior.acute[1],'_',prior.acute[2],"_base_",prior.base[1],'_',prior.base[2],".R",sep='')
+	f.name		<- paste(DATA,'/',dir.name,'/',"match_INC_E2E",'_',m.type,'_',loc.type,'_',cluster.tw,"_acute_",prior.acute[1],'_',prior.acute[2],"_base_",prior.base[1],'_',prior.base[2],".R",sep='')
 	if(resume)
 	{
 		options(show.error.messages = FALSE)		
 		if(verbose)
-			cat(paste("\nprj.simudata.match.theta.to.Inc.E2E: try to resume file ",paste(f.name,".R",sep='')))
-		readAttempt<-	try(suppressWarnings(load(paste(f.name,".R",sep=''))))
+			cat(paste("\nprj.simudata.match.theta.to.Inc.E2E: try to resume file ",f.name))
+		readAttempt<-	try(suppressWarnings(load(f.name)))
 		options(show.error.messages = TRUE)
 		if(!inherits(readAttempt, "try-error") && verbose)
-			cat(paste("\nprj.simudata.match.theta.to.Inc.E2E: resumed file ",paste(f.name,".R",sep='')))
+			cat(paste("\nprj.simudata.match.theta.to.Inc.E2E: resumed file ",f.name))
 	}
 	if(!resume || inherits(readAttempt, "try-error"))
 	{	
@@ -1879,7 +1878,7 @@ prj.simudata.match.theta.to.Inc.E2E<- function()
 		#print(abc.struct)
 		abc.struct	<- mclapply(seq_len(nrow(abc.struct)),function(i)
 				{				
-					args<<- prj.simudata.cmd(CODE.HOME, loc.type, abc.struct[i,acute], abc.struct[i,base], 1, sample.prob, sample.prob, cluster.tw, save=0, resume=0, verbose=0)
+					args<<- prj.simudata.cmd(CODE.HOME, loc.type, abc.struct[i,acute], abc.struct[i,base], 1, sample.prob, sample.prob, cluster.tw, save=0, resume=0, verbose=0, debug.susc.const=debug.susc.const, debug.only.u=debug.only.u)
 					args<<- unlist(strsplit(args,' '))
 					tpc	<- prj.simudata()
 					sum.attack	<- median( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc.internal"]][["attack.rate"]]) )					
@@ -1895,7 +1894,7 @@ prj.simudata.match.theta.to.Inc.E2E<- function()
 		cat(paste("\nprj.simudata.match.theta.to.Inc.E2E: write data to file",f.name))
 		save(abc.struct, file=f.name)		
 	}	
-	print(tmp)
+	#print(tmp)
 	
 	stop()
 }
