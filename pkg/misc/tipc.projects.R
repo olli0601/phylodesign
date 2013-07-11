@@ -683,14 +683,16 @@ prj.popart.seqcoverage	<- function()
 				else
 				{
 					#low acute
-					cmd<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.H0[1], theta.model.H0[2], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
+					cmd			<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.H0[1], theta.model.H0[2], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
+					cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
 					cat(cmd)								
 					signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
 					outdir		<- paste(CODE.HOME,"misc",sep='/')
 					outfile		<- paste("phd",signat,"qsub",sep='.')
 					prj.hpccaller(outdir, outfile, cmd)
 					#high acute
-					cmd<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.H1[1], theta.model.H1[2], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
+					cmd			<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.H1[1], theta.model.H1[2], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
+					cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
 					cat(cmd)								
 					signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
 					outdir		<- paste(CODE.HOME,"misc",sep='/')
@@ -1765,7 +1767,7 @@ prj.hpccaller<- function(outdir, outfile, cmd)
 prj.simudata.cmd<- function(dir.name, loc, acute, base, rep, sIdx, sE, cluster.tw, debug.susc.const=0, debug.only.u=0, save=1, resume=1, verbose=1)
 {		
 	cmd<- paste("\n",dir.name,"/misc/phdes.startme.R -exeSIMU.DATA ",sep='')
-	cmd<- paste(cmd, " -loc=",loc,sep='')
+	cmd<- paste(cmd, " -loc=\"",loc,'\"',sep='')
 	cmd<- paste(cmd, " -acute=",acute,sep='')
 	cmd<- paste(cmd, " -baseline=",base,sep='')
 	cmd<- paste(cmd, " -rep=",rep,sep='')
@@ -1810,7 +1812,7 @@ prj.simudata<- function()
 		if(length(tmp)>0) tpc.repeat<- tmp[1]
 		tmp<- na.omit(sapply(args,function(arg)
 						{	switch(substr(arg,2,4),
-									loc= return(substr(arg,6,nchar(arg))),NA)	}))
+									loc= return(substr(arg,7,nchar(arg)-1)),NA)	}))
 		if(length(tmp)>0) loc.type<- tmp[1]
 		tmp<- na.omit(sapply(args,function(arg)
 						{	switch(substr(arg,2,2),

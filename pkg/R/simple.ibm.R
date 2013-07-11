@@ -43,28 +43,25 @@ ibm.init.incidence<- function(loc)
 ###############################################################################
 ibm.init.popinitdistributions.popart<- function(attr, popart.community)
 {
-	popart.triplets	<- popart.getdata.randomized.arm( 1, rtn.fixed=1 )
-	print("")
-	print(popart.triplets)
-	
-	comm		<- popart.triplets[ popart.community==popart.triplets$comid_old, , drop=0]
-	tmp			<- lapply(seq_along(attr),function(i)
-					{
-						switch(	names(attr)[i],
-								status=	{		
-											s	<- 1-comm[,"hivcomb"]/100
-											u	<- comm[,"hivcomb"] / 100 * ( 1 - comm[,"artadjust"]/100 )
-											t	<- comm[,"hivcomb"] / 100 * comm[,"artadjust"]/100 
-											ans	<- c(s,0,t,u)
-											names(ans)<- c('s','i','t','u')
-											ans
-										},
-								gender= rep(1/length(attr[[i]]),length(attr[[i]])),
-								risk= 	c(0.2,0.4,0.4),
-								circ= 	c(0.2,0.8),
-								age= 	rep(1/length(attr[[i]]),length(attr[[i]]))
-						)
-					})
+	popart.triplets	<- popart.getdata.randomized.arm( 1, rtn.fixed=1 )	
+	comm			<- popart.triplets[ popart.community==popart.triplets$comid_old, , drop=0]
+	tmp				<- lapply(seq_along(attr),function(i)
+						{
+							switch(	names(attr)[i],
+									status=	{		
+												s	<- 1-comm[,"hivcomb"]/100
+												u	<- comm[,"hivcomb"] / 100 * ( 1 - comm[,"artadjust"]/100 )
+												t	<- comm[,"hivcomb"] / 100 * comm[,"artadjust"]/100 
+												ans	<- c(s,0,t,u)
+												names(ans)<- c('s','i','t','u')
+												ans
+											},
+									gender= rep(1/length(attr[[i]]),length(attr[[i]])),
+									risk= 	c(0.2,0.4,0.4),
+									circ= 	c(0.2,0.8),
+									age= 	rep(1/length(attr[[i]]),length(attr[[i]]))
+							)
+						})
 	names(tmp)	<- names(attr)
 	tmp$npop	<- round( comm[,"popsize"] * comm[,"p.adults"] ) 
 	tmp	
