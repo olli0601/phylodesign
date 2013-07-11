@@ -1759,17 +1759,27 @@ prj.pipeline<- function()
 	}
 	if(1)	#start 'prj.simudata.match.theta.to.Inc.E2E'
 	{
+		sites		<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )
+		nit			<- 5e4
+		
 		dir.name	<- CODE.HOME
-		cmd			<- paste("\n",dir.name,"/misc/phdes.startme.R -exeSIMU.MATCH",sep='')
-		cmd			<- prj.hpcwrapper(cmd, hpc.walltime=71, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
-		cat(cmd)
-		signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
-		outdir		<- paste(CODE.HOME,"misc",sep='/')
-		outfile		<- paste("phd",signat,"qsub",sep='.')
-		prj.hpccaller(outdir, outfile, cmd)
+		sapply(sites$comid_old, function(loc)
+				{
+					cmd			<- paste("\n",dir.name,"/misc/phdes.startme.R -exeSIMU.MATCH",sep='')
+					cmd			<- paste(cmd, " -loc=",loc,sep='')
+					cmd			<- paste(cmd, " -nit=",nit,sep='')
+					
+					cmd			<- prj.hpcwrapper(cmd, hpc.walltime=71, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
+					cat(cmd)
+					signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
+					outdir		<- paste(CODE.HOME,"misc",sep='/')
+					outfile		<- paste("phd",signat,"qsub",sep='.')
+					prj.hpccaller(outdir, outfile, cmd)			
+				})		
 	}
-	if(1)	#start 'prj.popart.powercalc.by.acutelklratio'
-	{
+	if(0)	#start 'prj.popart.powercalc.by.acutelklratio' for all locations
+	{		
+		
 		dir.name	<- CODE.HOME
 		cmd			<- paste("\n",dir.name,"/misc/phdes.startme.R -exePOPART.POWER.ACUTELKLRATIO",sep='')
 		cmd			<- prj.hpcwrapper(cmd, hpc.walltime=71, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
@@ -1777,7 +1787,7 @@ prj.pipeline<- function()
 		signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
 		outdir		<- paste(CODE.HOME,"misc",sep='/')
 		outfile		<- paste("phd",signat,"qsub",sep='.')
-		prj.hpccaller(outdir, outfile, cmd)
+		prj.hpccaller(outdir, outfile, cmd)				
 	}	
 	if(0)
 	{
@@ -1844,7 +1854,7 @@ prj.hpccaller<- function(outdir, outfile, cmd)
 prj.simudata.cmd<- function(dir.name, loc, acute, base, rep, sIdx, sE, cluster.tw, debug.susc.const=0, debug.only.u=0, save=1, resume=1, verbose=1)
 {		
 	cmd<- paste("\n",dir.name,"/misc/phdes.startme.R -exeSIMU.DATA ",sep='')
-	cmd<- paste(cmd, " -loc=\"",loc,'\"',sep='')
+	cmd<- paste(cmd, " -loc=",loc,sep='')
 	cmd<- paste(cmd, " -acute=",acute,sep='')
 	cmd<- paste(cmd, " -baseline=",base,sep='')
 	cmd<- paste(cmd, " -rep=",rep,sep='')
@@ -1889,7 +1899,7 @@ prj.simudata<- function()
 		if(length(tmp)>0) tpc.repeat<- tmp[1]
 		tmp<- na.omit(sapply(args,function(arg)
 						{	switch(substr(arg,2,4),
-									loc= return(substr(arg,7,nchar(arg)-1)),NA)	}))
+									loc= return(substr(arg,6,nchar(arg))),NA)	}))
 		if(length(tmp)>0) loc.type<- tmp[1]
 		tmp<- na.omit(sapply(args,function(arg)
 						{	switch(substr(arg,2,2),
@@ -2069,6 +2079,22 @@ prj.simudata.match.theta.to.Inc.E2E<- function()
 	abc.cores			<- 8
 	dir.name			<- paste("acutesimu_fxs",debug.susc.const,"_onlyu",debug.only.u,sep='')
 	
+	if(exists("args"))
+	{
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,4),
+									loc= return(substr(arg,6,nchar(arg))),NA)	}))
+		if(length(tmp)>0) loc.type<- tmp[1]
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,4),
+									nit= return(as.numeric(substr(arg,6,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) abc.nit<- tmp[1]
+	}
+	if(verbose)
+	{
+		cat(paste("\nabc.nit ",abc.nit))
+		cat(paste("\nloc.type ",loc.type))		
+	}
 	f.name		<- paste(DATA,'/',dir.name,'/',"match_INC_E2E",'_',m.type,'_',loc.type,'_',cluster.tw,"_acute_",prior.acute[1],'_',prior.acute[2],"_base_",prior.base[1],'_',prior.base[2],".R",sep='')
 	if(resume)
 	{
@@ -2084,14 +2110,14 @@ prj.simudata.match.theta.to.Inc.E2E<- function()
 	{	
 		abc.struct	<- c( runif(abc.nit,prior.acute[1],prior.acute[2]), runif(abc.nit,prior.base[1],prior.base[2]) )
 		abc.struct	<- as.data.table( matrix(abc.struct, ncol=2, nrow= abc.nit, dimnames=list(c(),c("acute","base"))) )		
-		#print(abc.struct)
+		print(abc.struct)
 		#abc.struct	<- mclapply(seq_len(nrow(abc.struct)),function(i)
 		abc.struct	<- lapply(seq_len(nrow(abc.struct)),function(i)
 				{		
 					print(unlist(c(i,abc.struct[i,])))
 					args<<- prj.simudata.cmd(CODE.HOME, loc.type, abc.struct[i,acute], abc.struct[i,base], 1, sample.prob, sample.prob, cluster.tw, save=0, resume=0, verbose=0, debug.susc.const=debug.susc.const, debug.only.u=debug.only.u)
 					args<<- unlist(strsplit(args,' '))
-					tpc	<- prj.simudata()
+					tpc	<- prj.simudata()[["tpc"]]
 					sum.attack	<- median( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc.internal"]][["attack.rate"]]) )					
 					sum.E2E		<- median( sapply(seq_along(tpc), function(i)
 									{
