@@ -204,6 +204,36 @@ acute.lkl.tree.xk.ik<- function(nx,ni,rx,ri,dT, log=0)
 	ans
 }
 ###############################################################################
+#' Compute the log likelihood of a tip cluster table under the \code{Acute} model, batch mode
+acute.loglkl.batch<- function(loc.type, tpc.table, cluster.tw, theta, clu.closure= 12, verbose=1)
+{		
+	m.type			<- "Acute"
+	theta0			<- c(1, 0, 0, 0)
+	names(theta0)	<- c("acute","base","m.st1","m.st2")
+	ibm				<- ibm.collapse( ibm.init.model(m.type, loc.type, NA, theta0, save='', resume= 0, init.pop=0) )
+	state.n			<- ibm$init.pop.distr$status * ibm$init.pop.distr$npop
+	pop.n			<- ibm$init.pop.distr$npop	
+	if(verbose)	print(pop.n)
+	if(verbose)	print(state.n)	
+	
+	clu.n			<- clu.tipc.n(clu.closure)			
+	clu.n.sum		<- apply(clu.n,2,sum)																	#faster than seq_len(ncol(clu.n))^seq.int(-1,ncol(clu.n)-2)
+	lclu.n			<- log( clu.n / matrix(clu.n.sum, nrow=nrow(clu.n), ncol=length(clu.n.sum), byrow=1) ) 		
+	
+	#evaluate likelihood over parameter space
+	tpc.lkl		<- sapply(seq_len(nrow(theta)),function(i)
+			{				
+				#i<- 10
+				if(verbose) print(theta[i,])
+				ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]
+				ibm[["beta"]][["base"]]					<- theta[i,"base"]	
+				rate.m									<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)	
+				lkl										<- acutesampled.loglkl(tpc.table, rate.m, theta[i,"sample"], cluster.tw, lclu.n=lclu.n)				
+				lkl[["table.lkl"]]
+			})	
+	cbind(theta, matrix(tpc.lkl, ncol=1, nrow=length(tpc.lkl), dimnames=list(c(),c("lkl"))))	
+}
+###############################################################################
 #' Compute the log likelihood of a tip cluster table under the \code{Acute} model
 acute.loglkl<- function(tpc, rate.m, dT, clu.n=NULL)
 {

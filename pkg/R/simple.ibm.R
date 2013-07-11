@@ -44,8 +44,7 @@ ibm.init.incidence<- function(loc)
 ibm.init.popinitdistributions.popart<- function(attr, popart.community)
 {
 	popart.triplets	<- popart.getdata.randomized.arm( 1, rtn.fixed=1 )
-	print(popart.community)
-	print(popart.triplets)
+#print(popart.community); print(popart.triplets)
 	comm			<- popart.triplets[ popart.community==popart.triplets$comid_old, , drop=0]
 	tmp				<- lapply(seq_along(attr),function(i)
 						{
@@ -199,7 +198,7 @@ ibm.init.model<- function(m.type, loc.type, m.popsize, theta, save='', resume= 1
 		ibm.att					<- ibm.init.attributes(m.type)
 		ibm$beta				<- ibm.init.beta(ibm.att)					
 		ibm$beta				<- ibm.set.modelbeta(m.type, ibm$beta, theta)		
-		if(loc.type%in%c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Ikhwezi","Bloekombos","Delft South","Town II","Luvuyo","Kuyasa"))
+		if(loc.type%in%c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Ikhwezi","Bloekombos","DelftSouth","TownII","Luvuyo","Kuyasa"))
 			ibm.distr			<- ibm.init.popinitdistributions.popart(ibm.att, loc.type)
 		else
 			ibm.distr			<- ibm.init.popinitdistributions.vanilla(ibm.att, loc.type,m.popsize)

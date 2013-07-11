@@ -607,19 +607,19 @@ prj.acute.test.lkl.wsampling.onlyU<- function()
 	stop()
 }
 ###############################################################################
-prj.popart.seqcoverage	<- function()
+prj.popart.powercalc.by.acutelklratio	<- function()
 {
 	dir.name		<- "popartpower_acute"
 	my.mkdir(DATA,dir.name)
 	dir.name		<- paste(DATA,dir.name,sep='/')	
-	resume			<- 0
+	resume			<- 1
 	verbose			<- 1
 	plot.increment	<- 0.05
 	
 	m.type			<- "Acute"	
 	cohort.size		<- 2500	
 	cohort.dur		<- 3	
-	theta.EE.H0		<- 0.10
+	theta.EE.H0		<- 0.1
 	theta.EE.H1		<- 0.4
 	theta.UE		<- 0.3
 	theta.TE		<- theta.UE / 5
@@ -630,8 +630,18 @@ prj.popart.seqcoverage	<- function()
 	opt.pooled		<- "no pooling"#"pooled across ZA"#"pooled across trial"#"no pooling"
 	opt.pooled		<- "pooled across SA"
 	opt.clu.closure	<- 14
-	opt.sampling	<- "PC after yr 1 and HCC"	#"PC and HCC"#"only HCC"	#"PC and HCC"	#
+	opt.sampling	<- "PC12+HCC"	#"PC and HCC"#"only HCC"	#"PC and HCC"	#
 	opt.power		<- "All"
+	
+	p.lab			<- 0.7*0.9			#set lower as discussed	70% from CD4 90% from sequencing
+	p.consent.coh	<- 0.9*0.9			#90% consent to main study and of those 90% consent to phylo study				
+	p.consent.clu	<- 1				#waiver
+	p.vhcc.prev.AB	<- 1				#already in PopART model estimate
+	p.vhcc.inc.AB	<- 1				#already in PopART model estimate
+	p.vhcc.prev.C	<- 1				#already in PopART model estimate
+	p.vhcc.inc.C	<- 1				#already in PopART model estimate
+	#p.contam		<- seq(0.05,0.2,0.025)
+	
 	if(verbose)
 	{
 		cat(paste("\ncohort.size",cohort.size))
@@ -645,61 +655,117 @@ prj.popart.seqcoverage	<- function()
 		cat(paste("\nopt.power",opt.power))
 		cat(paste("\nopt.sampling",opt.sampling))
 	}
-	
-	sites			<- popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug, rtn.phylostudy=1 )
-	samples.CD4		<- popart.predicted.firstCD4()
-	print("")
-	print(sites)
-	print(samples.CD4)
 		
-	p.lab			<- 0.7*0.9			#set lower as discussed	70% from CD4 90% from sequencing
-	p.consent.coh	<- 0.9*0.9			#90% consent to main study and of those 90% consent to phylo study				
-	p.consent.clu	<- 1				#waiver
-	p.vhcc.prev.AB	<- 1				#already in PopART model estimate
-	p.vhcc.inc.AB	<- 1				#already in PopART model estimate
-	p.vhcc.prev.C	<- 1				#already in PopART model estimate
-	p.vhcc.inc.C	<- 1				#already in PopART model estimate
-	#p.contam		<- seq(0.05,0.2,0.025)
-	
-	samples.seq		<- popart.predicted.sequences(sites,  samples.CD4, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)			
-	samples.seq		<- cbind( samples.seq, samples.seq[,"%avg",drop=0] * 0.1 / 2 )		#add simple prior on seq.cov
-	colnames(samples.seq)[ncol(samples.seq)]	<- c("sigma")
-	print(samples.seq)
-	sites			<- cbind(sites, samples.CD4, samples.seq)
-	
 	#simulate high acute and low acute tip clusters for each community
-	theta.model.H0	<- c(2.2, 0.052)
-	theta.model.H1	<- c(15, 0.032)
-	lapply(seq_len(nrow(sites)),function(i)
-			{
-				if(0)
+	f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
+	if(resume)
+	{
+		options(show.error.messages = FALSE)		
+		if(verbose)
+			cat(paste("\nprj.simudata: try to resume file ",paste(f.name,".R",sep='')))
+		readAttempt<-	try(suppressWarnings(load(paste(f.name,".R",sep=''))))
+		options(show.error.messages = TRUE)
+		if(!inherits(readAttempt, "try-error") && verbose)
+			cat(paste("\nprj.simudata: resumed file ",paste(f.name,".R",sep='')))
+	}
+	if(!resume || inherits(readAttempt, "try-error"))
+	{	
+		sites			<- popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug, rtn.phylostudy=1 )
+		samples.CD4		<- popart.predicted.firstCD4()
+		samples.seq		<- popart.predicted.sequences(sites,  samples.CD4, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)			
+		samples.seq		<- cbind( samples.seq, samples.seq[,"%avg",drop=0] * 0.1 / 2 )		#add simple prior on seq.cov
+		colnames(samples.seq)[ncol(samples.seq)]	<- c("sigma")
+		print(samples.seq)
+		sites			<- cbind(sites, samples.CD4, samples.seq)
+		
+		#TODO need parameters for each site
+		theta.model.H0	<- c(2.2, 0.052)
+		theta.model.H1	<- c(15, 0.032)
+		tpc.obs			<- lapply(seq_len(nrow(sites)),function(i)
 				{
-					args<<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.H0[1], theta.model.H0[2], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
-					args<<- unlist(strsplit(args,' '))
-					print(args)
-					stop()
-					#tpc	<- prj.simudata()
-				}
-				else
-				{
-					#low acute
-					cmd			<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.H0[1], theta.model.H0[2], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
-					cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
-					cat(cmd)								
-					signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
-					outdir		<- paste(CODE.HOME,"misc",sep='/')
-					outfile		<- paste("phd",signat,"qsub",sep='.')
-					prj.hpccaller(outdir, outfile, cmd)
-					#high acute
-					cmd			<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.H1[1], theta.model.H1[2], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
-					cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
-					cat(cmd)								
-					signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
-					outdir		<- paste(CODE.HOME,"misc",sep='/')
-					outfile		<- paste("phd",signat,"qsub",sep='.')
-					prj.hpccaller(outdir, outfile, cmd)
-				}				
-			})
+					if(verbose)
+						cat(paste("\nprocess ",sites[i,"comid_old"]))
+					if(1)
+					{
+						args		<<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.H0[1], theta.model.H0[2], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=0, debug.susc.const=0, debug.only.u=0)
+						args		<<- unlist(strsplit(args,' '))		#print(args)					
+						tpc			<- prj.simudata()					#print(tpc[["sum.attack"]]["Median"]); print(tpc[["sum.E2E"]]["Median"])										
+						tpc.H0		<- tpc[["tpc.table.sample.median"]]
+						
+						args		<<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.H1[1], theta.model.H1[2], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=0, debug.susc.const=0, debug.only.u=0)
+						args		<<- unlist(strsplit(args,' '))					
+						tpc			<- prj.simudata()
+						tpc.H1		<- tpc[["tpc.table.sample.median"]]					
+					}
+					else	#precompute low and high acute scenarios
+					{
+						#low acute
+						cmd			<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.H0[1], theta.model.H0[2], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
+						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
+						cat(cmd)								
+						signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
+						outdir		<- paste(CODE.HOME,"misc",sep='/')
+						outfile		<- paste("phd",signat,"qsub",sep='.')
+						prj.hpccaller(outdir, outfile, cmd)
+						#high acute
+						cmd			<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.H1[1], theta.model.H1[2], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
+						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
+						cat(cmd)								
+						signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
+						outdir		<- paste(CODE.HOME,"misc",sep='/')
+						outfile		<- paste("phd",signat,"qsub",sep='.')
+						prj.hpccaller(outdir, outfile, cmd)
+					}	
+					list(H0=tpc.H0, H1=tpc.H1)
+				})
+		names(tpc.obs)	<- sites[,"comid_old"]
+		if(verbose)
+			cat(paste("\nwrite tpc.obs to",paste(f.name,".R",sep='')))	
+		save(tpc.obs, sites, file=paste(f.name,".R",sep=''))
+	}
+	
+	#get marginal likelihood values
+	f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
+	if(resume)
+	{
+		options(show.error.messages = FALSE)		
+		if(verbose)
+			cat(paste("\nprj.simudata: try to resume file ",paste(f.name,".R",sep='')))
+		readAttempt<-	try(suppressWarnings(load(paste(f.name,".R",sep=''))))
+		options(show.error.messages = TRUE)
+		if(!inherits(readAttempt, "try-error") && verbose)
+			cat(paste("\nprj.simudata: resumed file ",paste(f.name,".R",sep='')))
+	}
+	if(!resume || inherits(readAttempt, "try-error"))
+	{		
+		mlkl.n				<- 1e3
+		mlkl.theta.model.H0	<- c(2.2, 0.052)
+		mlkl.theta.model.H1	<- c(15, 0.032)
+	
+		mlkl.theta			<- lapply(seq_len(nrow(sites)),function(i)
+								{
+									list(	H0= expand.grid(acute=mlkl.theta.model.H0[1], base=mlkl.theta.model.H0[2], sample=rnorm(mlkl.n, sites[i,"%avg"], sites[i,"sigma"]) ),
+											H1= expand.grid(acute=mlkl.theta.model.H1[1], base=mlkl.theta.model.H1[2], sample=rnorm(mlkl.n, sites[i,"%avg"], sites[i,"sigma"]) ) 	
+											)
+								})
+		names(mlkl.theta)	<- sites[,"comid_old"]
+		#print(mlkl.theta[[1]])
+		
+		mlkl.theta			<- lapply(seq_len(nrow(sites)),function(i)
+				{		
+	#				i<- 9
+					lkl.tpcH0.thetaH0	<- acute.loglkl.batch(sites[i,"comid_old"], tpc.obs[[i]][["H0"]], cohort.dur, mlkl.theta[[i]][["H0"]], clu.closure= 12, verbose=0)
+					lkl.tpcH0.thetaH1	<- acute.loglkl.batch(sites[i,"comid_old"], tpc.obs[[i]][["H0"]], cohort.dur, mlkl.theta[[i]][["H1"]], clu.closure= 12, verbose=0)
+					lkl.tpcH1.thetaH0	<- acute.loglkl.batch(sites[i,"comid_old"], tpc.obs[[i]][["H1"]], cohort.dur, mlkl.theta[[i]][["H0"]], clu.closure= 12, verbose=0)
+					lkl.tpcH1.thetaH1	<- acute.loglkl.batch(sites[i,"comid_old"], tpc.obs[[i]][["H1"]], cohort.dur, mlkl.theta[[i]][["H1"]], clu.closure= 12, verbose=0)
+					ans					<- list(tpcH0.thetaH0=lkl.tpcH0.thetaH0, tpcH0.thetaH1=lkl.tpcH0.thetaH1, tpcH1.thetaH0=lkl.tpcH1.thetaH0, tpcH1.thetaH1=lkl.tpcH1.thetaH1)
+	#				print(ans); stop()
+					ans
+				})
+		if(verbose)
+			cat(paste("\nwrite tpc.obs to",paste(f.name,".R",sep='')))	
+		save(tpc.obs, sites, mlkl.theta, file=paste(f.name,".R",sep=''))
+	}
 	
 	stop()
 	
@@ -1691,7 +1757,7 @@ prj.pipeline<- function()
 				})
 		#cmd			<- paste(cmd,sep='',collapse='')		
 	}
-	if(1)	#start auxiliary job
+	if(1)	#start 'prj.simudata.match.theta.to.Inc.E2E'
 	{
 		dir.name	<- CODE.HOME
 		cmd			<- paste("\n",dir.name,"/misc/phdes.startme.R -exeSIMU.MATCH",sep='')
@@ -1702,6 +1768,17 @@ prj.pipeline<- function()
 		outfile		<- paste("phd",signat,"qsub",sep='.')
 		prj.hpccaller(outdir, outfile, cmd)
 	}
+	if(1)	#start 'prj.popart.powercalc.by.acutelklratio'
+	{
+		dir.name	<- CODE.HOME
+		cmd			<- paste("\n",dir.name,"/misc/phdes.startme.R -exePOPART.POWER.ACUTELKLRATIO",sep='')
+		cmd			<- prj.hpcwrapper(cmd, hpc.walltime=71, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
+		cat(cmd)
+		signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
+		outdir		<- paste(CODE.HOME,"misc",sep='/')
+		outfile		<- paste("phd",signat,"qsub",sep='.')
+		prj.hpccaller(outdir, outfile, cmd)
+	}	
 	if(0)
 	{
 		dir.name	<- CODE.HOME
@@ -1812,7 +1889,7 @@ prj.simudata<- function()
 		if(length(tmp)>0) tpc.repeat<- tmp[1]
 		tmp<- na.omit(sapply(args,function(arg)
 						{	switch(substr(arg,2,4),
-									loc= return(substr(arg,6,nchar(arg))),NA)	}))
+									loc= return(substr(arg,7,nchar(arg)-1)),NA)	}))
 		if(length(tmp)>0) loc.type<- tmp[1]
 		tmp<- na.omit(sapply(args,function(arg)
 						{	switch(substr(arg,2,2),
@@ -1847,8 +1924,8 @@ prj.simudata<- function()
 									save= return(as.numeric(substr(arg,7,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) save<- tmp[1]
 		tmp<- na.omit(sapply(args,function(arg)
-						{	switch(substr(arg,2,8),
-									resume= return(as.numeric(substr(arg,10,nchar(arg)))),NA)	}))
+						{	switch(substr(arg,2,7),
+									resume= return(as.numeric(substr(arg,9,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) resume<- tmp[1]
 		tmp<- na.omit(sapply(args,function(arg)
 						{	switch(substr(arg,2,17),

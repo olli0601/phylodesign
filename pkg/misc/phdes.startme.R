@@ -66,7 +66,7 @@ EPS			<<- .Machine$double.eps
 #default.fun<- "prj.pipeline"
 #default.fun<- "prj.simudata.match.theta.to.Inc.E2E"
 #default.fun<- "prj.acute.test"
-default.fun<- "prj.popart.seqcoverage"
+default.fun<- "prj.popart.powercalc.by.acutelklratio"
 
 ###############################################################################
 #if(length(args) && !is.loaded("tipc_tabulate_after_sample"))
@@ -105,6 +105,7 @@ if(length(args))
 		else default.fun<- switch(tmp[1],
 					POPART.POWER.LINK.CONSENT	= "prj.popart.powercalc_link_consenting",
 					POPART.POWER.TIPC.CONSENT	= "prj.popart.powercalc_tipc_consenting",
+					POPART.POWER.ACUTELKLRATIO	= "prj.popart.powercalc.by.acutelklratio",
 					TEST						= "prj.test",
 					SIMU.DATA					= "prj.simudata",
 					SIMU.MATCH					= "prj.simudata.match.theta.to.Inc.E2E",
