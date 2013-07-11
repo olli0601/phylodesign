@@ -7,13 +7,10 @@
 #' @param rtn.fixed		indicator if a fixed allocation of arms is returned (for debugging)
 #' @return data frame of trial sites with allocated arms
 #' @examples	popart.getdata.randomized.arm(1)
-popart.getdata.randomized.arm<- function( randomize.n, rtn.fixed=0, rtn.phylostudy=1 )
+popart.getdata.randomized.arm<- function( randomize.n, r.inc.A= 0.0056, r.inc.B=0.01, r.inc.C=0.013, p.adults.ZA=0.53, p.adults.SA=0.7, rtn.fixed=0, rtn.phylostudy=1 )
 {	
 	data(popart.triplets.130207)					
-	# select studies for phylogenetics
-	#in ZA chose small high prevalence triplets outside of Lusaka
-	#5 is Khayelitsha triplet in SA 
-	#6 is High prevalence triplet in SA			
+	# select studies for phylogenetics	
 	if(rtn.phylostudy)
 		simul	<- popart.triplets.130207[rep(which(popart.triplets.130207$triplet %in% c(1,4,5,6)),randomize.n),]
 	else
@@ -29,10 +26,10 @@ popart.getdata.randomized.arm<- function( randomize.n, rtn.fixed=0, rtn.phylostu
 	#simul$arm		<- ifelse(simul$arm.code==3,"C",simul$arm)
 	#drops 			<- c("random","arm.code")
 	#simul			<- simul[,!names(simul) %in% drops]
-	simul$inc.rate	<- sapply(simul$arm,function(x){(x %in% "A")*0.0056+(x %in% "B")*0.01+(x %in% "C")*0.013})
-	simul$p.adults	<- ifelse(simul$country==1,0.5,0.6)
+	simul$inc.rate	<- sapply(simul$arm,function(x){(x %in% "A")*r.inc.A+(x %in% "B")*r.inc.B+(x %in% "C")*r.inc.C})
+	simul$p.adults	<- ifelse(simul$country==1,p.adults.ZA,p.adults.SA)
 	#simul$rid		<- rep(1:randomize.n, each=3*4)
-	simul
+	simul[ order(simul$triplet.id, simul$arm), ]	
 }
 ###############################################################################
 #' randomize the number of individuals with HIV, on ART at each trial site and in the population cohort 
@@ -287,42 +284,49 @@ popart.get.sampled.transmissions<- function(x, method="PC and HCC", rtn.int=1, p
 	x2i
 }
 ###############################################################################
-popart.sampling.init.PopARTmodel<- function(x, p.consent.PC, p.consent.HCC, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method="PC and HCC")
+popart.predicted.firstCD4<- function(version= "130627")
 {
-	#assuming central targets for linkage and consenting
-	first.CD4.HCC		<- matrix( c(	2397, 289, 3078, 604, 705, 57, 
-										3960, 477, 2270, 445, 771, 62, 
-										2231, 197, 3482, 412, 793, 24, 
-										7567, 325, 4578, 303, 773, 26), nrow=12, ncol=2, byrow=1, 
-										dimnames=list(	c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Kuyasa","Luvuyo","Town II","Ikhwezi","Bloekombos","Delft South"),
+	if(version=="130627")	
+	{
+		#Anne: Results obtained for 6 months CHiPS rounds, assuming that individuals come for preART CD4 monitoring once a year 
+		#	and  ART CD4 monitoring very 3 months. The definition of incident cases is individuals infected during the trial.
+		
+		#	this is assuming central targets for linkage and consenting
+		first.CD4.HCC		<- matrix( c(	2397, 289, 3078, 604, 705, 57, 
+											3960, 477, 2270, 445, 771, 62, 
+											2231, 197, 3482, 412, 793, 24, 
+											7567, 325, 4578, 303, 773, 26), nrow=12, ncol=2, byrow=1, 
+										dimnames=list(	c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Luvuyo","Kuyasa","Town II","Ikhwezi","Delft South","Bloekombos"),
 														c("HCC Total","HCC Incident")))
-	first.CD4.PC		<- matrix( c(	307, 42, 320, 74, 333, 107, 
-										307, 42, 320, 74, 333, 107, 
-										343, 30, 352, 53, 359, 77, 
-										343, 30, 352, 53, 359, 77), nrow=12, ncol=2, byrow=1, 
-										dimnames=list(	c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Kuyasa","Luvuyo","Town II","Ikhwezi","Bloekombos","Delft South"),
+		first.CD4.PC		<- matrix( c(	307, 42, 320, 74, 333, 107, 
+											307, 42, 320, 74, 333, 107, 
+											343, 30, 352, 53, 359, 77, 
+											343, 30, 352, 53, 359, 77), nrow=12, ncol=2, byrow=1, 
+										dimnames=list(	c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Luvuyo","Kuyasa","Town II","Ikhwezi","Delft South","Bloekombos"),
 														c("PC Total","PC Incident")))
-	#no loss due to linkage and consenting									
-	first.CD4.All		<- matrix( c(	2410, 332, 3237, 750, 2985, 957, 
-										3981, 549, 2386, 553, 3262, 1046, 
-										2281, 199, 3735, 562, 4253, 917, 
-										7736, 677, 4910, 738, 4144, 893), nrow=12, ncol=2, byrow=1, 
-										dimnames=list(	c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Kuyasa","Luvuyo","Town II","Ikhwezi","Bloekombos","Delft South"),
+		#	this is assuming no loss due to linkage and consenting
+		first.CD4.All		<- matrix( c(	2410, 332, 3237, 750, 2985, 957, 
+											3981, 549, 2386, 553, 3262, 1046, 
+											2281, 199, 3735, 562, 4253, 917, 
+											7736, 677, 4910, 738, 4144, 893), nrow=12, ncol=2, byrow=1, 
+										dimnames=list(	c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Luvuyo","Kuyasa","Town II","Ikhwezi","Delft South","Bloekombos"),
 														c("total prev","total inc")))
-										
-										
-	first.CD4			<- cbind(first.CD4.PC,first.CD4.HCC)
-	first.CD4			<- first.CD4[as.character(x$comid_old),]
-	first.CD4.All		<- first.CD4.All[as.character(x$comid_old),]
-#print(first.CD4)
-#print(first.CD4.All)		 
+	}
+	cbind(first.CD4.PC,first.CD4.HCC,first.CD4.All)
+}
+###############################################################################
+popart.predicted.sequences<- function(sites, first.CD4, p.consent.PC, p.consent.HCC, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method="PC and HCC")
+{
+	x					<- sites									
+	if(any(x$comid_old != rownames(first.CD4))) stop("first.CD4 not ordered by sites")									
+			 
 	x$CD4.1st.PC.prev	<- first.CD4[,"PC Total"] - first.CD4[,"PC Incident"] 
 	x$CD4.1st.PC.inc	<- first.CD4[,"PC Incident"] 
 	x$CD4.1st.HCC.prev	<- first.CD4[,"HCC Total"] - first.CD4[,"HCC Incident"] 
 	x$CD4.1st.HCC.inc	<- first.CD4[,"HCC Incident"]
 #print(x)
 
-	s<- matrix(NA,nrow=nrow(x),ncol=9,dimnames= list(x$comid_old, c("visit.prev","visit.inc","PC.prev","nonPC.prev","PC.inc","nonPC.inc","baseline","total prev","total inc")))	
+	s<- matrix(NA,nrow=nrow(x),ncol=9,dimnames= list(x$comid_old, c("visit.prev","visit.inc","PC.prev","nonPC.prev","PC.inc","nonPC.inc","%prev","%inc","%avg")))	
 	s[x$arm!="C", "visit.prev"]	<- p.vhcc.prev.AB
 	s[x$arm=="C", "visit.prev"]	<- p.vhcc.prev.C
 	s[x$arm!="C", "visit.inc"]	<- p.vhcc.inc.AB
@@ -361,11 +365,9 @@ popart.sampling.init.PopARTmodel<- function(x, p.consent.PC, p.consent.HCC, p.la
 									"only HCC"					= 0,
 									NA
 									))
-	s[, "total prev"]	<- apply(s[, c("PC.prev","nonPC.prev")],1,sum)	/ 	first.CD4.All[,"total prev"]
-	s[, "total inc"]	<- apply(s[, c("PC.inc","nonPC.inc")],1,sum)	/ 	first.CD4.All[,"total inc"]
-						
-	#if(any(is.na(s[, "baseline"])))	stop("unknown method")								
-	#s[, "baseline"]		<- s[, "baseline"] / x$n.prev		#coverage at baseline is sampled HIV+ at baseline / total HIV+ at baseline	
+	s[, "%prev"]		<- apply(s[, c("PC.prev","nonPC.prev")],1,sum)	/ 	first.CD4[,"total prev"]
+	s[, "%inc"]			<- apply(s[, c("PC.inc","nonPC.inc")],1,sum)	/ 	first.CD4[,"total inc"]
+	s[, "%avg"]			<- (s[, "%prev"] + s[, "%inc"])/2				
 	as.data.frame(s[,-c(1,2)])	
 }
 ###############################################################################

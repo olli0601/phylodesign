@@ -295,11 +295,10 @@ birthsampled.loglkl<- function(tpc, rate, sample.prob, dT)
 acutesampled.loglkl<- function(tpc, rate.m, sample.prob, dT, lclu.n=NULL)
 {
 	#fix mle for initial frequencies	
-	init.freq.mle		<- apply(tpc,1,sum) / sum(tpc[c('u','t'),])					#TODO still the MLE for the initial values ? 
-#print(init.freq.mle)	
+	init.freq.mle		<- apply(tpc,1,sum) / sum(tpc[c('u','t'),])					#still the MLE for the initial values as long as same sampling prob 
 	#compute partial mle for rate.m
 	tpc.n.mx	<- ncol(tpc)-1														#max number of transmissions in tip cluster	
-	tpc.ncol	<- max(acute.MAX.TIPC.SIZE,tpc.n.mx+2)									#without sampling, need to compute probabilities only up to the largest number of transmissions + 1 in the any tip cluster
+	tpc.ncol	<- max(acute.MAX.TIPC.SIZE,tpc.n.mx+2)								#without sampling, need to compute probabilities only up to the largest number of transmissions + 1 in the any tip cluster
 #print(tpc.ncol)
 	if(	is.null(lclu.n)  || 
 		(!is.null(lclu.n) && ncol(lclu.n)<tpc.ncol)	)
@@ -336,7 +335,7 @@ acutesampled.loglkl<- function(tpc, rate.m, sample.prob, dT, lclu.n=NULL)
 	if(nrow(tipc.lkl)!=nrow(tpc))	stop("rows of tipc.lkk and tpc do not match")
 #print("tipc.lkl"); print(tipc.lkl); print("tipc table"); print(tpc); #stop()
 	table.lkl			<- tpc * tipc.lkl
-	ans					<- list(table.lkl= sum( table.lkl[!is.nan(table.lkl) & is.finite(tipc.lkl)] ), tipc.lkl=tipc.lkl)
+	ans					<- list(table.lkl= sum( table.lkl[!is.nan(table.lkl) & is.finite(tipc.lkl)] ), tipc.lkl=tipc.lkl, tpc=tpc)
 #print(ans); stop()	
 	ans
 }

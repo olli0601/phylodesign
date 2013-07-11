@@ -43,8 +43,11 @@ ibm.init.incidence<- function(loc)
 ###############################################################################
 ibm.init.popinitdistributions.popart<- function(attr, popart.community)
 {
-	data(popart.triplets.130207)
-	comm		<- popart.triplets.130207[ popart.community==popart.triplets.130207$comid_old, , drop=0]	
+	popart.triplets	<- popart.getdata.randomized.arm( 1, rtn.fixed=1 )
+	print("")
+	print(popart.triplets)
+	
+	comm		<- popart.triplets[ popart.community==popart.triplets$comid_old, , drop=0]
 	tmp			<- lapply(seq_along(attr),function(i)
 					{
 						switch(	names(attr)[i],
