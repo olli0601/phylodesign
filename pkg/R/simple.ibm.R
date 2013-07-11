@@ -43,7 +43,9 @@ ibm.init.incidence<- function(loc)
 ###############################################################################
 ibm.init.popinitdistributions.popart<- function(attr, popart.community)
 {
-	popart.triplets	<- popart.getdata.randomized.arm( 1, rtn.fixed=1 )	
+	popart.triplets	<- popart.getdata.randomized.arm( 1, rtn.fixed=1 )
+	print(popart.community)
+	print(popart.triplets)
 	comm			<- popart.triplets[ popart.community==popart.triplets$comid_old, , drop=0]
 	tmp				<- lapply(seq_along(attr),function(i)
 						{
@@ -173,8 +175,7 @@ ibm.init.pop<- function(attr, distr)
 #' @export
 ibm.init.model<- function(m.type, loc.type, m.popsize, theta, save='', resume= 1, init.pop=1, debug=0)
 {	
-	data(popart.phylo.com)
-	
+	#data(popart.phylo.com)	
 	old.warn<- getOption("warn")
 	options(warn=2)			#turn warnings into error
 	require(data.table)
@@ -197,8 +198,8 @@ ibm.init.model<- function(m.type, loc.type, m.popsize, theta, save='', resume= 1
 		names(ibm)				<- c("init.pop","init.pop.distr","curr.pop","beta")		
 		ibm.att					<- ibm.init.attributes(m.type)
 		ibm$beta				<- ibm.init.beta(ibm.att)					
-		ibm$beta				<- ibm.set.modelbeta(m.type, ibm$beta, theta)
-		if(loc.type%in%popart.phylo.com)
+		ibm$beta				<- ibm.set.modelbeta(m.type, ibm$beta, theta)		
+		if(loc.type%in%c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Ikhwezi","Bloekombos","Delft South","Town II","Luvuyo","Kuyasa"))
 			ibm.distr			<- ibm.init.popinitdistributions.popart(ibm.att, loc.type)
 		else
 			ibm.distr			<- ibm.init.popinitdistributions.vanilla(ibm.att, loc.type,m.popsize)
