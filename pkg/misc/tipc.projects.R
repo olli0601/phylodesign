@@ -1812,7 +1812,7 @@ prj.simudata<- function()
 		if(length(tmp)>0) tpc.repeat<- tmp[1]
 		tmp<- na.omit(sapply(args,function(arg)
 						{	switch(substr(arg,2,4),
-									loc= return(substr(arg,7,nchar(arg)-1)),NA)	}))
+									loc= return(substr(arg,6,nchar(arg))),NA)	}))
 		if(length(tmp)>0) loc.type<- tmp[1]
 		tmp<- na.omit(sapply(args,function(arg)
 						{	switch(substr(arg,2,2),
