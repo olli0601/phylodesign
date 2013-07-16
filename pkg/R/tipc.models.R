@@ -207,6 +207,7 @@ acute.lkl.tree.xk.ik<- function(nx,ni,rx,ri,dT, log=0)
 #' Compute the log likelihood of a tip cluster table under the \code{Acute} model, batch mode
 acute.loglkl.batch<- function(loc.type, tpc.table, cluster.tw, theta, clu.closure= 12, verbose=1)
 {		
+	if(!is.data.table(theta))	stop("expect data table theta")
 	m.type			<- "Acute"
 	theta0			<- c(1, 0, 0, 0)
 	names(theta0)	<- c("acute","base","m.st1","m.st2")
@@ -225,10 +226,10 @@ acute.loglkl.batch<- function(loc.type, tpc.table, cluster.tw, theta, clu.closur
 			{				
 				#i<- 10
 				if(verbose) print(theta[i,])
-				ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]
-				ibm[["beta"]][["base"]]					<- theta[i,"base"]	
+				ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,acute]
+				ibm[["beta"]][["base"]]					<- theta[i,base]	
 				rate.m									<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)	
-				lkl										<- acutesampled.loglkl(tpc.table, rate.m, theta[i,"sample"], cluster.tw, lclu.n=lclu.n)				
+				lkl										<- acutesampled.loglkl(tpc.table, rate.m, theta[i,sample], cluster.tw, lclu.n=lclu.n)				
 				lkl[["table.lkl"]]
 			})	
 	cbind(theta, matrix(tpc.lkl, ncol=1, nrow=length(tpc.lkl), dimnames=list(c(),c("lkl"))))	
