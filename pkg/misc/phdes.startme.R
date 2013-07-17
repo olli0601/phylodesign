@@ -63,10 +63,10 @@ EPS			<<- .Machine$double.eps
 #default.fun<- "prj.plotfisherhettransm"
 #default.fun<- "prj.simudata"
 #default.fun<- "prj.acute.loglklsurface"
-#default.fun<- "prj.pipeline"
+default.fun<- "prj.pipeline"
 #default.fun<- "prj.simudata.match.theta.to.Inc.E2E"
 #default.fun<- "prj.acute.test"
-default.fun<- "prj.popart.powercalc.by.acutelklratio"
+#default.fun<- "prj.popart.powercalc.by.acutelklratio"
 
 ###############################################################################
 #if(length(args) && !is.loaded("tipc_tabulate_after_sample"))
