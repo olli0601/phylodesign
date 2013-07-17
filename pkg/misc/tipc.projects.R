@@ -607,7 +607,7 @@ prj.acute.test.lkl.wsampling.onlyU<- function()
 	stop()
 }
 ###############################################################################
-prj.popart.powercalc.by.acutelklratio.lklH0H1<- function(sites, tpc.obs, mlkl.theta.model.H0, mlkl.theta.model.H1, mlkl.n= 1e3, cohort.dur=3, f.name=NA, resume=1, verbose=1)
+prj.popart.powercalc.by.acutelklratio.lklH0H1<- function(sites, tpc.obs, mlkl.theta.model.H0, mlkl.theta.model.H1, mlkl.n= 1e3, cohort.dur=3, f.name=NA, replace=1, resume=1, verbose=1)
 {
 	if(resume)
 	{
@@ -623,32 +623,52 @@ prj.popart.powercalc.by.acutelklratio.lklH0H1<- function(sites, tpc.obs, mlkl.th
 	{				
 		#get a table with param combinations for each site to sample from
 		mlkl.theta			<- lapply(seq_len(nrow(sites)),function(i)
-				{									
-					tmp.H0	<- subset( mlkl.theta.model.H0, comid_old==sites[i, "comid_old"] )
-					tmp.H0	<- tmp.H0[ sample.int(nrow(tmp.H0), mlkl.n, replace=1), ]
-					tmp.H0[,sample:= rnorm( mlkl.n, tmp.H0[,sample.mu], tmp.H0[,sample.sigma] )]
-					tmp.H1	<- subset( mlkl.theta.model.H1, comid_old==sites[i, "comid_old"] )
-					tmp.H1	<- tmp.H1[ sample.int(nrow(tmp.H1), mlkl.n, replace=1), ]		
-					tmp.H1[,sample:= rnorm( mlkl.n, tmp.H1[,sample.mu], tmp.H1[,sample.sigma] )]									
-					list(	H0= subset(tmp.H0, select=c(acute,base,sample)), H1= subset(tmp.H1, select=c(acute,base,sample)) 	) 	
-				})
+								{									
+									tmp.H0	<- subset( mlkl.theta.model.H0, comid_old==sites[i, "comid_old"] )
+									if(all(tmp.H0[,sample.sigma]==0))
+										tmp.H0	<- tmp.H0[ sample.int(nrow(tmp.H0), min(nrow(tmp.H0), mlkl.n), replace=0), ]										 									
+									else
+										tmp.H0	<- tmp.H0[ sample.int(nrow(tmp.H0), mlkl.n, replace=1), ]
+									tmp.H0[,sample:= rnorm( nrow(tmp.H0), tmp.H0[,sample.mu], tmp.H0[,sample.sigma] )]
+									tmp.H1	<- subset( mlkl.theta.model.H1, comid_old==sites[i, "comid_old"] )
+									if(all(tmp.H1[,sample.sigma]==0))
+										tmp.H1	<- tmp.H1[ sample.int(nrow(tmp.H1), min(nrow(tmp.H0), mlkl.n), replace=0), ]
+									else
+										tmp.H1	<- tmp.H1[ sample.int(nrow(tmp.H1), mlkl.n, replace=1), ]
+									tmp.H1[,sample:= rnorm( nrow(tmp.H1), tmp.H1[,sample.mu], tmp.H1[,sample.sigma] )]									
+									list(	H0= subset(tmp.H0, select=c(acute,base,sample)), H1= subset(tmp.H1, select=c(acute,base,sample)) 	) 	
+								})
 		names(mlkl.theta)	<- sites[,"comid_old"]
 		mlkl.theta			<- lapply(seq_len(nrow(sites)),function(i)
-				{		
-					#				i<- 9
-					lkl.tpcH0.thetaH0	<- acute.loglkl.batch(sites[i,"comid_old"], tpc.obs[[i]][["H0"]], cohort.dur, mlkl.theta[[i]][["H0"]], clu.closure= 12, verbose=0)
-					lkl.tpcH0.thetaH1	<- acute.loglkl.batch(sites[i,"comid_old"], tpc.obs[[i]][["H0"]], cohort.dur, mlkl.theta[[i]][["H1"]], clu.closure= 12, verbose=0)
-					lkl.tpcH1.thetaH0	<- acute.loglkl.batch(sites[i,"comid_old"], tpc.obs[[i]][["H1"]], cohort.dur, mlkl.theta[[i]][["H0"]], clu.closure= 12, verbose=0)
-					lkl.tpcH1.thetaH1	<- acute.loglkl.batch(sites[i,"comid_old"], tpc.obs[[i]][["H1"]], cohort.dur, mlkl.theta[[i]][["H1"]], clu.closure= 12, verbose=0)
-					ans					<- list(tpcH0.thetaH0=lkl.tpcH0.thetaH0, tpcH0.thetaH1=lkl.tpcH0.thetaH1, tpcH1.thetaH0=lkl.tpcH1.thetaH0, tpcH1.thetaH1=lkl.tpcH1.thetaH1)
-					#				print(ans); stop()
-					ans
-				})
+								{		
+									print( mlkl.theta[[i]] )
+									if(verbose)	cat(paste("\nacute.loglkl.batch, process ",sites[i,"comid_old"],"\nnumber lkl evaluations: 4x ",nrow(mlkl.theta[[i]][["H0"]])))
+									lkl.tpcH0.thetaH0	<- acute.loglkl.batch(sites[i,"comid_old"], tpc.obs[[i]][["H0"]], cohort.dur, mlkl.theta[[i]][["H0"]], clu.closure= 12, verbose=verbose)
+									lkl.tpcH0.thetaH1	<- acute.loglkl.batch(sites[i,"comid_old"], tpc.obs[[i]][["H0"]], cohort.dur, mlkl.theta[[i]][["H1"]], clu.closure= 12, verbose=verbose)
+									lkl.tpcH1.thetaH0	<- acute.loglkl.batch(sites[i,"comid_old"], tpc.obs[[i]][["H1"]], cohort.dur, mlkl.theta[[i]][["H0"]], clu.closure= 12, verbose=verbose)
+									lkl.tpcH1.thetaH1	<- acute.loglkl.batch(sites[i,"comid_old"], tpc.obs[[i]][["H1"]], cohort.dur, mlkl.theta[[i]][["H1"]], clu.closure= 12, verbose=verbose)
+									ans					<- list(tpcH0.thetaH0=lkl.tpcH0.thetaH0, tpcH0.thetaH1=lkl.tpcH0.thetaH1, tpcH1.thetaH0=lkl.tpcH1.thetaH0, tpcH1.thetaH1=lkl.tpcH1.thetaH1)
+									#				print(ans); stop()
+									ans
+								})
 		if(verbose)
 			cat(paste("\nwrite tpc.obs to",paste(f.name,".R",sep='')))	
 		save(tpc.obs, sites, mlkl.theta, file=paste(f.name,".R",sep=''))
 	}
 	mlkl.theta
+}
+###############################################################################
+prj.popart.powercalc.by.acutelklratio.matchpa<- function(sim, target, hetclu.scale= 0.25, hetclu.cov= ( hetclu.scale*matrix(c(0.0015/2,0.006,0.006,0.1/2),2,2) )^2, maha.thresh= 1.96)
+{
+	hetclu.icov	<- solve(hetclu.cov)
+	tmp			<- merge(sim, target, by="comid_old", all.x=1)
+	x			<- as.matrix(subset(tmp,select=c(Inc,E2E)) - subset(tmp,select=c(mu.inc.rate.H0,mu.pE2E.H0)))
+	d.H0		<- rowSums((x %*% hetclu.icov) * x)
+	x			<- as.matrix(subset(tmp,select=c(Inc,E2E)) - subset(tmp,select=c(mu.inc.rate.H1,mu.pE2E.H1)))
+	d.H1		<- rowSums((x %*% hetclu.icov) * x)
+		
+	ans			<- list(H0= sim[d.H0<maha.thresh,], H1= sim[d.H1<maha.thresh,])
+	ans
 }
 ###############################################################################
 prj.popart.powercalc.by.acutelklratio	<- function()
@@ -770,7 +790,25 @@ prj.popart.powercalc.by.acutelklratio	<- function()
 			cat(paste("\nwrite tpc.obs to",paste(f.name,".R",sep='')))	
 		save(tpc.obs, sites, file=paste(f.name,".R",sep=''))
 	}
-	
+	#add target effects to 'sites'	
+	require(MASS)	
+	sites[,"mu.inc.rate.H0"]	<- sites[,"inc.rate"]
+	sites[,"mu.inc.rate.H1"]	<- 0.013
+	sites[,"mu.pE2E.H0"]		<- theta.EE.H0
+	sites[,"mu.pE2E.H1"]		<- theta.EE.H1
+	#get acute parameters that match target effects under H0, H1. 
+	#this accounts for between cluster heterogeneity by adding a site specific random effect whose magnitude is specified by 'hetclu.scale'
+	if(0)
+	{
+		tmp	<- mvrnorm(1e1, c(sites[1,"mu.inc.rate.H0"], sites[1,"mu.pE2E.H0"]), hetclu.cov)
+		tmp	<- rbind(tmp, mvrnorm(1e1, c(sites[1,"mu.inc.rate.H1"], sites[1,"mu.pE2E.H1"]), hetclu.cov))
+		tmp	<- data.table(comid_old="Ndeke", Inc= tmp[,1], E2E=tmp[,2])	
+		#TODO load matches.R and create data.table
+		tmp<- prj.popart.powercalc.by.acutelklratio.matchpa( tmp, sites[,c("comid_old","mu.inc.rate.H0","mu.inc.rate.H1","mu.pE2E.H0","mu.pE2E.H1")], hetclu.scale= 0.25 )
+		#returns list of H0 data.table with comid_old and H1 data.table with comid_old
+	}
+#print(sites)
+
 	#get likelihood values
 	#	-- use the predicted seq coverage as stored in 'sites' to build a prior on the sampling prob
 	#	-- get likelihood values of the simulated tip cluster for this set of model parameters
@@ -795,7 +833,7 @@ prj.popart.powercalc.by.acutelklratio	<- function()
 								data.table( comid_old= sites[i,3], acute=15, base= 0.032, sample.mu=seq(round(sites[i,"%avg"],d=2),1,by=0.025), sample.sigma=0  )
 							}))
 	f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"increasingcoverage",'_',p.lab,'_',p.consent.coh,sep='')
-	mlkl.theta			<- prj.popart.powercalc.by.acutelklratio.lklH0H1(sites, tpc.obs, mlkl.theta.model.H0, mlkl.theta.model.H1, mlkl.n= 1e4, cohort.dur=3, f.name=f.name, resume=1, verbose=1)
+	mlkl.theta			<- prj.popart.powercalc.by.acutelklratio.lklH0H1(sites, tpc.obs, mlkl.theta.model.H0, mlkl.theta.model.H1, mlkl.n= 1e3, cohort.dur=3, f.name=f.name, resume=1, verbose=1)
 	stop()
 	
 	
@@ -1804,7 +1842,7 @@ prj.pipeline<- function()
 							})
 		#cmd			<- paste(cmd,sep='',collapse='')		
 	}
-	if(0)	#simulate tip cluster data sets
+	if(1)	#simulate tip cluster data sets
 	{
 		dir.name			<- CODE.HOME
 		#acute				<- c(2,4,6,8)
@@ -2122,7 +2160,11 @@ prj.simudata<- function()
 		if(save)
 			save(tpc.table.all.median,tpc.table.sample.median,sum.attack,sum.E2E,file=paste(f.name,".R",sep=''))				
 	}
-	
+	if(verbose)
+	{
+		print(sum.attack)
+		print(sum.E2E)
+	}
 	ans<- list(tpc=tpc, tpc.table.all.median=tpc.table.all.median, tpc.table.sample.median=tpc.table.sample.median, sum.attack=sum.attack, sum.E2E=sum.E2E )
 	ans
 }
