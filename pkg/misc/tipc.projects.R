@@ -2144,7 +2144,7 @@ prj.pipeline<- function()
 				})
 		#cmd			<- paste(cmd,sep='',collapse='')		
 	}
-	if(1)	#start 'prj.simudata.match.theta.to.Inc.E2E'
+	if(0)	#start 'prj.simudata.match.theta.to.Inc.E2E'
 	{
 		sites		<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )
 		nit			<- 20e3
@@ -2164,7 +2164,7 @@ prj.pipeline<- function()
 					prj.hpccaller(outdir, outfile, cmd)			
 				})		
 	}
-	if(0)	#start 'prj.popart.powercalc.by.acutelklratio' for all locations
+	if(1)	#start 'prj.popart.powercalc.by.acutelklratio' for all locations
 	{		
 		
 		dir.name	<- CODE.HOME
