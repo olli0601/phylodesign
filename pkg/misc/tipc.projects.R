@@ -2144,10 +2144,10 @@ prj.pipeline<- function()
 				})
 		#cmd			<- paste(cmd,sep='',collapse='')		
 	}
-	if(0)	#start 'prj.simudata.match.theta.to.Inc.E2E'
+	if(1)	#start 'prj.simudata.match.theta.to.Inc.E2E'
 	{
 		sites		<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )
-		nit			<- 4e3
+		nit			<- 20e3
 		
 		dir.name	<- CODE.HOME
 		sapply(sites$comid_old, function(loc)
@@ -2156,7 +2156,7 @@ prj.pipeline<- function()
 					cmd			<- paste(cmd, " -loc=",loc,sep='')
 					cmd			<- paste(cmd, " -nit=",nit,sep='')
 					
-					cmd			<- prj.hpcwrapper(cmd, hpc.walltime=71, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
+					cmd			<- prj.hpcwrapper(cmd, hpc.walltime=400, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
 					cat(cmd)
 					signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
 					outdir		<- paste(CODE.HOME,"misc",sep='/')
@@ -2164,7 +2164,7 @@ prj.pipeline<- function()
 					prj.hpccaller(outdir, outfile, cmd)			
 				})		
 	}
-	if(1)	#start 'prj.popart.powercalc.by.acutelklratio' for all locations
+	if(0)	#start 'prj.popart.powercalc.by.acutelklratio' for all locations
 	{		
 		
 		dir.name	<- CODE.HOME
@@ -2459,8 +2459,8 @@ prj.simudata.match.theta.to.Inc.E2E<- function()
 	verbose				<- 1	
 	cluster.tw			<- 3
 	save				<- 1
-	prior.acute			<- c(1,20)
-	prior.base			<- c(0.015, 0.09)		
+	prior.acute			<- c(0.5,13)
+	prior.base			<- c(0.01, 0.13)		
 	sample.prob			<- 1	
 	debug.susc.const	<- 0
 	debug.only.u		<- 0
