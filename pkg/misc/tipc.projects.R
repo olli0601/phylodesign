@@ -607,6 +607,150 @@ prj.acute.test.lkl.wsampling.onlyU<- function()
 	stop()
 }
 ###############################################################################
+#simulate high acute and low acute tip clusters for each community	
+prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling, pooled.n, dir.name=DATA, verbose=1, resume=1)
+{
+	m.type			<- "Acute"	
+	theta.model.Hx	<- NULL
+	f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
+	if(resume)
+	{
+		options(show.error.messages = FALSE)		
+		if(verbose)
+			cat(paste("\nprj.simudata: try to resume file ",paste(f.name,".R",sep='')))
+		readAttempt<-	try(suppressWarnings(load(paste(f.name,".R",sep=''))))
+		options(show.error.messages = TRUE)
+		if(!inherits(readAttempt, "try-error") && verbose)
+			cat(paste("\nprj.simudata: resumed file ",paste(f.name,".R",sep='')))
+	}
+	#resume<- 0
+	if(!resume || inherits(readAttempt, "try-error"))
+	{	
+		#get sites and add target effects to 'sites'
+		sites						<- popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug, rtn.phylostudy=1 )				
+		sites[,"mu.inc.rate.H0"]	<- sites[,"inc.rate"]
+		sites[,"mu.inc.rate.H1"]	<- 0.013
+		sites[,"mu.pE2E.H0"]		<- theta.EE.H0
+		sites[,"mu.pE2E.H1"]		<- theta.EE.H1
+		print(sites)
+		samples.CD4					<- popart.predicted.firstCD4()
+		samples.seq					<- popart.predicted.sequences(sites,  samples.CD4, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)			
+		samples.seq					<- cbind( samples.seq, samples.seq[,"%avg",drop=0] * 0.1 / 2 )		#add simple prior on seq.cov
+		colnames(samples.seq)[ncol(samples.seq)]	<- c("sigma")
+		sites						<- cbind(sites, samples.CD4, samples.seq)
+		
+		if(1)
+		{
+			#each site was calibrated to match 		"mu.inc.rate.H0","mu.pE2E.H0"		"mu.inc.rate.H1","mu.pE2E.H1"
+			theta.model.Hx	<- matrix(	c(	1.25, 0.062, 4.4, 0.09,
+											1.1, 0.088, 5.8, 0.073,
+											1, 0.1, 7, 0.065,
+											1.8, 0.045, 5.8, 0.069,
+											1.6, 0.063, 6, 0.062,
+											0.7, 0.125, 5.6, 0.08,
+											3.8, 0.027, 10.8, 0.045,
+											2.2, 0.053, 11, 0.045,
+											1.7, 0.067, 12, 0.043,
+											2, 0.048, 5.9, 0.071,
+											0.7, 0.125, 3.8, 0.099,
+											1, 0.09, 7.4, 0.059		),byrow=T, ncol=4,nrow=nrow(sites), dimnames=list(c(),c("acute.H0","base.H0","acute.H1","base.H1")))
+			theta.model.Hx	<- as.data.table(theta.model.Hx)
+			theta.model.Hx[,comid_old:=sites[,"comid_old"]]
+			print(theta.model.Hx)
+		}
+		else
+		{
+			#take matching parameters from 95% cloud around target parameters
+			#	-- TODO needs more simulations, perhaps 2e4 ?
+			theta.model.Hx	<- t(sapply(seq_len(nrow(sites)),function(i)
+							{					
+								site		<- sites[i,"comid_old"]
+								if(verbose)
+									cat(paste("\nprocess ",site))
+								f.name		<- paste(DATA,'/',paste("acutesimu_fxs0_onlyu0",sep=''),'/',"match_INC_E2E",'_',m.type,'_',site,'_',cohort.dur,"_acute_1_20_base_0.015_0.09.R",sep='')
+								readAttempt	<-	try(suppressWarnings(load(f.name)))
+								if(!inherits(readAttempt, "try-error"))	
+								{	
+									setnames(abc.struct, "INC", "Inc")
+									abc.struct[,comid_old:=site]
+									tmp			<- prj.popart.powercalc.by.acutelklratio.matchpa( abc.struct, sites[,c("comid_old","mu.inc.rate.H0","mu.inc.rate.H1","mu.pE2E.H0","mu.pE2E.H1")], hetclu.scale=1, return.top=10 )						
+#									print(tmp)
+									if(verbose)
+										cat(paste("\nfound number nonzero weights H0",nrow(subset(tmp[["H0"]],weight>0)),"number matching H1",nrow(subset(tmp[["H1"]],weight>0))))							
+									#take weighted mean of matching params					
+									ans			<- c(	weighted.mean(tmp[["H0"]][, acute], tmp[["H0"]][, weight]), weighted.mean(tmp[["H0"]][, base], tmp[["H0"]][, weight]), 
+											weighted.mean(tmp[["H1"]][, acute], tmp[["H1"]][, weight]), weighted.mean(tmp[["H1"]][, base], tmp[["H1"]][, weight])	)
+									#use default param if not sensible			
+									if(nrow(subset(tmp[["H0"]],weight>0))<1)
+										ans[1:2]<- c(2.2, 0.052)
+									if(nrow(subset(tmp[["H1"]],weight>0))<1)
+										ans[3:4]<- c(15, 0.032)										
+								}
+								else
+								{
+									options(warn=1)
+									warning("using inappropriate default parameters")
+									options(warn=2)
+									ans			<- c(2.2, 0.052, 15, 0.032)
+								}
+								names(ans)	<- c("acute.H0","base.H0","acute.H1","base.H1")	
+								ans
+							}))
+			theta.model.Hx	<- as.data.table(theta.model.Hx)
+			theta.model.Hx[,comid_old:=sites[,"comid_old"]]
+			print(theta.model.Hx)
+			stop()
+		}
+		#have data table with model parameters for each site to simulate from
+		#	-- take subset from data table and simulate 50				
+		tpc.obs			<- lapply(seq_len(nrow(sites)),function(i)
+				{					
+					if(verbose)
+						cat(paste("\nprocess ",sites[i,"comid_old"]))
+					tmp	<- subset(theta.model.Hx, comid_old==sites[i,"comid_old"])
+					if(1)
+					{
+						args		<<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H0], tmp[1,base.H0], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
+						args		<<- unlist(strsplit(args,' '))		#print(args)					
+						tpc			<- prj.simudata()					#print(tpc[["sum.attack"]]["Median"]); print(tpc[["sum.E2E"]]["Median"])										
+						tpc.H0		<- tpc[["tpc.table.sample.median"]]
+						
+						args		<<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H1], tmp[1,base.H1], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
+						args		<<- unlist(strsplit(args,' '))					
+						tpc			<- prj.simudata()
+						tpc.H1		<- tpc[["tpc.table.sample.median"]]					
+					}
+					else	#precompute low and high acute scenarios
+					{
+						#low acute
+						cmd			<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H0], tmp[1,base.H0], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
+						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
+						cat(cmd)								
+						signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
+						outdir		<- paste(CODE.HOME,"misc",sep='/')
+						outfile		<- paste("phd",signat,"qsub",sep='.')
+						prj.hpccaller(outdir, outfile, cmd)
+						#high acute
+						cmd			<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H1], tmp[1,base.H1], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
+						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
+						cat(cmd)								
+						signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
+						outdir		<- paste(CODE.HOME,"misc",sep='/')
+						outfile		<- paste("phd",signat,"qsub",sep='.')
+						prj.hpccaller(outdir, outfile, cmd)
+					}	
+					list(H0=tpc.H0, H1=tpc.H1)
+				})
+		names(tpc.obs)	<- sites[,"comid_old"]
+		if(verbose)
+			cat(paste("\nwrite tpc.obs to",paste(f.name,".R",sep='')))	
+		save(tpc.obs, theta.model.Hx, sites, file=paste(f.name,".R",sep=''))
+	}
+	
+	ans<- list(tpc.obs=tpc.obs, theta.model.Hx=theta.model.Hx, sites=sites)
+	ans
+}	
+###############################################################################
 prj.popart.powercalc.by.acutelklratio.lklH0H1<- function(sites=NULL, tpc.obs=NULL, mlkl.theta.model.H0=NULL, mlkl.theta.model.H1=NULL, mlkl.n= 1e3, cohort.dur=3, f.name=NA, replace=1, resume=1, verbose=1, remote=0, remote.signat=NA)
 {
 	if(resume && remote && !is.null(sites) )
@@ -931,143 +1075,13 @@ prj.popart.powercalc.by.acutelklratio	<- function()
 		cat(paste("\nopt.power",opt.power))
 		cat(paste("\nopt.sampling",opt.sampling))
 	}
-		
+
 	#simulate high acute and low acute tip clusters for each community
-	f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
-	if(resume)
-	{
-		options(show.error.messages = FALSE)		
-		if(verbose)
-			cat(paste("\nprj.simudata: try to resume file ",paste(f.name,".R",sep='')))
-		readAttempt<-	try(suppressWarnings(load(paste(f.name,".R",sep=''))))
-		options(show.error.messages = TRUE)
-		if(!inherits(readAttempt, "try-error") && verbose)
-			cat(paste("\nprj.simudata: resumed file ",paste(f.name,".R",sep='')))
-	}
-	resume<- 0
-	if(!resume || inherits(readAttempt, "try-error"))
-	{	
-		#get sites and add target effects to 'sites'
-		sites						<- popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug, rtn.phylostudy=1 )				
-		sites[,"mu.inc.rate.H0"]	<- sites[,"inc.rate"]
-		sites[,"mu.inc.rate.H1"]	<- 0.013
-		sites[,"mu.pE2E.H0"]		<- theta.EE.H0
-		sites[,"mu.pE2E.H1"]		<- theta.EE.H1
-		print(sites)
-		samples.CD4					<- popart.predicted.firstCD4()
-		samples.seq					<- popart.predicted.sequences(sites,  samples.CD4, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)			
-		samples.seq					<- cbind( samples.seq, samples.seq[,"%avg",drop=0] * 0.1 / 2 )		#add simple prior on seq.cov
-		colnames(samples.seq)[ncol(samples.seq)]	<- c("sigma")
-		sites						<- cbind(sites, samples.CD4, samples.seq)
-		
-		if(1)
-		{
-			#each site was calibrated to match 		"mu.inc.rate.H0","mu.pE2E.H0"		"mu.inc.rate.H1","mu.pE2E.H1"
-			theta.model.Hx	<- matrix(	c(	1.25, 0.062, 4.4, 0.09,
-											1.1, 0.088, 5.8, 0.073,
-											1, 0.1, 7, 0.065,
-											1.8, 0.045, 5.8, 0.069,
-											1.6, 0.063, 6, 0.062,
-											0.7, 0.125, 5.6, 0.08,
-											3.8, 0.027, 10.8, 0.045,
-											2.2, 0.053, 11, 0.045,
-											1.7, 0.067, 12, 0.043,
-											2, 0.048, 5.9, 0.071,
-											0.7, 0.125, 3.8, 0.099,
-											1, 0.09, 7.4, 0.059		),byrow=T, ncol=4,nrow=nrow(sites), dimnames=list(c(),c("acute.H0","base.H0","acute.H1","base.H1")))
-			theta.model.Hx	<- as.data.table(theta.model.Hx)
-			theta.model.Hx[,comid_old:=sites[,"comid_old"]]
-			print(theta.model.Hx)
-		}
-		else
-		{
-			#take matching parameters from 95% cloud around target parameters
-			#	-- TODO needs more simulations, perhaps 2e4 ?
-			theta.model.Hx	<- t(sapply(seq_len(nrow(sites)),function(i)
-							{					
-								site		<- sites[i,"comid_old"]
-								if(verbose)
-									cat(paste("\nprocess ",site))
-								f.name		<- paste(DATA,'/',paste("acutesimu_fxs0_onlyu0",sep=''),'/',"match_INC_E2E",'_',m.type,'_',site,'_',cohort.dur,"_acute_1_20_base_0.015_0.09.R",sep='')
-								readAttempt	<-	try(suppressWarnings(load(f.name)))
-								if(!inherits(readAttempt, "try-error"))	
-								{	
-									setnames(abc.struct, "INC", "Inc")
-									abc.struct[,comid_old:=site]
-									tmp			<- prj.popart.powercalc.by.acutelklratio.matchpa( abc.struct, sites[,c("comid_old","mu.inc.rate.H0","mu.inc.rate.H1","mu.pE2E.H0","mu.pE2E.H1")], hetclu.scale=1, return.top=10 )						
-#									print(tmp)
-									if(verbose)
-										cat(paste("\nfound number nonzero weights H0",nrow(subset(tmp[["H0"]],weight>0)),"number matching H1",nrow(subset(tmp[["H1"]],weight>0))))							
-									#take weighted mean of matching params					
-									ans			<- c(	weighted.mean(tmp[["H0"]][, acute], tmp[["H0"]][, weight]), weighted.mean(tmp[["H0"]][, base], tmp[["H0"]][, weight]), 
-											weighted.mean(tmp[["H1"]][, acute], tmp[["H1"]][, weight]), weighted.mean(tmp[["H1"]][, base], tmp[["H1"]][, weight])	)
-									#use default param if not sensible			
-									if(nrow(subset(tmp[["H0"]],weight>0))<1)
-										ans[1:2]<- c(2.2, 0.052)
-									if(nrow(subset(tmp[["H1"]],weight>0))<1)
-										ans[3:4]<- c(15, 0.032)										
-								}
-								else
-								{
-									options(warn=1)
-									warning("using inappropriate default parameters")
-									options(warn=2)
-									ans			<- c(2.2, 0.052, 15, 0.032)
-								}
-								names(ans)	<- c("acute.H0","base.H0","acute.H1","base.H1")	
-								ans
-							}))
-			theta.model.Hx	<- as.data.table(theta.model.Hx)
-			theta.model.Hx[,comid_old:=sites[,"comid_old"]]
-			print(theta.model.Hx)
-			stop()
-		}
-		#have data table with model parameters for each site to simulate from
-		#	-- take subset from data table and simulate 50				
-		tpc.obs			<- lapply(seq_len(nrow(sites)),function(i)
-				{					
-					if(verbose)
-						cat(paste("\nprocess ",sites[i,"comid_old"]))
-					tmp	<- subset(theta.model.Hx, comid_old==sites[i,"comid_old"])
-					if(1)
-					{
-						args		<<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H0], tmp[1,base.H0], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
-						args		<<- unlist(strsplit(args,' '))		#print(args)					
-						tpc			<- prj.simudata()					#print(tpc[["sum.attack"]]["Median"]); print(tpc[["sum.E2E"]]["Median"])										
-						tpc.H0		<- tpc[["tpc.table.sample.median"]]
-						
-						args		<<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H1], tmp[1,base.H1], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
-						args		<<- unlist(strsplit(args,' '))					
-						tpc			<- prj.simudata()
-						tpc.H1		<- tpc[["tpc.table.sample.median"]]					
-					}
-					else	#precompute low and high acute scenarios
-					{
-						#low acute
-						cmd			<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H0], tmp[1,base.H0], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
-						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
-						cat(cmd)								
-						signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
-						outdir		<- paste(CODE.HOME,"misc",sep='/')
-						outfile		<- paste("phd",signat,"qsub",sep='.')
-						prj.hpccaller(outdir, outfile, cmd)
-						#high acute
-						cmd			<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H1], tmp[1,base.H1], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
-						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
-						cat(cmd)								
-						signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
-						outdir		<- paste(CODE.HOME,"misc",sep='/')
-						outfile		<- paste("phd",signat,"qsub",sep='.')
-						prj.hpccaller(outdir, outfile, cmd)
-					}	
-					list(H0=tpc.H0, H1=tpc.H1)
-				})
-		names(tpc.obs)	<- sites[,"comid_old"]
-		if(verbose)
-			cat(paste("\nwrite tpc.obs to",paste(f.name,".R",sep='')))	
-		save(tpc.obs, theta.model.Hx, sites, file=paste(f.name,".R",sep=''))
-	}
-	stop()
+	tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling, pooled.n, dir.name=dir.name, verbose=1, resume=1)
+	tpc.obs			<- tmp$tpc.obs
+	theta.model.Hx	<- tmp$theta.model.Hx 
+	sites			<- tmp$sites
+
 	if(all("mu.inc.rate.H0"!=colnames(sites)))
 	{
 		#add target effects to 'sites'		
@@ -1076,6 +1090,45 @@ prj.popart.powercalc.by.acutelklratio	<- function()
 		sites[,"mu.pE2E.H0"]		<- theta.EE.H0
 		sites[,"mu.pE2E.H1"]		<- theta.EE.H1
 	}
+	if(is.null(theta.model.Hx))
+	{
+		theta.model.Hx	<- matrix(	c(	1.25, 0.062, 4.4, 0.09,
+										1.1, 0.088, 5.8, 0.073,
+										1, 0.1, 7, 0.065,
+										1.8, 0.045, 5.8, 0.069,
+										1.6, 0.063, 6, 0.062,
+										0.7, 0.125, 5.6, 0.08,
+										3.8, 0.027, 10.8, 0.045,
+										2.2, 0.053, 11, 0.045,
+										1.7, 0.067, 12, 0.043,
+										2, 0.048, 5.9, 0.071,
+										0.7, 0.125, 3.8, 0.099,
+										1, 0.09, 7.4, 0.059		),byrow=T, ncol=4,nrow=nrow(sites), dimnames=list(c(),c("acute.H0","base.H0","acute.H1","base.H1")))
+		theta.model.Hx	<- as.data.table(theta.model.Hx)
+		theta.model.Hx[,comid_old:=sites[,"comid_old"]]
+	}
+	
+	print(theta.model.Hx)
+	print(sites)
+	#print(tpc.obs)
+	require(xtable)		
+	tpc.obs.latex	<- lapply(seq_along(tpc.obs), function(i)
+							{
+								tmp<- lapply(seq_along(tpc.obs[[i]]), function(j)
+										{
+											txt.start	<- "\\begin{table}[htbp]\n\\centering\n{\\footnotesize\n"
+											txt.table	<- print( xtable(tpc.obs[[i]][[j]],digits=0), floating=FALSE, print.results=FALSE )
+											txt.caption	<- paste( names(tpc.obs)[i], '_', names(tpc.obs[[i]])[j], sep='')
+											txt.end		<- paste( "}\n\\caption{", txt.caption ,"}\n\\end{table}\n", sep='')
+											paste(txt.start, txt.table, txt.end, sep='')
+										})	
+								tmp	<- paste(unlist(tmp), collapse="\\n\n", sep='')
+								tmp
+							})
+	tpc.obs.latex	<- paste(tmp, collapse="\\n\n", sep='')
+	#cat(tmp)
+	
+
 	#TODO get acute parameters that match target effects under H0, H1. 
 	#	this accounts for between cluster heterogeneity by adding a site specific random effect whose magnitude is specified by 'hetclu.scale'
 	if(0)
@@ -1093,29 +1146,36 @@ prj.popart.powercalc.by.acutelklratio	<- function()
 	#get likelihood values
 	#	-- use the predicted seq coverage as stored in 'sites' to build a prior on the sampling prob
 	#	-- get likelihood values of the simulated tip cluster for this set of model parameters
+	remote.signat		<- "Wed_Jul_17_13:30:19_2013"
 	mlkl.theta.model.H0	<- do.call("rbind", lapply(seq_len(nrow(sites)),function(i)
 							{
-								data.table( comid_old= sites[i,3], acute=2.2, base= 0.052, sample.mu=sites[i,"%avg"], sample.sigma=sites[i,"sigma"]  )
+								tmp	<- subset(theta.model.Hx, comid_old==sites[i,"comid_old"])								
+								data.table( comid_old= sites[i,"comid_old"], acute=tmp[1, acute.H0], base= tmp[1, base.H0], sample.mu=sites[i,"%avg"], sample.sigma=sites[i,"sigma"]  )
 							}))
 	mlkl.theta.model.H1	<- do.call("rbind", lapply(seq_len(nrow(sites)),function(i)
 							{
-								data.table( comid_old= sites[i,3], acute=15, base= 0.032, sample.mu=sites[i,"%avg"], sample.sigma=sites[i,"sigma"]  )
+								tmp	<- subset(theta.model.Hx, comid_old==sites[i,"comid_old"])
+								data.table( comid_old= sites[i,"comid_old"], acute=tmp[1, acute.H1], base= tmp[1, base.H1], sample.mu=sites[i,"%avg"], sample.sigma=sites[i,"sigma"]  )
 							}))
+	#print( mlkl.theta.model.H0 )
+	#stop()
+			
 	f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
-	mlkl.theta			<- prj.popart.powercalc.by.acutelklratio.lklH0H1(sites, tpc.obs, mlkl.theta.model.H0, mlkl.theta.model.H1, mlkl.n= 1e3, cohort.dur=3, f.name=f.name, resume=1, verbose=1)
+	mlkl.theta			<- prj.popart.powercalc.by.acutelklratio.lklH0H1(sites, tpc.obs, mlkl.theta.model.H0, mlkl.theta.model.H1, mlkl.n= 1e3, cohort.dur=3, f.name=f.name, resume=1, verbose=1, verbose=1, remote=0, remote.signat=remote.signat)
 
 	#get likelihood values for increasing sampling coverage
 	mlkl.theta.model.H0	<- do.call("rbind", lapply(seq_len(nrow(sites)),function(i)
 							{
-								data.table( comid_old= sites[i,3], acute=2.2, base= 0.052, sample.mu=seq(round(sites[i,"%avg"],d=2),1,by=0.025), sample.sigma=0  )
+								tmp	<- subset(theta.model.Hx, comid_old==sites[i,"comid_old"])
+								data.table( comid_old= sites[i,3], acute=tmp[1, acute.H0], base= tmp[1, base.H0], sample.mu=seq(round(sites[i,"%avg"],d=2),1,by=0.025), sample.sigma=0  )
 							}))
 	mlkl.theta.model.H1	<- do.call("rbind", lapply(seq_len(nrow(sites)),function(i)
 							{
-								data.table( comid_old= sites[i,3], acute=15, base= 0.032, sample.mu=seq(round(sites[i,"%avg"],d=2),1,by=0.025), sample.sigma=0  )
+								tmp	<- subset(theta.model.Hx, comid_old==sites[i,"comid_old"])
+								data.table( comid_old= sites[i,3], acute=tmp[1, acute.H1], base= tmp[1, base.H1], sample.mu=seq(round(sites[i,"%avg"],d=2),1,by=0.025), sample.sigma=0  )
 							}))
-	f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"increasingcoverage",'_',p.lab,'_',p.consent.coh,sep='')
-	remote.signat		<- "Wed_Jul_17_13:30:19_2013"
-	mlkl.theta.cov		<- prj.popart.powercalc.by.acutelklratio.lklH0H1(sites, tpc.obs, mlkl.theta.model.H0, mlkl.theta.model.H1, mlkl.n= 1e3, cohort.dur=3, f.name=f.name, resume=1, verbose=1, remote=1, remote.signat=remote.signat)
+	f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"increasingcoverage",'_',p.lab,'_',p.consent.coh,sep='')	
+	mlkl.theta.cov		<- prj.popart.powercalc.by.acutelklratio.lklH0H1(sites, tpc.obs, mlkl.theta.model.H0, mlkl.theta.model.H1, mlkl.n= 1e3, cohort.dur=3, f.name=f.name, resume=1, verbose=1, remote=0, remote.signat=remote.signat)
 	names(mlkl.theta.cov)	<- sites[,"comid_old"]	
 	mlkl.theta.cov		<- prj.popart.powercalc.by.acutelklratio.mlkl.increasingcoverage(mlkl.theta.cov)	
 	mlkl.theta.cov		<- merge(mlkl.theta.cov, as.data.table(sites[,c("comid_old","arm","%avg","popsize")]), by="comid_old")
@@ -2169,7 +2229,7 @@ prj.pipeline<- function()
 		
 		dir.name	<- CODE.HOME
 		cmd			<- paste("\n",dir.name,"/misc/phdes.startme.R -exePOPART.POWER.ACUTELKLRATIO",sep='')
-		cmd			<- prj.hpcwrapper(cmd, hpc.walltime=71, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
+		cmd			<- prj.hpcwrapper(cmd, hpc.walltime=71, hpc.mem="3800mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
 		cat(cmd)
 		signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
 		outdir		<- paste(CODE.HOME,"misc",sep='/')
