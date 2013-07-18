@@ -2120,7 +2120,7 @@ prj.pipeline<- function()
 							})
 		#cmd			<- paste(cmd,sep='',collapse='')		
 	}
-	if(1)	#simulate tip cluster data sets
+	if(0)	#simulate tip cluster data sets
 	{
 		dir.name			<- CODE.HOME
 		#acute				<- c(2,4,6,8)
