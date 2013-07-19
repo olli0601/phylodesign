@@ -1080,54 +1080,29 @@ prj.popart.powercalc.by.acutelklratio	<- function()
 	tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling, pooled.n, dir.name=dir.name, verbose=1, resume=1)
 	tpc.obs			<- tmp$tpc.obs
 	theta.model.Hx	<- tmp$theta.model.Hx 
-	sites			<- tmp$sites
-
-	if(all("mu.inc.rate.H0"!=colnames(sites)))
-	{
-		#add target effects to 'sites'		
-		sites[,"mu.inc.rate.H0"]	<- sites[,"inc.rate"]
-		sites[,"mu.inc.rate.H1"]	<- 0.013
-		sites[,"mu.pE2E.H0"]		<- theta.EE.H0
-		sites[,"mu.pE2E.H1"]		<- theta.EE.H1
-	}
-	if(is.null(theta.model.Hx))
-	{
-		theta.model.Hx	<- matrix(	c(	1.25, 0.062, 4.4, 0.09,
-										1.1, 0.088, 5.8, 0.073,
-										1, 0.1, 7, 0.065,
-										1.8, 0.045, 5.8, 0.069,
-										1.6, 0.063, 6, 0.062,
-										0.7, 0.125, 5.6, 0.08,
-										3.8, 0.027, 10.8, 0.045,
-										2.2, 0.053, 11, 0.045,
-										1.7, 0.067, 12, 0.043,
-										2, 0.048, 5.9, 0.071,
-										0.7, 0.125, 3.8, 0.099,
-										1, 0.09, 7.4, 0.059		),byrow=T, ncol=4,nrow=nrow(sites), dimnames=list(c(),c("acute.H0","base.H0","acute.H1","base.H1")))
-		theta.model.Hx	<- as.data.table(theta.model.Hx)
-		theta.model.Hx[,comid_old:=sites[,"comid_old"]]
-	}
-	
+	sites			<- tmp$sites	
 	print(theta.model.Hx)
 	print(sites)
 	#print(tpc.obs)
-	require(xtable)		
-	tpc.obs.latex	<- lapply(seq_along(tpc.obs), function(i)
-							{
-								tmp<- lapply(seq_along(tpc.obs[[i]]), function(j)
-										{
-											txt.start	<- "\\begin{table}[htbp]\n\\centering\n{\\footnotesize\n"
-											txt.table	<- print( xtable(tpc.obs[[i]][[j]],digits=0), floating=FALSE, print.results=FALSE )
-											txt.caption	<- paste( names(tpc.obs)[i], '_', names(tpc.obs[[i]])[j], sep='')
-											txt.end		<- paste( "}\n\\caption{", txt.caption ,"}\n\\end{table}\n", sep='')
-											paste(txt.start, txt.table, txt.end, sep='')
-										})	
-								tmp	<- paste(unlist(tmp), collapse="\\n\n", sep='')
-								tmp
-							})
-	tpc.obs.latex	<- paste(tmp, collapse="\\n\n", sep='')
-	#cat(tmp)
-	
+	if(0)
+	{
+		require(xtable)		
+		tpc.obs.latex	<- lapply(seq_along(tpc.obs), function(i)
+								{
+									tmp<- lapply(seq_along(tpc.obs[[i]]), function(j)
+											{
+												txt.start	<- "\\begin{table}[htbp]\n\\centering\n{\\footnotesize\n"
+												txt.table	<- print( xtable(tpc.obs[[i]][[j]],digits=0), floating=FALSE, print.results=FALSE )
+												txt.caption	<- paste( names(tpc.obs)[i], '_', names(tpc.obs[[i]])[j], sep='')
+												txt.end		<- paste( "}\n\\caption{", txt.caption ,"}\n\\end{table}\n", sep='')
+												paste(txt.start, txt.table, txt.end, sep='')
+											})	
+									tmp	<- paste(unlist(tmp), collapse="\\n\n", sep='')
+									tmp
+								})
+		tpc.obs.latex	<- paste(tmp, collapse="\\n\n", sep='')
+		#cat(tmp)
+	}
 
 	#TODO get acute parameters that match target effects under H0, H1. 
 	#	this accounts for between cluster heterogeneity by adding a site specific random effect whose magnitude is specified by 'hetclu.scale'
@@ -1161,7 +1136,7 @@ prj.popart.powercalc.by.acutelklratio	<- function()
 	#stop()
 			
 	f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
-	mlkl.theta			<- prj.popart.powercalc.by.acutelklratio.lklH0H1(sites, tpc.obs, mlkl.theta.model.H0, mlkl.theta.model.H1, mlkl.n= 1e3, cohort.dur=3, f.name=f.name, resume=1, verbose=1, verbose=1, remote=0, remote.signat=remote.signat)
+	mlkl.theta			<- prj.popart.powercalc.by.acutelklratio.lklH0H1(sites, tpc.obs, mlkl.theta.model.H0, mlkl.theta.model.H1, mlkl.n= 1e3, cohort.dur=3, f.name=f.name, resume=1, verbose=1, remote=0, remote.signat=remote.signat)
 
 	#get likelihood values for increasing sampling coverage
 	mlkl.theta.model.H0	<- do.call("rbind", lapply(seq_len(nrow(sites)),function(i)
