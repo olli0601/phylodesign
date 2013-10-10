@@ -613,6 +613,7 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 	m.type			<- "Acute"	
 	theta.model.Hx	<- NULL
 	f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
+	resume			<- 0
 	if(resume)
 	{
 		options(show.error.messages = FALSE)		
@@ -622,27 +623,28 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 		options(show.error.messages = TRUE)
 		if(!inherits(readAttempt, "try-error") && verbose)
 			cat(paste("\nprj.simudata: resumed file ",paste(f.name,".R",sep='')))
-	}
-	#resume<- 0
+	}	
 	if(!resume || inherits(readAttempt, "try-error"))
 	{	
 		#get sites and add target effects to 'sites'
-		sites						<- popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug, rtn.phylostudy=1 )				
+		sites						<- popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug, rtn.phylostudy=1 )
+		#TODO this would change for each arm and depending on pess, central and opt target
 		sites[,"mu.inc.rate.H0"]	<- sites[,"inc.rate"]
 		sites[,"mu.inc.rate.H1"]	<- 0.013
 		sites[,"mu.pE2E.H0"]		<- theta.EE.H0
 		sites[,"mu.pE2E.H1"]		<- theta.EE.H1
-		print(sites)
+		#print(sites)
 		samples.CD4					<- popart.predicted.firstCD4()
-		samples.seq					<- popart.predicted.sequences(sites,  samples.CD4, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)			
+		samples.seq					<- popart.predicted.sequences(sites,  samples.CD4, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)
+		#print(samples.seq)
+		#print(apply(samples.seq,2,sum))
 		samples.seq					<- cbind( samples.seq, samples.seq[,"%avg",drop=0] * 0.1 / 2 )		#add simple prior on seq.cov
 		colnames(samples.seq)[ncol(samples.seq)]	<- c("sigma")
 		sites						<- cbind(sites, samples.CD4, samples.seq)
 		
-		if(1)
-		{
-			#each site was calibrated to match 		"mu.inc.rate.H0","mu.pE2E.H0"		"mu.inc.rate.H1","mu.pE2E.H1"
-			theta.model.Hx	<- matrix(	c(	1.25, 0.062, 4.4, 0.09,
+		#each site was calibrated to match 		"mu.inc.rate.H0","mu.pE2E.H0"		"mu.inc.rate.H1","mu.pE2E.H1"
+		if(verbose)	cat(paste("\nset up default theta corresponding to %E2E 10 vs 40 -- should only use these for arm C as these theta don t reflect the induced %E2E in A,B"))
+		theta.model.Hx	<- matrix(	c(	1.25, 0.062, 4.4, 0.09,
 											1.1, 0.088, 5.8, 0.073,
 											1, 0.1, 7, 0.065,
 											1.8, 0.045, 5.8, 0.069,
@@ -654,50 +656,54 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 											2, 0.048, 5.9, 0.071,
 											0.7, 0.125, 3.8, 0.099,
 											1, 0.09, 7.4, 0.059		),byrow=T, ncol=4,nrow=nrow(sites), dimnames=list(c(),c("acute.H0","base.H0","acute.H1","base.H1")))
-			theta.model.Hx	<- as.data.table(theta.model.Hx)
-			theta.model.Hx[,comid_old:=sites[,"comid_old"]]
-			print(theta.model.Hx)
-		}
-		else
+		theta.model.Hx	<- as.data.table(theta.model.Hx)
+		theta.model.Hx[,comid_old:=sites[,"comid_old"]]		
+			
+		if(1)
 		{
 			#take matching parameters from 95% cloud around target parameters
 			#	-- TODO needs more simulations, perhaps 2e4 ?
-			theta.model.Hx	<- t(sapply(seq_len(nrow(sites)),function(i)
+			if(verbose)	cat(paste("\nfind theta corresponding to incidence and %E2E under H0 and H1 "))
+			theta.model.Hx	<- lapply(seq_len(nrow(sites)),function(i)
 							{					
 								site		<- sites[i,"comid_old"]
-								if(verbose)
-									cat(paste("\nprocess ",site))
-								f.name		<- paste(DATA,'/',paste("acutesimu_fxs0_onlyu0",sep=''),'/',"match_INC_E2E",'_',m.type,'_',site,'_',cohort.dur,"_acute_1_20_base_0.015_0.09.R",sep='')
+								if(verbose)	cat(paste("\nprocess ",site))
+								f.name		<- paste(DATA,'/',paste("acutesimu_fxs0_onlyu0",sep=''),'/',"match_INC_E2E",'_',m.type,'_',site,'_',cohort.dur,"_acute_0.5_13_base_0.01_0.13.R",sep='')								
 								readAttempt	<-	try(suppressWarnings(load(f.name)))
 								if(!inherits(readAttempt, "try-error"))	
 								{	
+									if(verbose)	cat(paste("\nloaded precomputed simulations from file",f.name))
 									setnames(abc.struct, "INC", "Inc")
 									abc.struct[,comid_old:=site]
-									tmp			<- prj.popart.powercalc.by.acutelklratio.matchpa( abc.struct, sites[,c("comid_old","mu.inc.rate.H0","mu.inc.rate.H1","mu.pE2E.H0","mu.pE2E.H1")], hetclu.scale=1, return.top=10 )						
+									tmp			<- prj.popart.powercalc.by.acutelklratio.matchpa( abc.struct, sites[,c("comid_old","mu.inc.rate.H0","mu.inc.rate.H1","mu.pE2E.H0","mu.pE2E.H1")], hetclu.scale=1, return.top=25 )						
 #									print(tmp)
-									if(verbose)
-										cat(paste("\nfound number nonzero weights H0",nrow(subset(tmp[["H0"]],weight>0)),"number matching H1",nrow(subset(tmp[["H1"]],weight>0))))							
+									if(verbose)	cat(paste("\nfound params matching H0, n with nonzero weights=",nrow(subset(tmp[["H0"]],weight>0))))
+									if(verbose)	cat(paste("\nfound params matching H1, n with nonzero weights=",nrow(subset(tmp[["H1"]],weight>0))))
 									#take weighted mean of matching params					
-									ans			<- c(	weighted.mean(tmp[["H0"]][, acute], tmp[["H0"]][, weight]), weighted.mean(tmp[["H0"]][, base], tmp[["H0"]][, weight]), 
-											weighted.mean(tmp[["H1"]][, acute], tmp[["H1"]][, weight]), weighted.mean(tmp[["H1"]][, base], tmp[["H1"]][, weight])	)
+									ans			<- c(	acute.H0=weighted.mean(tmp[["H0"]][, acute], tmp[["H0"]][, weight]), base.H0=weighted.mean(tmp[["H0"]][, base], tmp[["H0"]][, weight]), 
+														acute.H1=weighted.mean(tmp[["H1"]][, acute], tmp[["H1"]][, weight]), base.H1=weighted.mean(tmp[["H1"]][, base], tmp[["H1"]][, weight])	)
 									#use default param if not sensible			
 									if(nrow(subset(tmp[["H0"]],weight>0))<1)
-										ans[1:2]<- c(2.2, 0.052)
+									{
+										if(verbose)	cat(paste("\ncould not find params matching H0, use default for arm C"))
+										ans[1:2]<- as.numeric(subset(theta.model.Hx, comid_old==site,select=c(acute.H0,base.H0)))
+									}
 									if(nrow(subset(tmp[["H1"]],weight>0))<1)
-										ans[3:4]<- c(15, 0.032)										
+									{
+										if(verbose)	cat(paste("\ncould not find params matching H1, use default for arm C"))
+										ans[3:4]<- as.numeric(subset(theta.model.Hx, comid_old==site,select=c(acute.H1,base.H1)))
+									}
 								}
 								else
 								{
 									options(warn=1)
-									warning("using inappropriate default parameters")
+									warning("could not load file",f.name,"\nusing inappropriate default parameters")
 									options(warn=2)
-									ans			<- c(2.2, 0.052, 15, 0.032)
-								}
-								names(ans)	<- c("acute.H0","base.H0","acute.H1","base.H1")	
-								ans
-							}))
-			theta.model.Hx	<- as.data.table(theta.model.Hx)
-			theta.model.Hx[,comid_old:=sites[,"comid_old"]]
+									ans			<- c(acute.H0=2.2, base.H0=0.052, acute.H1=15, base.H1=0.032)
+								}									
+								data.table(comid_old=site,acute.H0=ans[1], base.H0=ans[2], acute.H1=ans[3], base.H1=ans[4])								
+							})
+			theta.model.Hx	<- rbindlist(theta.model.Hx)
 			print(theta.model.Hx)
 			stop()
 		}
@@ -941,6 +947,30 @@ prog.acute.loglkl.batch<- function()
 	
 }
 ###############################################################################
+prj.popart.powercalc.by.acutelklratio.mlkl.plot<- function(mlkl.criterion, f.name)
+{
+	require(RColorBrewer)	
+	mlkl.criterion[,pch:=15]		
+	set(mlkl.criterion, which(mlkl.criterion[,arm=="B"]), "pch", 16)
+	set(mlkl.criterion, which(mlkl.criterion[,arm=="C"]), "pch", 17)
+	setkey(mlkl.criterion, "H1/H0|H1")		
+	xlim					<- c(0,1)
+	ylim					<- range( c(12,mlkl.criterion[,"H1/H0|H1", with=F]) )
+	ylim[1]					<- ylim[1]*0.9
+	ylim[2]					<- ylim[2]*1.5
+	cols					<- brewer.pal(9, "PuBuGn")[1:4]
+	cols.bf					<- matrix( c( min(0,ylim[1]),2,2,6,6,10,10,ylim[2] ), nrow=2, ncol=4 )
+	cat(paste("plot centraltarget_BFpoint to file", f.name))
+	pdf(file=f.name, width=4,height=8)
+	par(mar=c(0,4,2,0))
+	plot(1,1,type='n',bty='n',xlim=xlim, ylim=ylim, ylab="2 ln BF", xlab="", xaxt='n', log='y')	
+	sapply(seq_len(ncol(cols.bf)), function(i){		polygon(	c(xlim, rev(xlim)), c(cols.bf[1,i],cols.bf[1,i],cols.bf[2,i],cols.bf[2,i]), border=NA, col=cols[i] )			})
+	points(rep(0.5,nrow(mlkl.criterion)),unlist(mlkl.criterion[,"H1/H0|H1", with=F]), pch=mlkl.criterion[,pch])		
+	text(rep(0.5,nrow(mlkl.criterion)) + rep(c(0.25,-0.25),nrow(mlkl.criterion)/2),unlist(mlkl.criterion[,"H1/H0|H1", with=F]), labels=gsub(' ','',mlkl.criterion[,comid_old]))
+	legend("topright",pch=unique(mlkl.criterion[,pch]), legend=paste("arm",unique(mlkl.criterion[,arm])), bg="white", box.col="white")
+	dev.off()
+}		
+###############################################################################
 prj.popart.powercalc.by.acutelklratio.mlkl.increasingcoverage<- function(mlkl.theta)
 {
 	#get marginal likelihoods
@@ -1003,7 +1033,8 @@ prj.popart.powercalc.by.acutelklratio.mlkl.increasingcoverage.plot<- function(ml
 			})
 }
 ###############################################################################
-prj.popart.powercalc.by.acutelklratio.matchpa<- function(sim, target, hetclu.scale= 0.25, hetclu.cov= ( hetclu.scale*matrix(c(0.0015/2,0.006,0.006,0.1/2),2,2) )^2, return.top= 10)
+#sim<- abc.struct; target<- sites[,c("comid_old","mu.inc.rate.H0","mu.inc.rate.H1","mu.pE2E.H0","mu.pE2E.H1")]; hetclu.scale<- 1; hetclu.cov<- ( hetclu.scale*matrix(c(0.0015/2,0.006,0.006,0.1/2),2,2) )^2
+prj.popart.powercalc.by.acutelklratio.matchpa<- function(sim, target, hetclu.scale= 1, hetclu.cov= ( hetclu.scale*matrix(c(0.015/2,0.006,0.006,0.1/2),2,2) )^2, return.top= 10)
 {
 	hetclu.icov	<- solve(hetclu.cov)
 	tmp			<- merge(sim, target, by="comid_old", all.x=1)
@@ -1011,16 +1042,18 @@ prj.popart.powercalc.by.acutelklratio.matchpa<- function(sim, target, hetclu.sca
 	d.H0		<- rowSums((x %*% hetclu.icov) * x)	
 	x			<- as.matrix(subset(tmp,select=c(Inc,E2E)) - subset(tmp,select=c(mu.inc.rate.H1,mu.pE2E.H1)))
 	d.H1		<- rowSums((x %*% hetclu.icov) * x)
-	ans.H0		<- sim
-	ans.H0[,dist:= d.H0]
-	setkey(ans.H0, dist)
-	ans.H0		<- ans.H0[seq_len(return.top),]
+	ans.H0		<- copy(sim)
+	ans.H0[,dist:= d.H0]	
 	ans.H0[,weight:= dnorm(ans.H0[,dist])]	
 	ans.H1		<- sim
 	ans.H1[,dist:= d.H1]
-	setkey(ans.H1, dist)
-	ans.H1		<- ans.H1[seq_len(return.top),]
 	ans.H1[,weight:= dnorm(ans.H1[,dist])]
+	
+	setkey(ans.H1, dist)
+	setkey(ans.H0, dist)	
+	ans.H0		<- ans.H0[seq_len(return.top),]
+	ans.H1		<- ans.H1[seq_len(return.top),]
+	
 	ans			<- list(H0= ans.H0, H1= ans.H1)
 	ans
 }
@@ -1053,7 +1086,7 @@ prj.popart.powercalc.by.acutelklratio	<- function()
 	opt.sampling	<- "PC12+HCC"	#"PC and HCC"#"only HCC"	#"PC and HCC"	#
 	opt.power		<- "All"
 	
-	p.lab			<- 0.7*0.9			#set lower as discussed	70% from CD4 90% from sequencing
+	p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing
 	p.consent.coh	<- 0.9*0.9			#90% consent to main study and of those 90% consent to phylo study				
 	p.consent.clu	<- 1				#waiver
 	p.vhcc.prev.AB	<- 1				#already in PopART model estimate
@@ -1138,72 +1171,163 @@ prj.popart.powercalc.by.acutelklratio	<- function()
 	f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
 	mlkl.theta			<- prj.popart.powercalc.by.acutelklratio.lklH0H1(sites, tpc.obs, mlkl.theta.model.H0, mlkl.theta.model.H1, mlkl.n= 1e3, cohort.dur=3, f.name=f.name, resume=1, verbose=1, remote=0, remote.signat=remote.signat)
 
-	#get likelihood values for increasing sampling coverage
-	mlkl.theta.model.H0	<- do.call("rbind", lapply(seq_len(nrow(sites)),function(i)
-							{
-								tmp	<- subset(theta.model.Hx, comid_old==sites[i,"comid_old"])
-								data.table( comid_old= sites[i,3], acute=tmp[1, acute.H0], base= tmp[1, base.H0], sample.mu=seq(round(sites[i,"%avg"],d=2),1,by=0.025), sample.sigma=0  )
-							}))
-	mlkl.theta.model.H1	<- do.call("rbind", lapply(seq_len(nrow(sites)),function(i)
-							{
-								tmp	<- subset(theta.model.Hx, comid_old==sites[i,"comid_old"])
-								data.table( comid_old= sites[i,3], acute=tmp[1, acute.H1], base= tmp[1, base.H1], sample.mu=seq(round(sites[i,"%avg"],d=2),1,by=0.025), sample.sigma=0  )
-							}))
-	f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"increasingcoverage",'_',p.lab,'_',p.consent.coh,sep='')	
-	mlkl.theta.cov		<- prj.popart.powercalc.by.acutelklratio.lklH0H1(sites, tpc.obs, mlkl.theta.model.H0, mlkl.theta.model.H1, mlkl.n= 1e3, cohort.dur=3, f.name=f.name, resume=1, verbose=1, remote=0, remote.signat=remote.signat)
-	names(mlkl.theta.cov)	<- sites[,"comid_old"]	
-	mlkl.theta.cov		<- prj.popart.powercalc.by.acutelklratio.mlkl.increasingcoverage(mlkl.theta.cov)	
-	mlkl.theta.cov		<- merge(mlkl.theta.cov, as.data.table(sites[,c("comid_old","arm","%avg","popsize")]), by="comid_old")
-	prj.popart.powercalc.by.acutelklratio.mlkl.increasingcoverage.plot(mlkl.theta.cov, f.name)
-	#print( mlkl.theta.cov )
-	
-	stop()
-	
-	
-	#get marginal likelihoods
-	#	-- take mean of the abovelikelihood values
-	mlkl.criterion			<- sapply(seq_len(nrow(sites)),function(i)
+	if(0)	#coverage required calculations
+	{
+		#get likelihood values for increasing sampling coverage
+		mlkl.theta.model.H0	<- do.call("rbind", lapply(seq_len(nrow(sites)),function(i)
 								{
-									scale.max			<- max( mlkl.theta[[i]][["tpcH0.thetaH0"]][,"lkl"], mlkl.theta[[i]][["tpcH0.thetaH1"]][,"lkl"] )	
-									mlkl.scaled			<- do.call("cbind", list( H0=mlkl.theta[[i]][["tpcH0.thetaH0"]][,"lkl"] - scale.max, H1=mlkl.theta[[i]][["tpcH0.thetaH1"]][,"lkl"] - scale.max ))	#norm constant for both is now unknown C_x times exp(scale.max)
-									#print( exp(mlkl.scaled ) ) 
-									mlkl.ratio			<- apply(exp(mlkl.scaled),2,mean)
-									mlkl.ratio.H0		<- mlkl.ratio["H0"]/mlkl.ratio["H1"]
-									
-									scale.max			<- max( mlkl.theta[[i]][["tpcH1.thetaH0"]][,"lkl"], mlkl.theta[[i]][["tpcH1.thetaH1"]][,"lkl"] )	
-									mlkl.scaled			<- do.call("cbind", list( H0=mlkl.theta[[i]][["tpcH1.thetaH0"]][,"lkl"] - scale.max, H1=mlkl.theta[[i]][["tpcH1.thetaH1"]][,"lkl"] - scale.max ))	#norm constant for both is now unknown C_x times exp(scale.max)
-									#print( exp(mlkl.scaled ) ) 
-									mlkl.ratio			<- apply(exp(mlkl.scaled),2,mean)
-									mlkl.ratio.H1		<- mlkl.ratio["H1"]/mlkl.ratio["H0"]
-									
-									ans					<- 2 * log( c( mlkl.ratio.H0, mlkl.ratio.H1 ) )
-									ans					<- c(ans, ifelse( ans[2]<=3, 0, ifelse( ans[2]<=20, 1, ifelse( ans[2]<=150, 2, 3 ) ) ) )  
-									names(ans)			<- c("H0/H1|H0","H1/H0|H1","comment")
-									ans
-								})		
-	#colnames(mlkl.criterion)<- sites[,"comid_old"]
-	#print(sites)	
-	mlkl.criterion			<- as.data.table( t(mlkl.criterion) )		
-	set(mlkl.criterion, NULL, "comment", factor(mlkl.criterion[,comment], levels= 0:3, labels= c("nil","pos","strong","vstrong") ) )
-	setnames(sites, "%avg", "perc.avg.seq.cov")
-	mlkl.criterion			<- cbind(subset(sites, select= c(comid_old, popsize, hivcomb, artadjust, arm, perc.avg.seq.cov)), mlkl.criterion)
-	print( mlkl.criterion )
+									tmp	<- subset(theta.model.Hx, comid_old==sites[i,"comid_old"])
+									data.table( comid_old= sites[i,3], acute=tmp[1, acute.H0], base= tmp[1, base.H0], sample.mu=seq(round(sites[i,"%avg"],d=2),1,by=0.025), sample.sigma=0  )
+								}))
+		mlkl.theta.model.H1	<- do.call("rbind", lapply(seq_len(nrow(sites)),function(i)
+								{
+									tmp	<- subset(theta.model.Hx, comid_old==sites[i,"comid_old"])
+									data.table( comid_old= sites[i,3], acute=tmp[1, acute.H1], base= tmp[1, base.H1], sample.mu=seq(round(sites[i,"%avg"],d=2),1,by=0.025), sample.sigma=0  )
+								}))
+		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"increasingcoverage",'_',p.lab,'_',p.consent.coh,sep='')	
+		mlkl.theta.cov		<- prj.popart.powercalc.by.acutelklratio.lklH0H1(sites, tpc.obs, mlkl.theta.model.H0, mlkl.theta.model.H1, mlkl.n= 1e3, cohort.dur=3, f.name=f.name, resume=1, verbose=1, remote=0, remote.signat=remote.signat)
+		names(mlkl.theta.cov)	<- sites[,"comid_old"]	
+		mlkl.theta.cov		<- prj.popart.powercalc.by.acutelklratio.mlkl.increasingcoverage(mlkl.theta.cov)	
+		mlkl.theta.cov		<- merge(mlkl.theta.cov, as.data.table(sites[,c("comid_old","arm","%avg","popsize")]), by="comid_old")
+		prj.popart.powercalc.by.acutelklratio.mlkl.increasingcoverage.plot(mlkl.theta.cov, f.name)
+		#print( mlkl.theta.cov )
+	}	
+	if(1)	#plot integrated Bayes factor for central targets
+	{
+		qu<-	0.9 
+		#compute marginal likelihood values on grid and select best 10% as those corresponding to H0 and H1.
+		mlkl.criterion	<- sapply(seq_len(nrow(sites)),function(i)
+				{
+					args			<<- prj.acute.test.lkl.wsampling.bothUandT.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.Hx[i,acute.H0], theta.model.Hx[i,base.H0], round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, by.sample=2, save=1, resume=1, verbose=0, debug.susc.const=0, debug.only.u=0)		 
+					args			<<- unlist(strsplit(args,' '))							
+					tipc.lkl		<- prj.acute.test.lkl.wsampling.bothUandT()				
+					ans				<- t( sapply( strsplit(names(tipc.lkl),'_',fixed=1), as.numeric ) )
+					colnames(ans)	<- c("acute","base","sample")
+					ans				<- as.data.table(ans)
+					ans[,comid_old:= sites[i,"comid_old"]]
+					ans[,lkl.H0:=tipc.lkl]								
+					args			<<- prj.acute.test.lkl.wsampling.bothUandT.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.Hx[i,acute.H1], theta.model.Hx[i,base.H1], round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, by.sample=2, save=1, resume=1, verbose=0, debug.susc.const=0, debug.only.u=0)		 
+					args			<<- unlist(strsplit(args,' '))							
+					tipc.lkl		<- prj.acute.test.lkl.wsampling.bothUandT()				
+					ans[,lkl.H1:=tipc.lkl]
+					
+					#subset of all those theta that explain H0 data best		
+					thetaH0			<- subset(ans, lkl.H0>=quantile(lkl.H0, probs=qu))
+					#subset of all those theta that explain H1 data best
+					thetaH1			<- subset(ans, lkl.H1>=quantile(lkl.H1, probs=qu))					
+					#lkl for H0 data for the thetaH0 para
+					tpcH0.thetaH0	<- subset(thetaH0, select=c(comid_old, acute, base, sample, lkl.H0))					
+					#lkl for H0 data for the thetaH1 para
+					tpcH0.thetaH1	<- subset(thetaH1, select=c(comid_old, acute, base, sample, lkl.H0))
+					#lkl for H1 data for the thetaH0 para
+					tpcH1.thetaH0	<- subset(thetaH0, select=c(comid_old, acute, base, sample, lkl.H1))
+					#lkl for H1 data for the thetaH1 para
+					tpcH1.thetaH1	<- subset(thetaH1, select=c(comid_old, acute, base, sample, lkl.H1))										
+					#print(ans); print(tpcH0.thetaH0); print(tpcH0.thetaH1); print(tpcH1.thetaH0); print(tpcH1.thetaH1)
+					
+					scale.max			<- max( tpcH0.thetaH0[,lkl.H0], tpcH0.thetaH1[,lkl.H0] )	
+					mlkl.scaled			<- do.call("cbind", list( H0=tpcH0.thetaH0[,lkl.H0] - scale.max, H1=tpcH0.thetaH1[,lkl.H0] - scale.max ))	#norm constant for both is now unknown C_x times exp(scale.max)
+					#print( exp(mlkl.scaled ) ) 
+					mlkl.ratio			<- apply(exp(mlkl.scaled),2,mean)
+					mlkl.ratio.H0		<- mlkl.ratio["H0"]/mlkl.ratio["H1"]
+					
+					scale.max			<- max( tpcH1.thetaH0[,lkl.H1], tpcH1.thetaH1[,lkl.H1] )	
+					mlkl.scaled			<- do.call("cbind", list( H0=tpcH1.thetaH0[,lkl.H1] - scale.max, H1=tpcH1.thetaH1[,lkl.H1] - scale.max ))	#norm constant for both is now unknown C_x times exp(scale.max)
+					#print( exp(mlkl.scaled ) ) 
+					mlkl.ratio			<- apply(exp(mlkl.scaled),2,mean)
+					mlkl.ratio.H1		<- mlkl.ratio["H1"]/mlkl.ratio["H0"]
+					
+					ans					<- 2 * log( c( mlkl.ratio.H0, mlkl.ratio.H1 ) )
+					ans					<- c(ans, ifelse( ans[2]<=3, 0, ifelse( ans[2]<=20, 1, ifelse( ans[2]<=150, 2, 3 ) ) ) )  
+					names(ans)			<- c("H0/H1|H0","H1/H0|H1","comment")
+					ans					
+				})		
+		mlkl.criterion			<- as.data.table( t(mlkl.criterion) )		
+print(mlkl.criterion)		
+		set(mlkl.criterion, NULL, "comment", factor(mlkl.criterion[,comment], levels= 0:3, labels= c("nil","pos","strong","vstrong") ) )
+		setnames(sites, "%avg", "perc.avg.seq.cov")
+		mlkl.criterion			<- cbind(subset(sites, select= c(comid_old, popsize, hivcomb, artadjust, arm, perc.avg.seq.cov)), mlkl.criterion)
+		print( mlkl.criterion )
+		mlkl.criterion			<- as.data.table(mlkl.criterion)
+		f.name					<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"centraltarget_BFavg",'_',p.lab,'_',p.consent.coh,".pdf",sep='')
+		prj.popart.powercalc.by.acutelklratio.mlkl.plot(mlkl.criterion, f.name)
 	
+	}
+	if(0)	#plot point Bayes factor for central targets
+	{
+		#get marginal likelihoods
+		#	-- take mean of the abovelikelihood values
+		mlkl.criterion			<- sapply(seq_len(nrow(sites)),function(i)
+									{
+										scale.max			<- max( mlkl.theta[[i]][["tpcH0.thetaH0"]][,lkl], mlkl.theta[[i]][["tpcH0.thetaH1"]][,lkl] )	
+										mlkl.scaled			<- do.call("cbind", list( H0=mlkl.theta[[i]][["tpcH0.thetaH0"]][,lkl] - scale.max, H1=mlkl.theta[[i]][["tpcH0.thetaH1"]][,lkl] - scale.max ))	#norm constant for both is now unknown C_x times exp(scale.max)
+										#print( exp(mlkl.scaled ) ) 
+										mlkl.ratio			<- apply(exp(mlkl.scaled),2,mean)
+										mlkl.ratio.H0		<- mlkl.ratio["H0"]/mlkl.ratio["H1"]
+										
+										scale.max			<- max( mlkl.theta[[i]][["tpcH1.thetaH0"]][,lkl], mlkl.theta[[i]][["tpcH1.thetaH1"]][,lkl] )	
+										mlkl.scaled			<- do.call("cbind", list( H0=mlkl.theta[[i]][["tpcH1.thetaH0"]][,lkl] - scale.max, H1=mlkl.theta[[i]][["tpcH1.thetaH1"]][,lkl] - scale.max ))	#norm constant for both is now unknown C_x times exp(scale.max)
+										#print( exp(mlkl.scaled ) ) 
+										mlkl.ratio			<- apply(exp(mlkl.scaled),2,mean)
+										mlkl.ratio.H1		<- mlkl.ratio["H1"]/mlkl.ratio["H0"]
+										
+										ans					<- 2 * log( c( mlkl.ratio.H0, mlkl.ratio.H1 ) )
+										ans					<- c(ans, ifelse( ans[2]<=3, 0, ifelse( ans[2]<=20, 1, ifelse( ans[2]<=150, 2, 3 ) ) ) )  
+										names(ans)			<- c("H0/H1|H0","H1/H0|H1","comment")
+										ans
+									})		
+		#colnames(mlkl.criterion)<- sites[,"comid_old"]
+		#print(sites)	
+		mlkl.criterion			<- as.data.table( t(mlkl.criterion) )		
+		set(mlkl.criterion, NULL, "comment", factor(mlkl.criterion[,comment], levels= 0:3, labels= c("nil","pos","strong","vstrong") ) )
+		setnames(sites, "%avg", "perc.avg.seq.cov")
+		mlkl.criterion			<- cbind(subset(sites, select= c(comid_old, popsize, hivcomb, artadjust, arm, perc.avg.seq.cov)), mlkl.criterion)
+		print( mlkl.criterion )
+		
+		mlkl.criterion			<- as.data.table(mlkl.criterion)
+		f.name					<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"centraltarget_BFpoint",'_',p.lab,'_',p.consent.coh,".pdf",sep='')
+		prj.popart.powercalc.by.acutelklratio.mlkl.plot(mlkl.criterion, f.name)				
+	}
 	stop()
 	
+}
+###############################################################################
+prj.acute.test.lkl.wsampling.bothUandT.cmd<- function(dir.name, loc, acute, base, sIdx, sE, cluster.tw, by.sample=1, debug.susc.const=0, debug.only.u=0, save=1, resume=1, verbose=1, plot.2D=0)
+{		
+	cmd<- paste("\n",dir.name,"/misc/phdes.startme.R -exeWSAMPLINGBOTHUANDT ",sep='')
+	cmd<- paste(cmd, " -loc=",loc,sep='')
+	cmd<- paste(cmd, " -acute=",acute,sep='')
+	cmd<- paste(cmd, " -baseline=",base,sep='')
+	cmd<- paste(cmd, " -sIdx=",sIdx,sep='')
+	cmd<- paste(cmd, " -sE=",sE,sep='')
+	cmd<- paste(cmd, " -cluster.tw=",cluster.tw,sep='')
+	cmd<- paste(cmd, " -by.sample=",by.sample,sep='')
+	cmd<- paste(cmd, " -save=",save,sep='')
+	cmd<- paste(cmd, " -resume=",resume,sep='')
+	cmd<- paste(cmd, " -debug.only.u=",debug.only.u,sep='')
+	cmd<- paste(cmd, " -debug.susc.const=",debug.susc.const,sep='')	
+	cmd<- paste(cmd, " -v=",verbose,sep='')
+	cmd<- paste(cmd, " -plot=",plot.2D,sep='')
+	cmd
 }
 ###############################################################################
 prj.acute.test.lkl.wsampling.bothUandT	<- function()
 {
 	require(RColorBrewer)
 	m.type				<- "Acute"
-	loc.type			<- "Town II"
+	loc.type			<- "TownII"
+	loc.type			<- "Ndeke"
 	m.popsize			<- NA
-	m.known.states		<- 1
-	theta0				<- c(15, 0.032, 0, 0)
+	m.known.states		<- 1	
+	theta0				<- c(4.4, 0.09, 0, 0)		#1.25   0.062      4.4   0.090      Ndeke
+	#theta0				<- c(1.25, 0.062, 0, 0)
+	sample.prob			<- 0.62
+	#theta0				<- c(15, 0.032, 0, 0)		#TownII
 	#theta0				<- c(2.2, 0.052, 0, 0)
+	#sample.prob		<- 0.4
+	
 	names(theta0)		<- c("acute","base","m.st1","m.st2")
-	sample.prob			<- c(0.4,0.4)
+	sample.prob			<- c(sample.prob,sample.prob)
 	names(sample.prob)	<- c("Idx","E")
 	cluster.tw			<- 3
 	m.repeat			<- 1
@@ -1211,23 +1335,97 @@ prj.acute.test.lkl.wsampling.bothUandT	<- function()
 	verbose				<- 0	
 	debug.onlyu			<- 0
 	debug.suscconst		<- 0
-	by.sample			<- 0
+	by.sample			<- 1
+	plot.2D				<- 1
+	if(exists("args"))
+	{
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,4),
+									loc= return(substr(arg,6,nchar(arg))),NA)	}))
+		if(length(tmp)>0) loc.type<- tmp[1]
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,11),
+									cluster.tw= return(as.numeric(substr(arg,13,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) cluster.tw<- tmp[1]				
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,6),
+									acute= return(as.numeric(substr(arg,8,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) theta0[1]<- tmp[1]
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,9),
+									baseline= return(as.numeric(substr(arg,11,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) theta0[2]<- tmp[1]
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,5),
+									sIdx= return(as.numeric(substr(arg,7,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) sample.prob[1]<- tmp[1]
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,3),
+									sE= return(as.numeric(substr(arg,5,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) sample.prob[2]<- tmp[1]	
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,10),
+									by.sample= return(as.numeric(substr(arg,12,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) by.sample<- tmp[1]							
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,2),
+									v= return(as.numeric(substr(arg,4,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) verbose<- tmp[1]
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,7),
+									resume= return(as.numeric(substr(arg,9,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) resume<- tmp[1]
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,5),
+									plot= return(as.numeric(substr(arg,7,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) plot.2D<- tmp[1]		
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,17),
+									debug.susc.const= return(as.numeric(substr(arg,19,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) debug.susc.const<- tmp[1]
+		tmp<- na.omit(sapply(args,function(arg)
+						{	switch(substr(arg,2,13),
+									debug.only.u= return(as.numeric(substr(arg,15,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) debug.only.u<- tmp[1]				
+	}
+	if(verbose)
+	{
+		cat(paste("\nloc.type ",loc.type))
+		cat(paste("\ncluster.tw ",cluster.tw))	
+		cat(paste("\ntheta0.acute ",theta0[1]))
+		cat(paste("\ntheta0.base ",theta0[2]))
+		cat(paste("\nsample.prob.Idx ",sample.prob[1]))
+		cat(paste("\nsample.prob.E ",sample.prob[2]))
+		cat(paste("\ndebug.susc.const ",debug.susc.const))
+		cat(paste("\ndebug.only.u ",debug.only.u))
+		cat(paste("\nby.sample ",by.sample))		
+		cat(paste("\nverbose ",verbose))
+		cat(paste("\nresume ",resume))
+		cat(paste("\nplot.2D ",plot.2D))		
+	}
 	dir.name			<- paste(DATA,"/acutesimu_fxs",debug.suscconst,"_onlyu",debug.onlyu,sep='')
 	f.name				<- paste(dir.name,paste("tpcdat_",m.type,"_",loc.type,"_n",m.popsize,"_rI",theta0[1],"_b",theta0[2],"_sIdx",sample.prob[1],"_sE",sample.prob[2],"_tw",cluster.tw,"_median",sep=''),sep='/')
 	cat(paste("\nload ",paste(f.name,".R",sep='')))		
 	load(paste(f.name,".R",sep=''))
-	print(tpc.table.all.median)
-	print(tpc.table.sample.median)
-		
-	if(by.sample)
+	if(verbose)
 	{
-		theta			<- expand.grid(acute= seq(1,20,0.25), base= seq(0.01,0.085,0.002), sample=sample.prob[1] )		
+		print(tpc.table.all.median)
+		print(tpc.table.sample.median)
+	}
+	if(by.sample==0)
+	{
+		theta			<- expand.grid(acute= seq(0.5,13,0.25), base= theta0["base"], sample= seq(0.1,0.9,0.05))
+	}
+	else if(by.sample==1)
+	{
+		theta			<- expand.grid(acute= seq(0.5,13,0.25), base= seq(0.01,0.13,0.0025), sample=sample.prob[1] )		
+	}
+	else if(by.sample==2)
+	{
+		theta			<- expand.grid(acute= seq(0.5,13,0.25), base= seq(0.01,0.13,0.0025), sample= seq(0.1,0.9,0.05) )		
 	}
 	else
-	{
-		theta			<- expand.grid(acute= seq(1,20,0.25), base= theta0["base"], sample= seq(0.1,0.9,0.05))		
-	}
-				
+		stop("unknown by.sample")
 	if(resume)
 	{
 		options(show.error.messages = FALSE)
@@ -1243,10 +1441,12 @@ prj.acute.test.lkl.wsampling.bothUandT	<- function()
 		acute.MAX.TIPC.SIZE	<<- 12 
 		ibm				<- ibm.collapse( ibm.init.model(m.type, loc.type, NA, theta0, save='', resume= 0, init.pop=0) )
 		state.n			<- ibm$init.pop.distr$status * ibm$init.pop.distr$npop
-		pop.n			<- ibm$init.pop.distr$npop	
-		print(pop.n)
-		print(state.n)	
-
+		pop.n			<- ibm$init.pop.distr$npop
+		if(verbose)
+		{
+			print(pop.n)
+			print(state.n)	
+		}
 		clu.n			<- clu.tipc.n(acute.MAX.TIPC.SIZE)			
 		clu.n.sum		<- apply(clu.n,2,sum)																	#faster than seq_len(ncol(clu.n))^seq.int(-1,ncol(clu.n)-2)
 		lclu.n			<- log( clu.n / matrix(clu.n.sum, nrow=nrow(clu.n), ncol=length(clu.n.sum), byrow=1) ) 		
@@ -1254,7 +1454,7 @@ prj.acute.test.lkl.wsampling.bothUandT	<- function()
 		tipc.lkl		<- sapply(seq_len(nrow(theta)),function(i)
 				{				
 #i<- 10
-print(theta[i,])
+#print(theta[i,])
 					ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,"acute"]
 					ibm[["beta"]][["base"]]					<- theta[i,"base"]	
 					rate.m									<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)	
@@ -1267,9 +1467,9 @@ print(theta[i,])
 		save(tipc.lkl, file=paste(f.name,".R",sep=''))				
 	}
 	#print(tipc.lkl)	
-	if(1)
+	if(plot.2D)
 	{
-		theta.mle	<- as.numeric(strsplit(names(tipc.lkl)[which.max(tipc.lkl)],'_')[[1]])
+		theta.mle		<- as.numeric(strsplit(names(tipc.lkl)[which.max(tipc.lkl)],'_')[[1]])
 		print(theta.mle)
 		
 		theta			<- t( sapply( strsplit(names(tipc.lkl),'_',fixed=1), as.numeric ) )
@@ -1300,7 +1500,7 @@ print(theta[i,])
 		points(theta.true[1],theta.true[2], pch=19, col="red")
 		dev.off()		
 	}
-	stop()
+	tipc.lkl
 }
 ###############################################################################
 prj.acute.test.lkl.nosampling.onlyU	<- function()
@@ -2179,11 +2379,11 @@ prj.pipeline<- function()
 				})
 		#cmd			<- paste(cmd,sep='',collapse='')		
 	}
-	if(0)	#start 'prj.simudata.match.theta.to.Inc.E2E'
+	if(1)	#start 'prj.simudata.match.theta.to.Inc.E2E'
 	{
 		sites		<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )
-		nit			<- 20e3
-		
+		nit			<- 25e3
+		sites		<- subset(sites, comid_old=="Ikhwezi")
 		dir.name	<- CODE.HOME
 		sapply(sites$comid_old, function(loc)
 				{
@@ -2191,7 +2391,7 @@ prj.pipeline<- function()
 					cmd			<- paste(cmd, " -loc=",loc,sep='')
 					cmd			<- paste(cmd, " -nit=",nit,sep='')
 					
-					cmd			<- prj.hpcwrapper(cmd, hpc.walltime=400, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
+					cmd			<- prj.hpcwrapper(cmd, hpc.walltime=500, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
 					cat(cmd)
 					signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
 					outdir		<- paste(CODE.HOME,"misc",sep='/')
@@ -2199,7 +2399,7 @@ prj.pipeline<- function()
 					prj.hpccaller(outdir, outfile, cmd)			
 				})		
 	}
-	if(1)	#start 'prj.popart.powercalc.by.acutelklratio' for all locations
+	if(0)	#start 'prj.popart.powercalc.by.acutelklratio' for all locations
 	{		
 		
 		dir.name	<- CODE.HOME

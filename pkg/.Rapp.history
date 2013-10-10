@@ -1,249 +1,308 @@
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-?sample.int
-sample.int(1,3)
-sample.int(1,3, replace=1)
-sample.int(1,3, replace=1)
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-x<- rnorm(1e5,c(0.013,0.25),c(0.002/2,0.02/2))
-?rnorm
-require(mvrnorm)
-require(mvnorm)
-require(MASS)
-mvrnorm(1e1,c(0.013,0.25),matrix(c(0.002/2,0,0,0.02/2)^2),2,2))
-mvrnorm(1e1,c(0.013,0.25),matrix(c(0.002/2,0,0,0.02/2)^2,2,2))
-mvrnorm(1e1,c(0.013,0.25),matrix(c(0.002/2,0,0,0.04/2)^2,2,2))
-mvrnorm(1e1,c(0.013,0.25),matrix(c(0.002/2,0,0,0.03/2)^2,2,2))
-x<- mvrnorm(1e4,c(0.013,0.25),matrix(c(0.002/2,0,0,0.03/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.013,0.25),matrix(c(0.0015/2,0,0,0.02/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.013,0.25),matrix(c(0.0015/2,0.01,0.01,0.02/2)^2,2,2))
-x<- mvrnorm(1e4,c(0.013,0.25),matrix(c(0.0015/2,0.001,0.001,0.02/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.013,0.25),matrix(c(0.0015/2,0.004,0.004,0.02/2)^2,2,2))
-x<- mvrnorm(1e4,c(0.013,0.25),matrix(c(0.0015/2,0.003,0.003,0.02/2)^2,2,2))
-x<- mvrnorm(1e4,c(0.013,0.25),matrix(c(0.0015/2,0.002,0.002,0.02/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.013,0.25),matrix(c(0.0015/2,0.0025,0.0025,0.02/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.013,0.25),matrix(c(0.0015/2,0.0015,0.0025,0.02/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.013,0.25),matrix(c(0.0015/2,0.0025,0.0015,0.02/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.013,0.25),matrix(c(0.0015/2,0.0025,0.0025,0.02/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.013,0.25),matrix(c(0.0015/2,0.0025,0.0025,0.04/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.013,0.3),matrix(c(0.0015/2,0.0025,0.0025,0.04/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.013,0.3),matrix(c(0.0015/2,0.0025,0.0025,0.05/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.013,0.3),matrix(c(0.0015/2,0.0025,0.0025,0.1/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.013,0.3),matrix(c(0.0015/2,0.0025,0.0025,0.08/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.013,0.3),matrix(c(0.0015/2,0.0025,0.0025,0.07/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.013,0.3),matrix(c(0.0015/2,0.005,0.005,0.07/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.011,0.25),matrix(c(0.0015/2,0.005,0.005,0.07/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.011,0.25),matrix(c(0.0015/2,0.005,0.005,0.09/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.011,0.25),matrix(c(0.0015/2,0.005,0.005,0.1/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.011,0.25),matrix(c(0.0015/2,0.01,0.01,0.1/2)^2,2,2))
-x<- mvrnorm(1e4,c(0.011,0.25),matrix(c(0.0015/2,0.008,0.008,0.1/2)^2,2,2))
-x<- mvrnorm(1e4,c(0.011,0.25),matrix(c(0.0015/2,0.007,0.007,0.1/2)^2,2,2))
-x<- mvrnorm(1e4,c(0.011,0.25),matrix(c(0.0015/2,0.006,0.006,0.1/2)^2,2,2))
-plot(type='p',x[,1],x[,2],pch=19)
-Sigma<- matrix(c(0.0015/2,0.006,0.006,0.1/2)^2,2,2)
-x<- mvrnorm(1e4,c(0.011,0.25),Sigma)
-Sigma<- matrix(c(0.0015/2,0.006,0.006,0.1/2),2,2)
-x<- mvrnorm(1e4,c(0.01,0.1),(0.5*Sigma)^2)
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.01,0.1),(0.25*Sigma)^2)
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(1e4,c(0.013,0.4),(0.25*Sigma)^2)
-plot(type='p',x[,1],x[,2],pch=19)
-x<- mvrnorm(7,c(0.013,0.4),(0.25*Sigma)^2)
-plot(type='p',x[,1],x[,2],pch=19)
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-?distance
-?mahalanobis
-mahalanobis
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-c(NULL, list(1))
-c(c(NULL, list(1)), list(2))
-source("misc/phdes.startme.R")
-traceback()
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-?data.table
-?brewer.pal
-display.brewer.all()
-display.brewer.all()
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-display.brewer.all()
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-sites
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-?points
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-traceback()
-?options
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-print(sites)
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-print:::xtable
-xtable:::print
-?print
-methods("print")
-print.xtable
-?print.xtable
-print.xtable
+require(abc.n)
+nabc.mutost.onesample.n.of.y(obs.n, s.of.lkl, mx.pw, sim.sd, alpha, tau.u.ub=0.0003, tol= s.of.lkl*s.of.lkl*1e-3)
+require(abc.n)#
+#
+sim<- {tmp<-c(0.01218,0.01267,0.01273,0.01309,0.01364,0.0138,0.01397,0.0132,0.0139,0.01374,0.01513,0.01515,0.01557,0.01579,0.01596,0.01565,0.01566,0.01589,0.01532,0.01556,0.01593,0.01583,0.01595,0.01538,0.01654,0.01614,0.01502,0.01547,0.01555,0.01546,0.01534,0.01557,0.01577,0.0158,0.01637,0.01558,0.01572,0.01557,0.01529,0.01504); names(tmp)<- c("30.000000", "32.000000", "34.000000", "36.000000", "38.000000", "40.000000", "42.000000", "44.000000", "46.000000", "48.000000", "50.000000", "52.000000", "54.000000", "56.000000", "58.000000", "60.000000", "62.000000", "64.000000", "66.000000", "68.000000", "70.000000", "72.000000", "74.000000", "76.000000", "78.000000", "80.000000", "82.000000", "84.000000", "86.000000", "88.000000", "90.000000", "92.000000", "94.000000", "96.000000", "98.000000", "100.000000", "102.000000", "104.000000", "106.000000", "108.000000"); tmp}#
+#
+obs<- {tmp<-c(0.01293,0.01278,0.01286,0.01278,0.01261,0.01301,0.01297,0.01251); names(tmp)<- c("30.000000", "32.000000", "34.000000", "36.000000", "38.000000", "40.000000", "42.000000", "44.000000"); tmp}#
+#
+obs.n<- length(obs)#
+s.of.lkl<- sqrt( var(obs)*(obs.n-1)/obs.n  * (obs.n-1)/(obs.n-3)	)#
+sim.sd	<- sd(sim); mx.pw<- 0.9; alpha<- 0.01; annealing<- 5
+nabc.mutost.onesample.n.of.y(obs.n, s.of.lkl, mx.pw, sim.sd, alpha, tau.u.ub=0.0003, tol= s.of.lkl*s.of.lkl*1e-3)
+require(abc.n)#
+#
+sim<- {tmp<-c(0.01218,0.01267,0.01273,0.01309,0.01364,0.0138,0.01397,0.0132,0.0139,0.01374,0.01513,0.01515,0.01557,0.01579,0.01596,0.01565,0.01566,0.01589,0.01532,0.01556,0.01593,0.01583,0.01595,0.01538,0.01654,0.01614,0.01502,0.01547,0.01555,0.01546,0.01534,0.01557,0.01577,0.0158,0.01637,0.01558,0.01572,0.01557,0.01529,0.01504); names(tmp)<- c("30.000000", "32.000000", "34.000000", "36.000000", "38.000000", "40.000000", "42.000000", "44.000000", "46.000000", "48.000000", "50.000000", "52.000000", "54.000000", "56.000000", "58.000000", "60.000000", "62.000000", "64.000000", "66.000000", "68.000000", "70.000000", "72.000000", "74.000000", "76.000000", "78.000000", "80.000000", "82.000000", "84.000000", "86.000000", "88.000000", "90.000000", "92.000000", "94.000000", "96.000000", "98.000000", "100.000000", "102.000000", "104.000000", "106.000000", "108.000000"); tmp}#
+#
+obs<- {tmp<-c(0.01293,0.01278,0.01286,0.01278,0.01261,0.01301,0.01297,0.01251); names(tmp)<- c("30.000000", "32.000000", "34.000000", "36.000000", "38.000000", "40.000000", "42.000000", "44.000000"); tmp}#
+#
+obs.n<- length(obs)#
+s.of.lkl<- sqrt( var(obs)*(obs.n-1)/obs.n  * (obs.n-1)/(obs.n-3)	)#
+sim.sd	<- sd(sim); mx.pw<- 0.9; alpha<- 0.01; annealing<- 5#
+nabc.mutost.onesample.n.of.y(obs.n, s.of.lkl, mx.pw, sim.sd, alpha, tau.u.ub=0.0003, tol= s.of.lkl*s.of.lkl*1e-3)
+outdir<- "/Users/Oliver/duke/2013_HIV_NL/ATHENA_2013/data/tmp"
+signat.out	<- signat.in	<- "Wed_May__1_17/08/15_2013"
+file								<- paste(outdir,"/ATHENA_2013_03_FirstAliSequences_HXB2PROTRT_",gsub('/',':',signat.out),".fasta.clustalo",sep='')#
+		if(verbose) cat(paste("\nread ",file))#
+		seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+require(ape)
+seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+dim(seq.PROT.RT)
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3495, c("g","-","-","-","g"))
+hivx.seq.find<- function(char.matrix, pos0= NA, from= c(), verbose=1)#
+{#
+	if(is.na(pos0)) 	stop("start position of token to be replaced is missing")#
+	if(!length(from))	stop("token to be replaced is missing")#
+	query.colidx	<- seq.int(pos0,pos0+length(from)-1)#
+	query.yes		<- which( apply(char.matrix, 1, function(x)	all(x[query.colidx]==from) ) )#
+	query.yes	#
+}
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3495, c("g","-","-","-","g"))
+query.yes
+seq.PROT.RT[query.yes,3495:3499]<- matrix( c("g","g","-","-","-"), nrow=length(query.yes), ncol=5, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("-","t","a"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("a","-"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3502, c("a","-"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("-","t","a"))
+query.yes
+seq.PROT.RT[345, 3500:3520]
+write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
+file
+file<- "/Users/Oliver/duke/2013_HIV_NL/ATHENA_2013/data/tmp/ATHENA_2013_03_FirstAliSequences_HXB2PROTRT_Wed_May__1_17:08:15_2013.fasta.clustalo2"
+seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3495, c("g","-","-","-","g"))
+query.yes
+seq.PROT.RT[query.yes,3495:3499]<- matrix( c("g","g","-","-","-"), nrow=length(query.yes), ncol=5, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("-","t","a"))
+query.yes
+seq.PROT.RT[query.yes,3501:3503]<- matrix( c("t","a","-"), nrow=length(query.yes), ncol=3, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3502, c("-","a"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3502, c("a","-"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("a","-"))
+query.yes
+seq.PROT.RT[query.yes,3501:3502]<- matrix( c("-","a"), nrow=length(query.yes), ncol=2, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3505, c("-","-","-","-","a"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3504, c("g","a","c"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3507, c("-","-","-","g","a"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3551, c("g","g"))
+query.yes
+query.yes[1:10]
+for(i in query.yes)#
+			seq.PROT.RT[i,3551:3600]		<-	c("-",seq.PROT.RT[i,3551:3599])
+write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3552, c("g","c"))
+query.yes
+for(i in query.yes)#
+			seq.PROT.RT[i,3552:3600]		<-	c("-",seq.PROT.RT[i,3552:3599])
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("-","t","t"))
+query.yes
+for(i in query.yes)#
+			seq.PROT.RT[i,3501:3600]		<-	c("-",seq.PROT.RT[i,3501:3599])
+seq.PROT.RT[17,3501:3510]
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3498, c("c","g","t"))
+query.yes
+for(i in query.yes)#
+			seq.PROT.RT[i,3498:3520]		<-	c("-",seq.PROT.RT[i,3498:3519])
+write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3552, c("-","g","g"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3549, c("-","c","a"))
+query.yes
+seq.PROT.RT[query.yes,3549:3551]<- matrix( c("c","a","-"), nrow=length(query.yes), ncol=3, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a"))
+query.yes
+seq.PROT.RT[query.yes,3543:3545]<- matrix( c("c","a","-"), nrow=length(query.yes), ncol=3, byrow=1 )
+seq.PROT.RT[query.yes,3543:3545]<- matrix( c("-","c","a"), nrow=length(query.yes), ncol=3, byrow=1 )
+seq.PROT.RT[query.yes,3543:3555]
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a","g","g","g","g","c","a"))
+query.yes
+seq.PROT.RT[query.yes,3543:3551]<- matrix( c("c","a","g","g","g","g","c","a","-"), nrow=length(query.yes), ncol=9, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a"))
+query.yes
+seq.PROT.RT[query.yes,3543:3555]
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a","g","g","a","g","c","a"))#
+		if(length(query.yes))#
+			seq.PROT.RT[query.yes,3543:3551]<- matrix( c("c","a","g","g","a","g","c","a","-"), nrow=length(query.yes), ncol=9, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a","k","g","g","a","c","a"))#
+		if(length(query.yes))#
+			seq.PROT.RT[query.yes,3543:3551]<- matrix( c("c","a","k","g","g","a","c","a","-"), nrow=length(query.yes), ncol=9, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a"))
+query.yes
+seq.PROT.RT[query.yes,3543:3555]
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a","g","g","g","g","g","a"))
+seq.PROT.RT[query.yes,3543:3551]<- matrix( c("c","a","g","g","g","g","g","a","-"), nrow=length(query.yes), ncol=9, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","t"))
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a","g","g","g","g","g","a"))
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","t"))
+query.yes
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3549, c("a","a","-"))
+query.yes
+seq.PROT.RT[query.yes,3549:3551]<- matrix( c("-","-","-"), nrow=length(query.yes), ncol=3, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3551, c("g","a","c"))
+seq.PROT.RT[query.yes,3551:3560]
+for(i in query.yes)#
+			seq.PROT.RT[i,3551:3560]		<-	c("-",seq.PROT.RT[i,3551:3559])
+seq.PROT.RT[query.yes,3551:3560]
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3551, c("g","a","y"))
+query.yes
+seq.PROT.RT[query.yes,3551:3560]
+if(length(query.yes))#
+			seq.PROT.RT[query.yes,3551:3554]<- matrix( c("-","g","a","y"), nrow=length(query.yes), ncol=4, byrow=1 )
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3549, c("-","c","c"))
+query.yes
+seq.PROT.RT[query.yes,3549:3560]
+query.yes							<- hivx.seq.find(seq.PROT.RT, 3549, c("-","c","c","g","g"))
+query.yes
+seq.PROT.RT[query.yes,3549:3551]<- matrix( c("c","-","c"), nrow=length(query.yes), ncol=3, byrow=1 )
+write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
+file
+seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+dim(seq.PROT.RT)
+seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+dim(seq.PROT.RT)
+file
+seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+dim(seq.PROT.RT)
+seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+dim(seq.PROT.RT)
+seq.PROT.RT							<- seq.PROT.RT[,2253:ncol(seq.PROT.RT)]
+dim(seq.PROT.RT)
+3877-2253
+seq.PROT.RT[1:5,1620:1630]
+ncol(seq.PROT.RT)<- 1624
+dim(seq.PROT.RT)[2]<- 1624
+dim(seq.PROT.RT)
+seq.PROT.RT							<- seq.PROT.RT[,1:1624]
+file
+file<- "/Users/Oliver/duke/2013_HIV_NL/ATHENA_2013/data/tmp/ATHENA_2013_03_FirstAliSequences_HXB2PROTRT_Wed_May__1_17:08:15_2013.fasta.clustalo3"
+write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
+apply(matrix(c(1,2,3,4),2,2),1,sum)
+tmp<- apply(seq.PROT.RT,1,function(x)		which(rev(x)!="-" )[1]  )
+tmp
+?sort
+seq.PROT.RT							<- seq.PROT.RT[sort(seq.PROT.RT.sort.by, index.return=1)$ix,]
+seq.PROT.RT.sort.by<- mtp
+seq.PROT.RT.sort.by<- tmp
+seq.PROT.RT							<- seq.PROT.RT[sort(seq.PROT.RT.sort.by, index.return=1)$ix,]
+write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
+file
+seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+seq.PROT.TR[1,1294:1299]
+seq.PROT.RT[1,1294:1299]
+dim(seq.PROT.RT)
+file
+seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+dim(seq.PROT.RT)
+seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
+dim(seq.PROT.RT)
+seq.PROT.RT[1,1294:1299]
+seq.PROT.RT[,1294:1299]				<- matrix( c("-","-","-","-","-","-"), nrow=length(query.yes), ncol=6, byrow=1 )
+seq.PROT.RT[,1294:1299]				<- matrix( c("-","-","-","-","-","-"), nrow=ncol(seq.PROT.RT), ncol=6, byrow=1 )
+seq.PROT.RT[,1294:1299]				<- matrix( c("-","-","-","-","-","-"), nrow=nrow(seq.PROT.RT), ncol=6, byrow=1 )
+file<- "/Users/Oliver/duke/2013_HIV_NL/ATHENA_2013/data/tmp/ATHENA_2013_03_FirstAliSequences_HXB2PROTRT_Wed_May__1_17:08:15_2013.fasta.clustalo4"
+write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
+which( rownames(seq.PROT.RT)=="HXB2" )
+signat.in	<- "Wed_May__1_17/08/15_2013"#
+		signat.out	<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')#
+		file<- paste(outdir,"/ATHENA_2013_03_FirstAliSequences_HXB2PROTRT_",gsub('/',':',signat.in),".fasta.clustalo4",sep='')
+file
+seq.PROT.RT	<- read.dna(file, format="fasta")
+dim(seq.PROT.RT)
+seq.PROT.RT	<- seq.PROT.RT[ rownames(seq.PROT.RT)!="HXB2", ]
+signat.out	<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
+signat.out
+file		<- paste(outdir,"/ATHENA_2013_03_FirstCurSequences_PROTRT_",gsub('/',':',signat.out),".R",sep='')
+verbose<- 1
+if(verbose) cat(paste("\nwrite to",file))#
+		save(seq.PROT.RT, file=file)#
+		file		<- paste(outdir,"/ATHENA_2013_03_FirstCurSequences_PROTRT_",gsub('/',':',signat.out),".phylip",sep='')#
+		if(verbose) cat(paste("\nwrite to ",file))
+hivc.seq.write.dna.phylip<- function(seq.DNAbin.mat, file)#
+{		#
+	tmp<- cbind( rownames(seq.DNAbin.mat), apply( as.character( seq.DNAbin.mat ), 1, function(x) paste(x,sep='',collapse='')  ) )#
+	tmp<- paste(t(tmp),collapse='\n',sep='')	#
+	tmp<- paste( paste(c(nrow(seq.DNAbin.mat),ncol(seq.DNAbin.mat)),sep='',collapse=' '),'\n',tmp,'\n',collapse='',sep='' )#
+	cat(tmp, file=file)#
+}
+hivc.seq.write.dna.phylip(seq.PROT.RT, file=file)
+70-33
+2013+37
+37700+45000
+outdir
+signat.in	<- "Sat_May_11_14:23:46_2013"#
+		signat.out	<- "Sat_May_11_14:23:46_2013"#
+#
+		file		<- paste(outdir,"/ATHENA_2013_03_FirstCurSequences_PROTRT_",gsub('/',':',signat.in),".R",sep='')#
+		if(verbose) cat(paste("\nload ",file))			#
+		load(file)
+seq.PROT.RT
+seq.PROT.RT[1,]
+x<- as.character(seq.PROT.RT[1,])
+x
+codon3.idx<- seq.int(3,ncol(seq.PROT.RT),3)
+seq.PROT.RT3<- seq.PROT.RT[, codon3.idx]
+seq.PROT.RT3
+x<- as.character(seq.PROT.RT3[1,])
+xa<- as.character(seq.PROT.RT[1,])
+all(xa[codon3.idx]==x)
+verbose<- 1
+file		<- paste(outdir,"/ATHENA_2013_03_FirstCurSequences_PROTRTCD3_",gsub('/',':',signat.out),".R",sep='')#
+		if(verbose) cat(paste("\nwrite to ",file))#
+		save(seq.PROT.RT3, file=file)
+file		<- paste(outdir,"/ATHENA_2013_03_FirstCurSequences_PROTRTCD3_",gsub('/',':',signat.out),".phylip",sep='')#
+		if(verbose) cat(paste("\nwrite to ",file))#
+		hivc.seq.write.dna.phylip(seq.PROT.RT3, file=file)
+seq.PROT.RT3[1,]
+library(roxygen2)#
+DIR_PKG<-"/Users/tonton/Documents/GitProjects/nABC/git_abc.n/pkg"#
+DIR_PKG<-"/Users/Oliver/git/abc.n/pkg"#
+roxygenize(package=paste(DIR_PKG))
+library(ape)
+boot.phylo
+sample(1:4,2,replace=1)
+sample(1:4,4,replace=1)
+bs.blocks.n<- 3
+bs.blocks.s	<- sample(seq_len(bs.blocks.n),bs.blocks.n,replace=1)-1
+bs.blocks.s
+bs.blocks.s	<- sample(seq_len(bs.blocks.n),bs.blocks.n,replace=1)-1
+bs.blocks.s
+bs.blocks.s	<- sample(seq_len(bs.blocks.n),bs.blocks.n,replace=1)-1
+bs.blocks.s
+bs.blocks.s	<- sample(seq_len(bs.blocks.n),bs.blocks.n,replace=1)-1
+bs.blocks.s
+as.numeric( sapply(bs.blocks.s,function(x)		3*x+c(1,2,3)		) )
+?break
+2.5*2 + 4.1*3 + 3.9*3.6 +4*3.7 + 4*3.9 + 2.8*3.5 +2.8*2.5
+2.5*2 + 4.1*3 + 3.9*3.6 +4*3.7 + 4*3.9 + 2.8*3.5 +2.8*2.5 + 3.8*2
+550 / 425
+575 / 500
+500 *1.3
+525 / 425
+500 * 1.235
+525 / 450
+500 * 1.17
+105/3
+choose(0,0)
+pop<- 55011
+perc.hiv<- 0.18
+perc.adult<- 0.5
+inc<- 0.0056
+pop.s<- pop * (1-perc.hiv)
+pop.s * 3 * inc
+perc.hivcov<- 0.28
+pop.s<- pop * (1-perc.hiv*perc.hivcov)
+perc.hivcov<- 0.28
+pop.s * 3 * inc
+1714 * 0.5
+pop<- 55011; perc.hiv<- 0.18; perc.adult<- 0.5; inc<- 0.0056; perc.hivcov<- 0.28
+pop.s<- pop * perc.adult * (1-perc.hiv)
+pop.s * 3 * inc
+pop.s<- pop * (1-perc.hiv*perc.hivcov)
+pop.s * 3 * inc
+pop.s<- pop * perc.adult * (1-perc.hiv*perc.hivcov)
+pop.s * 3 * inc
+pop<- 55011; perc.hiv<- 0.18; perc.adult<- 0.5; inc<- 0.0075; perc.hivcov<- 0.28
+pop.s<- pop * perc.adult * (1-perc.hiv)
+pop.s * 3 * inc
+pop<- 55011; perc.hiv<- 0.18; perc.adult<- 0.5; inc<- 0.01; perc.hivcov<- 0.28
+pop.s<- pop * perc.adult * (1-perc.hiv)
+pop.s * 3 * inc
+1714*0.5 / (3*inc)
+pop.s<- pop * perc.adult * (1-perc.hiv*perc.hivcov)
+pop.s * 3 * inc
+1714 / 2
+pop.s * 3 * inc
+83.7*83.7
+83.7*83.7/100/100
+setwd("/Users/Oliver/git/phylodesign/pkg")
 source("misc/phdes.startme.R")
 source("misc/phdes.startme.R")
 source("misc/phdes.startme.R")

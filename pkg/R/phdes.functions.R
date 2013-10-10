@@ -295,8 +295,8 @@ popart.predicted.firstCD4<- function(version= "130627")
 		#	this is assuming central targets for linkage and consenting
 		first.CD4.HCC		<- matrix( c(	2397, 289, 3078, 604, 705, 57, 
 											3960, 477, 2270, 445, 771, 62, 
-											2231, 197, 3482, 412, 793, 24, 
-											7567, 325, 4578, 303, 773, 26), nrow=12, ncol=2, byrow=1, 
+											2231, 168, 3482, 431, 793, 32, 
+											7567, 566, 4578, 568, 773, 31), nrow=12, ncol=2, byrow=1, 
 										dimnames=list(	c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Luvuyo","Kuyasa","TownII","Ikhwezi","DelftSouth","Bloekombos"),
 														c("HCC Total","HCC Incident")))
 		first.CD4.PC		<- matrix( c(	307, 42, 320, 74, 333, 107, 
@@ -313,7 +313,9 @@ popart.predicted.firstCD4<- function(version= "130627")
 										dimnames=list(	c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Luvuyo","Kuyasa","TownII","Ikhwezi","DelftSouth","Bloekombos"),
 														c("total prev","total inc")))
 	}
-	cbind(first.CD4.PC,first.CD4.HCC,first.CD4.All)
+	ans<- cbind(first.CD4.PC,first.CD4.HCC,first.CD4.All)
+	#print(ans); stop()
+	ans
 }
 ###############################################################################
 popart.predicted.sequences<- function(sites, first.CD4, p.consent.PC, p.consent.HCC, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method="PC and HCC")
@@ -325,8 +327,6 @@ popart.predicted.sequences<- function(sites, first.CD4, p.consent.PC, p.consent.
 	x$CD4.1st.PC.inc	<- first.CD4[,"PC Incident"] 
 	x$CD4.1st.HCC.prev	<- first.CD4[,"HCC Total"] - first.CD4[,"HCC Incident"] 
 	x$CD4.1st.HCC.inc	<- first.CD4[,"HCC Incident"]
-#print(x)
-
 	s<- matrix(NA,nrow=nrow(x),ncol=9,dimnames= list(x$comid_old, c("visit.prev","visit.inc","PC.prev","nonPC.prev","PC.inc","nonPC.inc","%prev","%inc","%avg")))	
 	s[x$arm!="C", "visit.prev"]	<- p.vhcc.prev.AB
 	s[x$arm=="C", "visit.prev"]	<- p.vhcc.prev.C
