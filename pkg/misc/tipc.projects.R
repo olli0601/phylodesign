@@ -732,7 +732,7 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 						cat(cmd)								
 						signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
 						outdir		<- paste(CODE.HOME,"misc",sep='/')
-						outfile		<- paste("phd",signat,"qsub",sep='.')
+						outfile		<- paste("phd_ct0",signat,"qsub",sep='.')
 						prj.hpccaller(outdir, outfile, cmd)
 						#high acute
 						cmd			<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H1], tmp[1,base.H1], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
@@ -740,7 +740,7 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 						cat(cmd)								
 						signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
 						outdir		<- paste(CODE.HOME,"misc",sep='/')
-						outfile		<- paste("phd",signat,"qsub",sep='.')
+						outfile		<- paste("phd_ct1",signat,"qsub",sep='.')
 						prj.hpccaller(outdir, outfile, cmd)
 						ans			<- NULL
 					}	
@@ -2439,7 +2439,10 @@ prj.pipeline<- function()
 		p.vhcc.inc.AB	<- 1				#already in PopART model estimate
 		p.vhcc.prev.C	<- 1				#already in PopART model estimate
 		p.vhcc.inc.C	<- 1				#already in PopART model estimate
-		#p.contam		<- seq(0.05,0.2,0.025)		
+		
+		opt.sampling	<- "PC12+HCC"
+		pooled.n		<- 1
+		
 		if(verbose)
 		{
 			cat(paste("\ncohort.size",cohort.size))
