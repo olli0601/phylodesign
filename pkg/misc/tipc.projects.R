@@ -608,12 +608,11 @@ prj.acute.test.lkl.wsampling.onlyU<- function()
 }
 ###############################################################################
 #simulate high acute and low acute tip clusters for each community	
-prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling, pooled.n, dir.name=DATA, verbose=1, resume=1)
+prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling, pooled.n, dir.name=DATA, verbose=1, resume=1, standalone=0)
 {
 	m.type			<- "Acute"	
 	theta.model.Hx	<- NULL
-	f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
-	resume			<- 0
+	f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')	
 	if(resume)
 	{
 		options(show.error.messages = FALSE)		
@@ -644,7 +643,7 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 		
 		#each site was calibrated to match 		"mu.inc.rate.H0","mu.pE2E.H0"		"mu.inc.rate.H1","mu.pE2E.H1"
 		if(verbose)	cat(paste("\nset up default theta corresponding to %E2E 10 vs 40 -- should only use these for arm C as these theta don t reflect the induced %E2E in A,B"))
-		theta.model.Hx	<- matrix(	c(	1.25, 0.062, 4.4, 0.09,
+		theta.model.Hx	<- matrix(	c(		1.25, 0.062, 4.4, 0.09,
 											1.1, 0.088, 5.8, 0.073,
 											1, 0.1, 7, 0.065,
 											1.8, 0.045, 5.8, 0.069,
@@ -659,10 +658,8 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 		theta.model.Hx	<- as.data.table(theta.model.Hx)
 		theta.model.Hx[,comid_old:=sites[,"comid_old"]]		
 			
-		if(1)
-		{
-			#take matching parameters from 95% cloud around target parameters
-			#	-- TODO needs more simulations, perhaps 2e4 ?
+		if(1)		#take matching parameters from 95% cloud around target parameters
+		{						
 			if(verbose)	cat(paste("\nfind theta corresponding to incidence and %E2E under H0 and H1 "))
 			theta.model.Hx	<- lapply(seq_len(nrow(sites)),function(i)
 							{					
@@ -704,8 +701,8 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 								data.table(comid_old=site,acute.H0=ans[1], base.H0=ans[2], acute.H1=ans[3], base.H1=ans[4])								
 							})
 			theta.model.Hx	<- rbindlist(theta.model.Hx)
-			print(theta.model.Hx)
-			stop()
+			if(verbose)	cat(paste("\nfind theta corresponding to incidence and %E2E under H0 and H1"))
+			print(theta.model.Hx)			
 		}
 		#have data table with model parameters for each site to simulate from
 		#	-- take subset from data table and simulate 50				
@@ -714,7 +711,7 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 					if(verbose)
 						cat(paste("\nprocess ",sites[i,"comid_old"]))
 					tmp	<- subset(theta.model.Hx, comid_old==sites[i,"comid_old"])
-					if(1)
+					if(!standalone)
 					{
 						args		<<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H0], tmp[1,base.H0], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
 						args		<<- unlist(strsplit(args,' '))		#print(args)					
@@ -724,7 +721,8 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 						args		<<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H1], tmp[1,base.H1], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
 						args		<<- unlist(strsplit(args,' '))					
 						tpc			<- prj.simudata()
-						tpc.H1		<- tpc[["tpc.table.sample.median"]]					
+						tpc.H1		<- tpc[["tpc.table.sample.median"]]
+						ans			<- list(H0=tpc.H0, H1=tpc.H1)
 					}
 					else	#precompute low and high acute scenarios
 					{
@@ -744,16 +742,23 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 						outdir		<- paste(CODE.HOME,"misc",sep='/')
 						outfile		<- paste("phd",signat,"qsub",sep='.')
 						prj.hpccaller(outdir, outfile, cmd)
+						ans			<- NULL
 					}	
-					list(H0=tpc.H0, H1=tpc.H1)
+					ans
 				})
-		names(tpc.obs)	<- sites[,"comid_old"]
-		if(verbose)
-			cat(paste("\nwrite tpc.obs to",paste(f.name,".R",sep='')))	
-		save(tpc.obs, theta.model.Hx, sites, file=paste(f.name,".R",sep=''))
+		if(!standalone)
+		{
+			names(tpc.obs)	<- sites[,"comid_old"]		
+			f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
+			if(verbose)	cat(paste("\nwrite tpc.obs to",paste(f.name,".R",sep='')))	
+			save(tpc.obs, theta.model.Hx, sites, file=paste(f.name,".R",sep=''))
+		}
 	}
 	
-	ans<- list(tpc.obs=tpc.obs, theta.model.Hx=theta.model.Hx, sites=sites)
+	if(!standalone)
+		ans	<- list(tpc.obs=tpc.obs, theta.model.Hx=theta.model.Hx, sites=sites)
+	else
+		ans	<- NULL
 	ans
 }	
 ###############################################################################
@@ -2379,7 +2384,11 @@ prj.pipeline<- function()
 				})
 		#cmd			<- paste(cmd,sep='',collapse='')		
 	}
-	if(1)	#start 'prj.simudata.match.theta.to.Inc.E2E'
+	#
+	#	start 'prj.simudata.match.theta.to.Inc.E2E'	
+	#	this simulates tip clusters for prior acute, beta and records INC and %E2E
+	#	
+	if(0)	
 	{
 		sites		<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )
 		nit			<- 25e3
@@ -2398,6 +2407,49 @@ prj.pipeline<- function()
 					outfile		<- paste("phd",signat,"qsub",sep='.')
 					prj.hpccaller(outdir, outfile, cmd)			
 				})		
+	}
+	#
+	#	compute representative theta corresponding to H0 and H1 and simulate tip cluster table for this theta
+	#
+	if(1)	
+	{
+		require(data.table)		
+		dir.name		<- "popartpower_acute"
+		my.mkdir(DATA,dir.name)
+		dir.name		<- paste(DATA,dir.name,sep='/')	
+		resume			<- 1
+		verbose			<- 1
+		plot.increment	<- 0.05
+		
+		m.type			<- "Acute"	
+		cohort.size		<- 2500	
+		cohort.dur		<- 3	
+		theta.EE.H0		<- 0.1
+		theta.EE.H1		<- 0.4
+		theta.UE		<- 0.3
+		theta.TE		<- theta.UE / 5
+		test.alpha		<- 0.05
+		p.nocontam		<- 0.95
+		debug			<- 1
+		
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing
+		p.consent.coh	<- 0.9*0.9			#90% consent to main study and of those 90% consent to phylo study				
+		p.consent.clu	<- 1				#waiver
+		p.vhcc.prev.AB	<- 1				#already in PopART model estimate
+		p.vhcc.inc.AB	<- 1				#already in PopART model estimate
+		p.vhcc.prev.C	<- 1				#already in PopART model estimate
+		p.vhcc.inc.C	<- 1				#already in PopART model estimate
+		#p.contam		<- seq(0.05,0.2,0.025)		
+		if(verbose)
+		{
+			cat(paste("\ncohort.size",cohort.size))
+			cat(paste("\ncohort.dur",cohort.dur))
+			cat(paste("\ntheta.EE.H0",theta.EE.H0))
+			cat(paste("\ntheta.EE.H1",theta.EE.H1))
+			cat(paste("\ntest.alpha",test.alpha))	
+			cat(paste("\np.nocontam",p.nocontam))			
+		}	
+		dummy			<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling, pooled.n, dir.name=dir.name, verbose=verbose, resume=resume, standalone=1)
 	}
 	if(0)	#start 'prj.popart.powercalc.by.acutelklratio' for all locations
 	{		
