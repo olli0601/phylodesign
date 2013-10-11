@@ -762,7 +762,95 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 	ans
 }	
 ###############################################################################
-prj.popart.powercalc.by.acutelklratio.lklH0H1<- function(sites=NULL, tpc.obs=NULL, mlkl.theta.model.H0=NULL, mlkl.theta.model.H1=NULL, mlkl.n= 1e3, cohort.dur=3, f.name=NA, replace=1, resume=1, verbose=1, remote=0, remote.signat=NA)
+#	mlkl.n= 1e3; cohort.dur=3; replace<- 1; remote<- 0;
+prj.popart.powercalc.by.acutelklratio.lkl4Precomputed<- function(sites=NULL, tpc.obs=NULL, cohort.dur=3, f.name=NA, replace=1, resume=1, verbose=1, remote=0, remote.signat=NA)
+{	
+	if(resume)
+	{
+		options(show.error.messages = FALSE)		
+		if(verbose)
+			cat(paste("\nprj.simudata: try to resume file ",paste(f.name,".R",sep='')))
+		readAttempt<-	try(suppressWarnings(load(paste(f.name,".R",sep=''))))
+		options(show.error.messages = TRUE)
+		if(!inherits(readAttempt, "try-error") && verbose)
+			cat(paste("\nprj.simudata: resumed file ",paste(f.name,".R",sep='')))
+	}
+	if(!resume || inherits(readAttempt, "try-error"))
+	{			
+		#
+		#	load precomputed data tables for each site and add 'sample' from prior determined by '%avg' and 'sigma'
+		#
+		tmp			<- seq_len(nrow(sites))[-which(sites$comid_old=="Ikhwezi")]
+		lkl.theta	<- rbindlist( lapply( tmp, function(i)
+						{					
+							site		<- sites[i,"comid_old"]
+							if(verbose)	cat(paste("\nprocess ",site))
+							file		<- paste(DATA,'/',paste("acutesimu_fxs0_onlyu0",sep=''),'/',"match_INC_E2E",'_',m.type,'_',site,'_',cohort.dur,"_acute_0.5_13_base_0.01_0.13.R",sep='')								
+							readAttempt	<-	try(suppressWarnings(load(file)))
+							if(!inherits(readAttempt, "try-error"))	
+							{	
+								if(verbose)	cat(paste("\nloaded precomputed simulations from file",file))
+								setnames(abc.struct, "INC", "Inc")
+								abc.struct[,comid_old:=site]						
+							}
+							else
+							{						
+								stop("could not load file",file,"\nusing inappropriate default parameters")					
+							}
+							abc.struct[,sample:= rnorm(nrow(abc.struct),mean=sites[i,"%avg"], sd=sites[i,"sigma"])]
+							abc.struct								
+						}) )
+		if(remote)
+		{
+			#save job specifics to temporary file		
+			f.name.remote	<- paste(f.name,'_tmp_',remote.signat,sep='')
+			if(verbose)	cat(paste("\nremote job. saving lkl.theta to file", f.name.remote))			
+			save(lkl.theta, sites,  tpc.obs, cohort.dur, file=paste(f.name.remote,".R",sep=''))
+			
+			#call acute.loglkl.batch remotely
+			dummy			<- lapply(seq_len(nrow(sites)),function(i)
+					{		
+						#print( mlkl.theta[[i]] )
+						#H0.H0
+						cmd			<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',sites[i,"comid_old"],"_H0",".R",sep=''),	sites[i,"comid_old"],	"H0")
+						cat(cmd)
+						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
+						prj.hpccaller(paste(CODE.HOME,"misc",sep='/'), paste("phd_l0",paste(strsplit(date(),split=' ')[[1]],collapse='_',sep=''),"qsub",sep='.'), cmd)
+						#H0.H1
+						cmd			<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',sites[i,"comid_old"],"_H1",".R",sep=''),	sites[i,"comid_old"],	"H1")
+						cat(cmd)
+						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
+						prj.hpccaller(paste(CODE.HOME,"misc",sep='/'), paste("phd_l1",paste(strsplit(date(),split=' ')[[1]],collapse='_',sep=''),"qsub",sep='.'), cmd)						
+					})
+		}
+		else
+		{	
+			lkl.theta.comid		<- seq_len(nrow(sites))[-which(sites$comid_old=="Ikhwezi")]			
+			lkl.theta			<- rbindlist( lapply(lkl.theta.comid[1:2],function(i)
+					{		
+						#print( mlkl.theta[[i]] )
+						site		<- sites[i,"comid_old"]
+						tmp			<- subset(lkl.theta, comid_old==site)
+						if(verbose)	cat(paste("\nacute.loglkl.batch, process ",site,"\nnumber lkl evaluations: ",nrow(tmp)))
+						#tmp		<- tmp[1:10,]
+						ans			<- acute.loglkl.batch(site, tpc.obs[[i]][["H0"]], cohort.dur, tmp, clu.closure= 12, verbose=verbose)
+						ans[, h:="H0"]
+						tmp		<- acute.loglkl.batch(site, tpc.obs[[i]][["H1"]], cohort.dur, tmp, clu.closure= 12, verbose=verbose)
+						tmp[, h:="H1"]
+						ans			<- rbind(ans, tmp)
+						#				print(ans); stop()
+						ans
+					}) )
+			if(verbose)
+				cat(paste("\nwrite tpc.lkl to",paste(f.name,".R",sep='')))	
+			save(tpc.obs, sites, lkl.theta, file=paste(f.name,".R",sep=''))				
+		}					
+	}
+	lkl.theta
+}
+###############################################################################
+#	mlkl.n= 1e3; cohort.dur=3; replace<- 1; remote<- 0;
+prj.popart.powercalc.by.acutelklratio.lklH0H1<- function(sites=NULL, tpc.obs=NULL, mlkl.theta.model=NULL, mlkl.n= 1e3, cohort.dur=3, f.name=NA, replace=1, resume=1, verbose=1, remote=0, remote.signat=NA)
 {
 	if(resume && remote && !is.null(sites) )
 	{
@@ -818,13 +906,13 @@ prj.popart.powercalc.by.acutelklratio.lklH0H1<- function(sites=NULL, tpc.obs=NUL
 		#get a table with param combinations for each site to sample from
 		mlkl.theta			<- lapply(seq_len(nrow(sites)),function(i)
 								{									
-									tmp.H0	<- subset( mlkl.theta.model.H0, comid_old==sites[i, "comid_old"] )
+									tmp.H0	<- subset( mlkl.theta.model, comid_old==sites[i, "comid_old"] & h=="H0" )
 									if(all(tmp.H0[,sample.sigma]==0))
 										tmp.H0	<- tmp.H0[ sample.int(nrow(tmp.H0), min(nrow(tmp.H0), mlkl.n), replace=0), ]										 									
 									else
 										tmp.H0	<- tmp.H0[ sample.int(nrow(tmp.H0), mlkl.n, replace=1), ]
 									tmp.H0[,sample:= rnorm( nrow(tmp.H0), tmp.H0[,sample.mu], tmp.H0[,sample.sigma] )]
-									tmp.H1	<- subset( mlkl.theta.model.H1, comid_old==sites[i, "comid_old"] )
+									tmp.H1	<- subset( mlkl.theta.model, comid_old==sites[i, "comid_old"] & h=="H1" )
 									if(all(tmp.H1[,sample.sigma]==0))
 										tmp.H1	<- tmp.H1[ sample.int(nrow(tmp.H1), min(nrow(tmp.H0), mlkl.n), replace=0), ]
 									else
@@ -889,14 +977,13 @@ prj.popart.powercalc.by.acutelklratio.lklH0H1<- function(sites=NULL, tpc.obs=NUL
 	mlkl.theta
 }
 ###############################################################################
-prog.acute.loglkl.batch.cmd<- function(dir.name,infile,outfile,site,tpcHx,lklHx)
+prog.acute.loglkl.batch.cmd<- function(dir.name,infile,outfile,site,tpcHx)
 {
 	cmd<- paste("\n",dir.name,"/misc/phdes.startme.R -exeACUTE.LKL.BATCH ",sep='')
 	cmd<- paste(cmd, " -infile=",infile,sep='')
 	cmd<- paste(cmd, " -outfile=",outfile,sep='')
 	cmd<- paste(cmd, " -site=",site,sep='')
 	cmd<- paste(cmd, " -tpcHx=",tpcHx,sep='')
-	cmd<- paste(cmd, " -lklHx=",lklHx,sep='')
 	cmd
 }
 ###############################################################################
@@ -910,7 +997,7 @@ prog.acute.loglkl.batch<- function()
 	site	<- NA
 	verbose	<- 1
 	tpcHx	<- "H0"
-	lklHx	<- "H0"
+	
 	if(exists("args"))
 	{
 		tmp<- na.omit(sapply(args,function(arg)
@@ -929,10 +1016,6 @@ prog.acute.loglkl.batch<- function()
 						{	switch(substr(arg,2,7),
 									tpcHx= return(substr(arg,9,nchar(arg))),NA)	}))
 		if(length(tmp)>0) tpcHx<- tmp[1]	
-		tmp<- na.omit(sapply(args,function(arg)
-						{	switch(substr(arg,2,7),
-									lklHx= return(substr(arg,9,nchar(arg))),NA)	}))
-		if(length(tmp)>0) lklHx<- tmp[1]	
 	}
 	if(verbose)
 	{
@@ -940,13 +1023,15 @@ prog.acute.loglkl.batch<- function()
 		print(outfile)
 		print(site)
 		print(tpcHx)
-		print(lklHx)
 	}
 	if(verbose)	cat(paste("\nloading file",infile))
 	load(infile)
 	
 	i	<- which( sites[,"comid_old"]==site )
-	ans	<- acute.loglkl.batch(sites[i,"comid_old"], tpc.obs[[i]][[tpcHx]], cohort.dur, mlkl.theta[[i]][[lklHx]], clu.closure= 12, verbose=verbose)
+	tmp	<- subset(lkl.theta, comid_old==site)
+	if(verbose)	cat(paste("\nprocessing"))
+	if(verbose)	print(tmp)
+	ans	<- acute.loglkl.batch(sites[i,"comid_old"], tpc.obs[[i]][[tpcHx]], cohort.dur, tmp, clu.closure= 12, verbose=verbose)
 	if(verbose)	cat(paste("\nsaving output to file",outfile))
 	save(ans, file=outfile)
 	
@@ -1115,7 +1200,7 @@ prj.popart.powercalc.by.acutelklratio	<- function()
 	}
 
 	#simulate high acute and low acute tip clusters for each community
-	tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling, pooled.n, dir.name=dir.name, verbose=1, resume=1)
+	tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling, pooled.n, dir.name=dir.name, verbose=1, resume=1, standalone=0)
 	tpc.obs			<- tmp$tpc.obs
 	theta.model.Hx	<- tmp$theta.model.Hx 
 	sites			<- tmp$sites	
@@ -1159,22 +1244,22 @@ prj.popart.powercalc.by.acutelklratio	<- function()
 	#get likelihood values
 	#	-- use the predicted seq coverage as stored in 'sites' to build a prior on the sampling prob
 	#	-- get likelihood values of the simulated tip cluster for this set of model parameters
-	remote.signat		<- "Wed_Jul_17_13:30:19_2013"
-	mlkl.theta.model.H0	<- do.call("rbind", lapply(seq_len(nrow(sites)),function(i)
+	
+	mlkl.theta.model	<- rbindlist( lapply(seq_len(nrow(sites)),function(i)
 							{
 								tmp	<- subset(theta.model.Hx, comid_old==sites[i,"comid_old"])								
-								data.table( comid_old= sites[i,"comid_old"], acute=tmp[1, acute.H0], base= tmp[1, base.H0], sample.mu=sites[i,"%avg"], sample.sigma=sites[i,"sigma"]  )
+								data.table( comid_old= sites[i,"comid_old"], h="H0", acute=tmp[1, acute.H0], base= tmp[1, base.H0], sample.mu=sites[i,"%avg"], sample.sigma=sites[i,"sigma"]  )
 							}))
-	mlkl.theta.model.H1	<- do.call("rbind", lapply(seq_len(nrow(sites)),function(i)
+	mlkl.theta.model	<- rbind(mlkl.theta.model, rbindlist( lapply(seq_len(nrow(sites)),function(i)
 							{
 								tmp	<- subset(theta.model.Hx, comid_old==sites[i,"comid_old"])
-								data.table( comid_old= sites[i,"comid_old"], acute=tmp[1, acute.H1], base= tmp[1, base.H1], sample.mu=sites[i,"%avg"], sample.sigma=sites[i,"sigma"]  )
-							}))
+								data.table( comid_old= sites[i,"comid_old"], h="H1", acute=tmp[1, acute.H1], base= tmp[1, base.H1], sample.mu=sites[i,"%avg"], sample.sigma=sites[i,"sigma"]  )
+							})))	
+	remote.signat		<- "Fri_Oct_11_10:30:19_2013"
 	#print( mlkl.theta.model.H0 )
-	#stop()
-			
+	#stop()			
 	f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
-	mlkl.theta			<- prj.popart.powercalc.by.acutelklratio.lklH0H1(sites, tpc.obs, mlkl.theta.model.H0, mlkl.theta.model.H1, mlkl.n= 1e3, cohort.dur=3, f.name=f.name, resume=1, verbose=1, remote=0, remote.signat=remote.signat)
+	mlkl.theta			<- prj.popart.powercalc.by.acutelklratio.lklH0H1(sites, tpc.obs, mlkl.theta.model, mlkl.n= 1e3, cohort.dur=cohort.dur, f.name=f.name, resume=1, verbose=1, remote=0, remote.signat=remote.signat)
 
 	if(0)	#coverage required calculations
 	{
@@ -2411,7 +2496,7 @@ prj.pipeline<- function()
 	#
 	#	compute representative theta corresponding to H0 and H1 and simulate tip cluster table for this theta
 	#
-	if(1)	
+	if(0)	
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
@@ -2454,6 +2539,52 @@ prj.pipeline<- function()
 		}	
 		dummy			<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling, pooled.n, dir.name=dir.name, verbose=verbose, resume=resume, standalone=1)
 	}
+	if(1)
+	{
+		require(data.table)		
+		dir.name		<- "popartpower_acute"
+		my.mkdir(DATA,dir.name)
+		dir.name		<- paste(DATA,dir.name,sep='/')	
+		resume			<- 1
+		verbose			<- 1
+		plot.increment	<- 0.05
+		
+		m.type			<- "Acute"	
+		cohort.size		<- 2500	
+		cohort.dur		<- 3	
+		theta.EE.H0		<- 0.1
+		theta.EE.H1		<- 0.4
+		theta.UE		<- 0.3
+		theta.TE		<- theta.UE / 5
+		test.alpha		<- 0.05
+		p.nocontam		<- 0.95
+		debug			<- 1
+		pooled.n		<- 1		
+		opt.sampling	<- "PC12+HCC"		#"PC and HCC"#"only HCC"	#"PC and HCC"	#
+		
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing
+		p.consent.coh	<- 0.9*0.9			#90% consent to main study and of those 90% consent to phylo study				
+		p.consent.clu	<- 1				#waiver
+		p.vhcc.prev.AB	<- 1				#already in PopART model estimate
+		p.vhcc.inc.AB	<- 1				#already in PopART model estimate
+		p.vhcc.prev.C	<- 1				#already in PopART model estimate
+		p.vhcc.inc.C	<- 1				#already in PopART model estimate				
+			
+		#	load high acute and low acute tip clusters for each community
+		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling, pooled.n, dir.name=dir.name, verbose=1, resume=1, standalone=0)
+		tpc.obs			<- tmp$tpc.obs
+		theta.model.Hx	<- tmp$theta.model.Hx 
+		sites			<- tmp$sites
+		#	if not sensitivity analysis, reset 'sigma' to zero
+		if(1)
+			sites$sigma	<- 0	
+		#	get likelihood values for precomputed theta-E2E/Inc values
+		remote.signat		<- "Fri_Oct_11_10:30:19_2013"
+		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
+		dummy				<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=1, verbose=1, remote=1, remote.signat=remote.signat)
+		#	if remote, need to collect results
+		
+	}	
 	if(0)	#start 'prj.popart.powercalc.by.acutelklratio' for all locations
 	{		
 		
