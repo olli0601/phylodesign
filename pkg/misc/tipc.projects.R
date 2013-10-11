@@ -815,12 +815,12 @@ prj.popart.powercalc.by.acutelklratio.lkl4Precomputed<- function(sites=NULL, tpc
 						#H0.H0
 						cmd			<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',sites[i,"comid_old"],"_H0",".R",sep=''),	sites[i,"comid_old"],	"H0")
 						cat(cmd)
-						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
+						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=32, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
 						prj.hpccaller(paste(CODE.HOME,"misc",sep='/'), paste("phd_l0",paste(strsplit(date(),split=' ')[[1]],collapse='_',sep=''),"qsub",sep='.'), cmd)
 						#H0.H1
 						cmd			<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',sites[i,"comid_old"],"_H1",".R",sep=''),	sites[i,"comid_old"],	"H1")
 						cat(cmd)
-						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
+						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=32, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
 						prj.hpccaller(paste(CODE.HOME,"misc",sep='/'), paste("phd_l1",paste(strsplit(date(),split=' ')[[1]],collapse='_',sep=''),"qsub",sep='.'), cmd)						
 					})
 		}
@@ -997,6 +997,7 @@ prog.acute.loglkl.batch<- function()
 	outfile	<- NA
 	site	<- NA
 	verbose	<- 1
+	resumne	<- 1
 	tpcHx	<- "H0"
 	
 	if(exists("args"))
@@ -1025,17 +1026,29 @@ prog.acute.loglkl.batch<- function()
 		print(site)
 		print(tpcHx)
 	}
-	if(verbose)	cat(paste("\nloading file",infile))
-	load(infile)
-	
-	i	<- which( sites[,"comid_old"]==site )
-	tmp	<- subset(lkl.theta, comid_old==site)
-	if(verbose)	cat(paste("\nprocessing"))
-	if(verbose)	print(tmp)
-	ans	<- acute.loglkl.batch(sites[i,"comid_old"], tpc.obs[[i]][[tpcHx]], cohort.dur, tmp, clu.closure= 12, verbose=verbose)
-	if(verbose)	cat(paste("\nsaving output to file",outfile))
-	save(ans, file=outfile)
-	
+	if(resume)
+	{
+		options(show.error.messages = FALSE)		
+		if(verbose)
+			cat(paste("\nprj.simudata: try to resume file ",outfile))
+		readAttempt<-	try(suppressWarnings(load(outfile)))
+		options(show.error.messages = TRUE)
+		if(!inherits(readAttempt, "try-error") && verbose)
+			cat(paste("\nprj.simudata: resumed file ",outfile))
+	}
+	if(!resume || inherits(readAttempt, "try-error"))
+	{
+		if(verbose)	cat(paste("\nloading file",infile))
+		load(infile)
+		
+		i	<- which( sites[,"comid_old"]==site )
+		tmp	<- subset(lkl.theta, comid_old==site)
+		if(verbose)	cat(paste("\nprocessing"))
+		if(verbose)	print(tmp)
+		ans	<- acute.loglkl.batch(sites[i,"comid_old"], tpc.obs[[i]][[tpcHx]], cohort.dur, tmp, clu.closure= 12, verbose=verbose)
+		if(verbose)	cat(paste("\nsaving output to file",outfile))
+		save(ans, file=outfile)
+	}
 }
 ###############################################################################
 prj.popart.powercalc.by.acutelklratio.mlkl.plot<- function(mlkl.criterion, f.name)
