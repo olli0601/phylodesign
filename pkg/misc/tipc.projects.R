@@ -765,6 +765,7 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 #	mlkl.n= 1e3; cohort.dur=3; replace<- 1; remote<- 0;
 prj.popart.powercalc.by.acutelklratio.lkl4Precomputed<- function(sites=NULL, tpc.obs=NULL, cohort.dur=3, f.name=NA, replace=1, resume=1, verbose=1, remote=0, remote.signat=NA)
 {	
+	m.type			<- "Acute"
 	if(resume)
 	{
 		options(show.error.messages = FALSE)		
