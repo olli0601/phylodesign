@@ -997,7 +997,7 @@ prog.acute.loglkl.batch<- function()
 	outfile	<- NA
 	site	<- NA
 	verbose	<- 1
-	resumne	<- 1
+	resume	<- 1
 	tpcHx	<- "H0"
 	
 	if(exists("args"))
