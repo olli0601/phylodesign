@@ -162,5 +162,5 @@ if(length(args))
 ###############################################################################
 if(PHDES.DEBUG)	options(error= my.dumpframes)	
 cat(paste("\nphdes.startme.R: ",ifelse(PHDES.DEBUG,"debug",""),"call",default.fun))
-dummy<- do.call(default.fun,argv) 	
+dummy<- do.call(default.fun,list()) 	
 cat("\ntipc: ",ifelse(PHDES.DEBUG,"debug","")," end\n")
