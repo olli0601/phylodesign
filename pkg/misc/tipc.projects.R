@@ -713,13 +713,13 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 					tmp	<- subset(theta.model.Hx, comid_old==sites[i,"comid_old"])
 					if(!standalone)
 					{
-						args		<<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H0], tmp[1,base.H0], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
-						args		<<- unlist(strsplit(args,' '))		#print(args)					
+						argv		<<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H0], tmp[1,base.H0], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
+						argv		<<- unlist(strsplit(argv,' '))		#print(argv)					
 						tpc			<- prj.simudata()					#print(tpc[["sum.attack"]]["Median"]); print(tpc[["sum.E2E"]]["Median"])										
 						tpc.H0		<- tpc[["tpc.table.sample.median"]]
 						
-						args		<<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H1], tmp[1,base.H1], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
-						args		<<- unlist(strsplit(args,' '))					
+						argv		<<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H1], tmp[1,base.H1], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
+						argv		<<- unlist(strsplit(argv,' '))					
 						tpc			<- prj.simudata()
 						tpc.H1		<- tpc[["tpc.table.sample.median"]]
 						ans			<- list(H0=tpc.H0, H1=tpc.H1)
@@ -775,7 +775,7 @@ prj.popart.powercalc.by.acutelklratio.lkl4Precomputed<- function(sites=NULL, tpc
 		options(show.error.messages = TRUE)
 		if(!inherits(readAttempt, "try-error") && verbose)
 			cat(paste("\nprj.simudata: resumed file ",paste(f.name,".R",sep='')))
-	}
+	}	
 	if(!resume || inherits(readAttempt, "try-error"))
 	{			
 		#
@@ -810,7 +810,7 @@ prj.popart.powercalc.by.acutelklratio.lkl4Precomputed<- function(sites=NULL, tpc
 			
 			#call acute.loglkl.batch remotely
 			dummy			<- lapply(seq_len(nrow(sites)),function(i)
-					{		
+					{														
 						#print( mlkl.theta[[i]] )
 						#H0.H0
 						cmd			<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',sites[i,"comid_old"],"_H0",".R",sep=''),	sites[i,"comid_old"],	"H0")
@@ -827,16 +827,18 @@ prj.popart.powercalc.by.acutelklratio.lkl4Precomputed<- function(sites=NULL, tpc
 		else
 		{	
 			lkl.theta.comid		<- seq_len(nrow(sites))[-which(sites$comid_old=="Ikhwezi")]			
-			lkl.theta			<- rbindlist( lapply(lkl.theta.comid[1:2],function(i)
-					{		
-						#print( mlkl.theta[[i]] )
+			lkl.theta			<- rbindlist( lapply(lkl.theta.comid,function(i)
+					{	
 						site		<- sites[i,"comid_old"]
 						tmp			<- subset(lkl.theta, comid_old==site)
-						if(verbose)	cat(paste("\nacute.loglkl.batch, process ",site,"\nnumber lkl evaluations: ",nrow(tmp)))
-						#tmp		<- tmp[1:10,]
-						ans			<- acute.loglkl.batch(site, tpc.obs[[i]][["H0"]], cohort.dur, tmp, clu.closure= 12, verbose=verbose)
+						if(verbose)	cat(paste("\nacute.loglkl.batch, process ",site,"\nnumber lkl evaluations: ",nrow(tmp)))						
+						argv		<<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',sites[i,"comid_old"],"_H0",".R",sep=''),	sites[i,"comid_old"],	"H0")
+						argv		<<- unlist(strsplit(argv,' '))						
+						ans			<- prog.acute.loglkl.batch()
 						ans[, h:="H0"]
-						tmp		<- acute.loglkl.batch(site, tpc.obs[[i]][["H1"]], cohort.dur, tmp, clu.closure= 12, verbose=verbose)
+						argv		<<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',sites[i,"comid_old"],"_H1",".R",sep=''),	sites[i,"comid_old"],	"H1")
+						argv		<<- unlist(strsplit(argv,' '))						
+						tmp			<- prog.acute.loglkl.batch()
 						tmp[, h:="H1"]
 						ans			<- rbind(ans, tmp)
 						#				print(ans); stop()
@@ -978,13 +980,14 @@ prj.popart.powercalc.by.acutelklratio.lklH0H1<- function(sites=NULL, tpc.obs=NUL
 	mlkl.theta
 }
 ###############################################################################
-prog.acute.loglkl.batch.cmd<- function(dir.name,infile,outfile,site,tpcHx)
+prog.acute.loglkl.batch.cmd<- function(dir.name, infile, outfile, site, tpcHx, verbose=1)
 {
 	cmd<- paste("\n",dir.name,"/misc/phdes.startme.R -exeACUTE.LKL.BATCH ",sep='')
 	cmd<- paste(cmd, " -infile=",infile,sep='')
 	cmd<- paste(cmd, " -outfile=",outfile,sep='')
 	cmd<- paste(cmd, " -site=",site,sep='')
 	cmd<- paste(cmd, " -tpcHx=",tpcHx,sep='')
+	cmd<- paste(cmd, " -v=",verbose,sep='')
 	cmd
 }
 ###############################################################################
@@ -1000,24 +1003,28 @@ prog.acute.loglkl.batch<- function()
 	resume	<- 1
 	tpcHx	<- "H0"
 	
-	if(exists("args"))
+	if(exists("argv"))
 	{
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,7),
 									infile= return(substr(arg,9,nchar(arg))),NA)	}))
 		if(length(tmp)>0) infile<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,8),
 									outfile= return(substr(arg,10,nchar(arg))),NA)	}))
 		if(length(tmp)>0) outfile<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,5),
 									site= return(substr(arg,7,nchar(arg))),NA)	}))
 		if(length(tmp)>0) site<- tmp[1]			
-		tmp<- na.omit(sapply(args,function(arg)
-						{	switch(substr(arg,2,7),
-									tpcHx= return(substr(arg,9,nchar(arg))),NA)	}))
-		if(length(tmp)>0) tpcHx<- tmp[1]	
+		tmp<- na.omit(sapply(argv,function(arg)
+						{	switch(substr(arg,2,6),
+									tpcHx= return(substr(arg,8,nchar(arg))),NA)	}))
+		if(length(tmp)>0) tpcHx<- tmp[1]			
+		tmp<- na.omit(sapply(argv,function(arg)
+						{	switch(substr(arg,2,2),
+									v= return(as.numeric(substr(arg,4,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) verbose<- tmp[1]
 	}
 	if(verbose)
 	{
@@ -1049,6 +1056,7 @@ prog.acute.loglkl.batch<- function()
 		if(verbose)	cat(paste("\nsaving output to file",outfile))
 		save(ans, file=outfile)
 	}
+	ans
 }
 ###############################################################################
 prj.popart.powercalc.by.acutelklratio.mlkl.plot<- function(mlkl.criterion, f.name)
@@ -1302,16 +1310,16 @@ prj.popart.powercalc.by.acutelklratio	<- function()
 		#compute marginal likelihood values on grid and select best 10% as those corresponding to H0 and H1.
 		mlkl.criterion	<- sapply(seq_len(nrow(sites)),function(i)
 				{
-					args			<<- prj.acute.test.lkl.wsampling.bothUandT.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.Hx[i,acute.H0], theta.model.Hx[i,base.H0], round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, by.sample=2, save=1, resume=1, verbose=0, debug.susc.const=0, debug.only.u=0)		 
-					args			<<- unlist(strsplit(args,' '))							
+					argv			<<- prj.acute.test.lkl.wsampling.bothUandT.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.Hx[i,acute.H0], theta.model.Hx[i,base.H0], round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, by.sample=2, save=1, resume=1, verbose=0, debug.susc.const=0, debug.only.u=0)		 
+					argv			<<- unlist(strsplit(argv,' '))							
 					tipc.lkl		<- prj.acute.test.lkl.wsampling.bothUandT()				
 					ans				<- t( sapply( strsplit(names(tipc.lkl),'_',fixed=1), as.numeric ) )
 					colnames(ans)	<- c("acute","base","sample")
 					ans				<- as.data.table(ans)
 					ans[,comid_old:= sites[i,"comid_old"]]
 					ans[,lkl.H0:=tipc.lkl]								
-					args			<<- prj.acute.test.lkl.wsampling.bothUandT.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.Hx[i,acute.H1], theta.model.Hx[i,base.H1], round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, by.sample=2, save=1, resume=1, verbose=0, debug.susc.const=0, debug.only.u=0)		 
-					args			<<- unlist(strsplit(args,' '))							
+					argv			<<- prj.acute.test.lkl.wsampling.bothUandT.cmd(CODE.HOME, sites[i,"comid_old"], theta.model.Hx[i,acute.H1], theta.model.Hx[i,base.H1], round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, by.sample=2, save=1, resume=1, verbose=0, debug.susc.const=0, debug.only.u=0)		 
+					argv			<<- unlist(strsplit(argv,' '))							
 					tipc.lkl		<- prj.acute.test.lkl.wsampling.bothUandT()				
 					ans[,lkl.H1:=tipc.lkl]
 					
@@ -1441,53 +1449,53 @@ prj.acute.test.lkl.wsampling.bothUandT	<- function()
 	debug.suscconst		<- 0
 	by.sample			<- 1
 	plot.2D				<- 1
-	if(exists("args"))
+	if(exists("argv"))
 	{
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,4),
 									loc= return(substr(arg,6,nchar(arg))),NA)	}))
 		if(length(tmp)>0) loc.type<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,11),
 									cluster.tw= return(as.numeric(substr(arg,13,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) cluster.tw<- tmp[1]				
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,6),
 									acute= return(as.numeric(substr(arg,8,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) theta0[1]<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,9),
 									baseline= return(as.numeric(substr(arg,11,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) theta0[2]<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,5),
 									sIdx= return(as.numeric(substr(arg,7,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) sample.prob[1]<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,3),
 									sE= return(as.numeric(substr(arg,5,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) sample.prob[2]<- tmp[1]	
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,10),
 									by.sample= return(as.numeric(substr(arg,12,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) by.sample<- tmp[1]							
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,2),
 									v= return(as.numeric(substr(arg,4,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) verbose<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,7),
 									resume= return(as.numeric(substr(arg,9,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) resume<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,5),
 									plot= return(as.numeric(substr(arg,7,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) plot.2D<- tmp[1]		
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,17),
 									debug.susc.const= return(as.numeric(substr(arg,19,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) debug.susc.const<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,13),
 									debug.only.u= return(as.numeric(substr(arg,15,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) debug.only.u<- tmp[1]				
@@ -1904,29 +1912,29 @@ prj.acutesampling.rejabc<- function()
 	names(theta0)<- c("acute","base","m.st1","m.st2")
 	my.mkdir(DATA,"acutesamplingabc")
 	
-	if(exists("args"))
+	if(exists("argv"))
 	{		
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,2),
 									n= return(as.numeric(substr(arg,3,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) m.popsize<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,2),
 									l= return(substr(arg,3,nchar(arg))),NA)	}))
 		if(length(tmp)>0) loc.type<- tmp[1]	
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,2),
 									a= return(as.numeric(substr(arg,3,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) theta0[1]<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,2),
 									b= return(as.numeric(substr(arg,3,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) theta0[2]<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,2),
 									c= return(as.numeric(substr(arg,3,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) theta0[3]<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,2),
 									s= return(as.numeric(substr(arg,3,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) abc.sit<- tmp[1]
@@ -2275,45 +2283,45 @@ prj.acute.loglklsurface<- function()
 	m.repeat			<- 1
 	resume				<- 1
 	verbose				<- 0	
-	if(exists("args"))
+	if(exists("argv"))
 	{		
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,2),
 									r= return(as.numeric(substr(arg,4,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) m.repeat<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,2),
 									l= return(substr(arg,4,nchar(arg))),NA)	}))
 		if(length(tmp)>0) loc.type<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,2),
 									n= return(as.numeric(substr(arg,4,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) m.popsize<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,11),
 									cluster.tw= return(as.numeric(substr(arg,13,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) cluster.tw<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,6),
 									acute= return(as.numeric(substr(arg,8,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) theta0[1]<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,9),
 									baseline= return(as.numeric(substr(arg,11,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) theta0[2]<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,5),
 									sIdx= return(as.numeric(substr(arg,7,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) sample.prob[1]<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,3),
 									sE= return(as.numeric(substr(arg,5,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) sample.prob[2]<- tmp[1]				
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,2),
 									v= return(as.numeric(substr(arg,4,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) verbose<- tmp[1]								
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,12),
 									knownstates= return(as.numeric(substr(arg,14,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) m.known.states<- tmp[1]
@@ -2553,6 +2561,9 @@ prj.pipeline<- function()
 		}	
 		dummy			<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling, pooled.n, dir.name=dir.name, verbose=verbose, resume=resume, standalone=1)
 	}
+	#
+	#	compute likelihood of representative theta matching H0 and H1 for all precomputed tip clusters
+	#	
 	if(1)
 	{
 		require(data.table)		
@@ -2596,9 +2607,56 @@ prj.pipeline<- function()
 		remote.signat		<- "Fri_Oct_11_10:30:19_2013"
 		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
 		dummy				<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=1, verbose=1, remote=1, remote.signat=remote.signat)
-		#	if remote, need to collect results
-		
+		#	remote, need to collect results in next step		
 	}	
+	#
+	#	
+	#	
+	if(1)
+	{
+		require(data.table)		
+		dir.name		<- "popartpower_acute"
+		my.mkdir(DATA,dir.name)
+		dir.name		<- paste(DATA,dir.name,sep='/')	
+		resume			<- 1
+		verbose			<- 1
+		plot.increment	<- 0.05
+		
+		m.type			<- "Acute"	
+		cohort.size		<- 2500	
+		cohort.dur		<- 3	
+		theta.EE.H0		<- 0.1
+		theta.EE.H1		<- 0.4
+		theta.UE		<- 0.3
+		theta.TE		<- theta.UE / 5
+		test.alpha		<- 0.05
+		p.nocontam		<- 0.95
+		debug			<- 1
+		pooled.n		<- 1		
+		opt.sampling	<- "PC12+HCC"		#"PC and HCC"#"only HCC"	#"PC and HCC"	#
+		
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing
+		p.consent.coh	<- 0.9*0.9			#90% consent to main study and of those 90% consent to phylo study				
+		p.consent.clu	<- 1				#waiver
+		p.vhcc.prev.AB	<- 1				#already in PopART model estimate
+		p.vhcc.inc.AB	<- 1				#already in PopART model estimate
+		p.vhcc.prev.C	<- 1				#already in PopART model estimate
+		p.vhcc.inc.C	<- 1				#already in PopART model estimate				
+		
+		#	load high acute and low acute tip clusters for each community
+		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling, pooled.n, dir.name=dir.name, verbose=1, resume=1, standalone=0)
+		tpc.obs			<- tmp$tpc.obs
+		theta.model.Hx	<- tmp$theta.model.Hx 
+		sites			<- tmp$sites
+		#	if not sensitivity analysis, reset 'sigma' to zero
+		if(1)
+			sites$sigma	<- 0	
+		#	get likelihood values for precomputed theta-E2E/Inc values
+		remote.signat		<- "Fri_Oct_11_10:30:19_2013"
+		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
+		dummy				<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=1, verbose=1, remote=0, remote.signat=remote.signat)
+		#	remote, need to collect results in next step		
+	}
 	if(0)	#start 'prj.popart.powercalc.by.acutelklratio' for all locations
 	{		
 		
@@ -2713,57 +2771,57 @@ prj.simudata<- function()
 	debug.only.u		<- 1
 	dir.name			<- paste("acutesimu_fxs",debug.susc.const,"_onlyu",debug.only.u,sep='')
 
-	if(exists("args"))
+	if(exists("argv"))
 	{
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,4),
 									rep= return(as.numeric(substr(arg,6,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) tpc.repeat<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,4),
 									loc= return(substr(arg,6,nchar(arg))),NA)	}))
 		if(length(tmp)>0) loc.type<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,2),
 									n= return(as.numeric(substr(arg,4,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) m.popsize<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,11),
 									cluster.tw= return(as.numeric(substr(arg,13,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) cluster.tw<- tmp[1]				
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,6),
 									acute= return(as.numeric(substr(arg,8,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) theta[1]<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,9),
 									baseline= return(as.numeric(substr(arg,11,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) theta[2]<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,5),
 									sIdx= return(as.numeric(substr(arg,7,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) sample.prob[1]<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,3),
 									sE= return(as.numeric(substr(arg,5,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) sample.prob[2]<- tmp[1]				
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,2),
 									v= return(as.numeric(substr(arg,4,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) verbose<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,5),
 									save= return(as.numeric(substr(arg,7,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) save<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,7),
 									resume= return(as.numeric(substr(arg,9,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) resume<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,17),
 									debug.susc.const= return(as.numeric(substr(arg,19,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) debug.susc.const<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,13),
 									debug.only.u= return(as.numeric(substr(arg,15,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) debug.only.u<- tmp[1]
@@ -2905,13 +2963,13 @@ prj.simudata.match.theta.to.Inc.E2E<- function()
 	abc.cores			<- 8
 	dir.name			<- paste("acutesimu_fxs",debug.susc.const,"_onlyu",debug.only.u,sep='')
 	
-	if(exists("args"))
+	if(exists("argv"))
 	{
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,4),
 									loc= return(substr(arg,6,nchar(arg))),NA)	}))
 		if(length(tmp)>0) loc.type<- tmp[1]
-		tmp<- na.omit(sapply(args,function(arg)
+		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,4),
 									nit= return(as.numeric(substr(arg,6,nchar(arg)))),NA)	}))
 		if(length(tmp)>0) abc.nit<- tmp[1]
@@ -2941,8 +2999,8 @@ prj.simudata.match.theta.to.Inc.E2E<- function()
 		abc.struct	<- lapply(seq_len(nrow(abc.struct)),function(i)
 				{		
 					print(unlist(c(i,abc.struct[i,])))
-					args<<- prj.simudata.cmd(CODE.HOME, loc.type, abc.struct[i,acute], abc.struct[i,base], 1, sample.prob, sample.prob, cluster.tw, save=0, resume=0, verbose=0, debug.susc.const=debug.susc.const, debug.only.u=debug.only.u)
-					args<<- unlist(strsplit(args,' '))
+					argv<<- prj.simudata.cmd(CODE.HOME, loc.type, abc.struct[i,acute], abc.struct[i,base], 1, sample.prob, sample.prob, cluster.tw, save=0, resume=0, verbose=0, debug.susc.const=debug.susc.const, debug.only.u=debug.only.u)
+					argv<<- unlist(strsplit(argv,' '))
 					tpc	<- prj.simudata()[["tpc"]]
 					sum.attack	<- median( sapply(seq_along(tpc), function(i) tpc[[i]][["tpc.internal"]][["attack.rate"]]) )					
 					sum.E2E		<- median( sapply(seq_along(tpc), function(i)

@@ -156,7 +156,8 @@ if(length(args))
 												-opt.pooled\tset pooling option. defaults to None\n\n
 												Example: ./tipc.startme.R -pPOPART.POWER.LINK.CONSENT -nocontam0.55 -instudy.clu.armC0.2 -opt.pooledSA2\n\n"))
 										q()
-									})}))							
+									})}))	
+	argv<<- args	
 }
 ###############################################################################
 if(PHDES.DEBUG)	options(error= my.dumpframes)	
