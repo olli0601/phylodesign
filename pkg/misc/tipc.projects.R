@@ -2607,12 +2607,13 @@ prj.pipeline<- function()
 		remote.signat		<- "Fri_Oct_11_10:30:19_2013"
 		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
 		dummy				<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=1, verbose=1, remote=1, remote.signat=remote.signat)
-		#	remote, need to collect results in next step		
+		#	remote, need to collect results in next step
+		stop()
 	}	
 	#
 	#	
 	#	
-	if(1)
+	if(0)
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
