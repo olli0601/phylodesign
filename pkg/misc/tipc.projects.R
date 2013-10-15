@@ -649,7 +649,7 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 			tmp			<- subset(df.hyp,target==opt.analysis & h=="H1", c(country, arm, Inc, E2E))	
 			setnames(tmp,	c("Inc","E2E"),	c("mu.inc.rate.H1","mu.pE2E.H1"))
 			sites		<- merge(sites, tmp, by=c("country","arm"))
-			sites		<- sites[order(df[,triplet.id],df[,arm]),]
+			sites		<- sites[order(sites[,triplet.id],sites[,arm]),]
 		}		
 		#print(sites)
 		samples.CD4					<- popart.predicted.firstCD4()
