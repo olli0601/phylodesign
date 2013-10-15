@@ -608,11 +608,12 @@ prj.acute.test.lkl.wsampling.onlyU<- function()
 }
 ###############################################################################
 #simulate high acute and low acute tip clusters for each community	
-prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling, pooled.n, dir.name=DATA, verbose=1, resume=1, standalone=0)
-{
+prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling="PC12+HCC", opt.analysis=paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep=''), pooled.n=1, df.hyp=NULL, dir.name=DATA, verbose=1, resume=1, standalone=0)
+{	
+	if(verbose)	cat(paste("\nopt.analysis set to",opt.analysis))
 	m.type			<- "Acute"	
 	theta.model.Hx	<- NULL
-	f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')	
+	f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.sampling,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')	
 	if(resume)
 	{
 		options(show.error.messages = FALSE)		
@@ -626,12 +627,30 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 	if(!resume || inherits(readAttempt, "try-error"))
 	{	
 		#get sites and add target effects to 'sites'
-		sites						<- popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug, rtn.phylostudy=1 )
-		#TODO this would change for each arm and depending on pess, central and opt target
-		sites[,"mu.inc.rate.H0"]	<- sites[,"inc.rate"]
-		sites[,"mu.inc.rate.H1"]	<- 0.013
-		sites[,"mu.pE2E.H0"]		<- theta.EE.H0
-		sites[,"mu.pE2E.H1"]		<- theta.EE.H1
+		sites	<- popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug, rtn.phylostudy=1 )
+		sites[which(sites[,"country"]==1),"country"]	<- "ZA"
+		sites[which(sites[,"country"]==2),"country"]	<- "SA"
+		sites	<- data.table(sites)
+		
+		if(opt.analysis=="1040")
+		{
+			sites[,"mu.inc.rate.H0"]	<- sites[,inc.rate]
+			sites[,"mu.inc.rate.H1"]	<- 0.013
+			sites[,"mu.pE2E.H0"]		<- theta.EE.H0
+			sites[,"mu.pE2E.H1"]		<- theta.EE.H1
+		}
+		else
+		{
+			if(is.null(df.hyp))								stop("df.hyp is NULL")
+			if(!opt.analysis%in%unique(df.hyp[,target]))	stop("Unknown target in df.hyp")
+			tmp			<- subset(df.hyp,target==opt.analysis & h=="H0", c(country, arm, Inc, E2E))	
+			setnames(tmp,	c("Inc","E2E"),	c("mu.inc.rate.H0","mu.pE2E.H0"))
+			sites		<- merge(sites, tmp, by=c("country","arm"))
+			tmp			<- subset(df.hyp,target==opt.analysis & h=="H1", c(country, arm, Inc, E2E))	
+			setnames(tmp,	c("Inc","E2E"),	c("mu.inc.rate.H1","mu.pE2E.H1"))
+			sites		<- merge(sites, tmp, by=c("country","arm"))
+			sites		<- sites[order(df[,triplet.id],df[,arm]),]
+		}		
 		#print(sites)
 		samples.CD4					<- popart.predicted.firstCD4()
 		samples.seq					<- popart.predicted.sequences(sites,  samples.CD4, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)
@@ -656,14 +675,14 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 											0.7, 0.125, 3.8, 0.099,
 											1, 0.09, 7.4, 0.059		),byrow=T, ncol=4,nrow=nrow(sites), dimnames=list(c(),c("acute.H0","base.H0","acute.H1","base.H1")))
 		theta.model.Hx	<- as.data.table(theta.model.Hx)
-		theta.model.Hx[,comid_old:=sites[,"comid_old"]]		
+		theta.model.Hx[,comid_old:=sites[,comid_old]]		
 			
 		if(1)		#take matching parameters from 95% cloud around target parameters
 		{						
 			if(verbose)	cat(paste("\nfind theta corresponding to incidence and %E2E under H0 and H1 "))
 			theta.model.Hx	<- lapply(seq_len(nrow(sites)),function(i)
 							{					
-								site		<- sites[i,"comid_old"]
+								site		<- sites[i,comid_old]
 								if(verbose)	cat(paste("\nprocess ",site))
 								f.name		<- paste(DATA,'/',paste("acutesimu_fxs0_onlyu0",sep=''),'/',"match_INC_E2E",'_',m.type,'_',site,'_',cohort.dur,"_acute_0.5_13_base_0.01_0.13.R",sep='')								
 								readAttempt	<-	try(suppressWarnings(load(f.name)))
@@ -672,8 +691,8 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 									if(verbose)	cat(paste("\nloaded precomputed simulations from file",f.name))
 									setnames(abc.struct, "INC", "Inc")
 									abc.struct[,comid_old:=site]
-									tmp			<- prj.popart.powercalc.by.acutelklratio.matchpa( abc.struct, sites[,c("comid_old","mu.inc.rate.H0","mu.inc.rate.H1","mu.pE2E.H0","mu.pE2E.H1")], hetclu.scale=1, return.top=25 )						
-#									print(tmp)
+									tmp			<- sites[,c("comid_old","mu.inc.rate.H0","mu.inc.rate.H1","mu.pE2E.H0","mu.pE2E.H1"), with=F]
+									tmp			<- prj.popart.powercalc.by.acutelklratio.matchpa( abc.struct, tmp, hetclu.scale=1, return.top=25 )						
 									if(verbose)	cat(paste("\nfound params matching H0, n with nonzero weights=",nrow(subset(tmp[["H0"]],weight>0))))
 									if(verbose)	cat(paste("\nfound params matching H1, n with nonzero weights=",nrow(subset(tmp[["H1"]],weight>0))))
 									#take weighted mean of matching params					
@@ -709,16 +728,16 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 		tpc.obs			<- lapply(seq_len(nrow(sites)),function(i)
 				{					
 					if(verbose)
-						cat(paste("\nprocess ",sites[i,"comid_old"]))
-					tmp	<- subset(theta.model.Hx, comid_old==sites[i,"comid_old"])
+						cat(paste("\nprocess ",sites[i,comid_old]))
+					tmp	<- subset(theta.model.Hx, comid_old==sites[i,comid_old])
 					if(!standalone)
 					{
-						argv		<<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H0], tmp[1,base.H0], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
+						argv		<<- prj.simudata.cmd(CODE.HOME, sites[i,comid_old], tmp[1,acute.H0], tmp[1,base.H0], 50, round(sites[i,"%avg", with=F],d=2), round(sites[i,"%avg", with=F],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
 						argv		<<- unlist(strsplit(argv,' '))		#print(argv)					
 						tpc			<- prj.simudata()					#print(tpc[["sum.attack"]]["Median"]); print(tpc[["sum.E2E"]]["Median"])										
 						tpc.H0		<- tpc[["tpc.table.sample.median"]]
 						
-						argv		<<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H1], tmp[1,base.H1], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
+						argv		<<- prj.simudata.cmd(CODE.HOME, sites[i,comid_old], tmp[1,acute.H1], tmp[1,base.H1], 50, round(sites[i,"%avg", with=F],d=2), round(sites[i,"%avg", with=F],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
 						argv		<<- unlist(strsplit(argv,' '))					
 						tpc			<- prj.simudata()
 						tpc.H1		<- tpc[["tpc.table.sample.median"]]
@@ -727,7 +746,7 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 					else	#precompute low and high acute scenarios
 					{
 						#low acute
-						cmd			<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H0], tmp[1,base.H0], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
+						cmd			<- prj.simudata.cmd(CODE.HOME, sites[i,comid_old], tmp[1,acute.H0], tmp[1,base.H0], 50, round(sites[i,"%avg", with=F],d=2), round(sites[i,"%avg", with=F],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
 						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
 						cat(cmd)								
 						signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
@@ -735,7 +754,7 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 						outfile		<- paste("phd_ct0",signat,"qsub",sep='.')
 						prj.hpccaller(outdir, outfile, cmd)
 						#high acute
-						cmd			<- prj.simudata.cmd(CODE.HOME, sites[i,"comid_old"], tmp[1,acute.H1], tmp[1,base.H1], 50, round(sites[i,"%avg"],d=2), round(sites[i,"%avg"],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
+						cmd			<- prj.simudata.cmd(CODE.HOME, sites[i,comid_old], tmp[1,acute.H1], tmp[1,base.H1], 50, round(sites[i,"%avg", with=F],d=2), round(sites[i,"%avg", with=F],d=2), cohort.dur, save=1, resume=1, verbose=1, debug.susc.const=0, debug.only.u=0)
 						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=8, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
 						cat(cmd)								
 						signat		<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
@@ -748,8 +767,8 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 				})
 		if(!standalone)
 		{
-			names(tpc.obs)	<- sites[,"comid_old"]		
-			f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
+			names(tpc.obs)	<- sites[,comid_old]					
+			f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.sampling,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')
 			if(verbose)	cat(paste("\nwrite tpc.obs to",paste(f.name,".R",sep='')))	
 			save(tpc.obs, theta.model.Hx, sites, file=paste(f.name,".R",sep=''))
 		}
@@ -844,8 +863,7 @@ prj.popart.powercalc.by.acutelklratio.lkl4Precomputed<- function(sites=NULL, tpc
 						#				print(ans); stop()
 						ans
 					}) )
-			if(verbose)
-				cat(paste("\nwrite tpc.lkl to",paste(f.name,".R",sep='')))	
+			if(verbose)	cat(paste("\nwrite tpc.lkl to",paste(f.name,".R",sep='')))	
 			save(tpc.obs, sites, lkl.theta, file=paste(f.name,".R",sep=''))				
 		}					
 	}
@@ -2515,10 +2533,40 @@ prj.pipeline<- function()
 					prj.hpccaller(outdir, outfile, cmd)			
 				})		
 	}
+	#convert Anne s propacute into a data.table
+	if(0)
+	{
+		verbose	<- 1
+		file	<- paste(CODE.HOME,"data","popart.propacute.131015.RData",sep='/')
+		tmp		<- load(file)
+		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))
+		colnames(averageInc.SA)[2]	<- "AOptimistic" 
+		colnames(averageInc.Za)[2]	<- "AOptimistic"
+		colnames(propAcute.SA)[2]	<- "AOptimistic"
+		colnames(propAcute.Za)[2]	<- "AOptimistic"
+		
+		tmp		<- list(	data.table(country="ZA", arm='A', target="central", Inc=averageInc.Za[,"ACentral"], E2E=propAcute.Za[,"ACentral"]),
+							data.table(country="ZA", arm='A', target="optimistic", Inc=averageInc.Za[,"AOptimistic"], E2E=propAcute.Za[,"AOptimistic"]),
+							data.table(country="ZA", arm='B', target="central", Inc=averageInc.Za[,"BCentral"], E2E=propAcute.Za[,"BCentral"]),
+							data.table(country="ZA", arm='B', target="optimistic", Inc=averageInc.Za[,"BOptimistic"], E2E=propAcute.Za[,"BOptimistic"]),
+							data.table(country="ZA", arm='C', target="central", Inc=averageInc.Za[,"C"], E2E=propAcute.Za[,"C"]),
+							data.table(country="ZA", arm='C', target="optimistic", Inc=averageInc.Za[,"C"], E2E=propAcute.Za[,"C"]),		
+							data.table(country="SA", arm='A', target="central", Inc=averageInc.SA[,"ACentral"], E2E=propAcute.SA[,"ACentral"]),
+							data.table(country="SA", arm='A', target="optimistic", Inc=averageInc.SA[,"AOptimistic"], E2E=propAcute.SA[,"AOptimistic"]),
+							data.table(country="SA", arm='B', target="central", Inc=averageInc.SA[,"BCentral"], E2E=propAcute.SA[,"BCentral"]),
+							data.table(country="SA", arm='B', target="optimistic", Inc=averageInc.SA[,"BOptimistic"], E2E=propAcute.SA[,"BOptimistic"]),
+							data.table(country="SA", arm='C', target="central", Inc=averageInc.SA[,"C"], E2E=propAcute.SA[,"C"]),
+							data.table(country="SA", arm='C', target="optimistic", Inc=averageInc.SA[,"C"], E2E=propAcute.SA[,"C"])		)
+		df.prop.early	<- rbindlist(tmp)
+		
+		file	<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
+		if(verbose) cat(paste("save to file",file))
+		save(df.prop.early, file=file)		
+	}
 	#
 	#	compute representative theta corresponding to H0 and H1 and simulate tip cluster table for this theta
 	#
-	if(0)	
+	if(1)	
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
@@ -2548,6 +2596,8 @@ prj.pipeline<- function()
 		p.vhcc.inc.C	<- 1				#already in PopART model estimate
 		
 		opt.sampling	<- "PC12+HCC"
+		opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')
+		opt.analysis	<- "central-1016"
 		pooled.n		<- 1
 		
 		if(verbose)
@@ -2559,12 +2609,23 @@ prj.pipeline<- function()
 			cat(paste("\ntest.alpha",test.alpha))	
 			cat(paste("\np.nocontam",p.nocontam))			
 		}	
-		dummy			<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling, pooled.n, dir.name=dir.name, verbose=verbose, resume=resume, standalone=1)
+		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
+		tmp				<- load(file)
+		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		
+		set(df.prop.early, which(df.prop.early[,target=="central"]), "target", "central-1016")
+		set(df.prop.early, which(df.prop.early[,target=="optimistic"]), "target", "optimistic-1016")
+		
+		df.hyp			<- df.prop.early[, {
+												tmp<- c(which.min(E2E), which.max(E2E))
+												list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp])
+											}, by=c("country", "arm","target")]
+		dummy			<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling=opt.sampling, opt.analysis=opt.analysis, pooled.n=pool.n, df.hyp=df.hyp, dir.name=dir.name, verbose=verbose, resume=resume, standalone=1)
+		stop()
 	}
 	#
 	#	compute likelihood of representative theta matching H0 and H1 for all precomputed tip clusters
 	#	
-	if(1)
+	if(0)
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
@@ -2652,11 +2713,100 @@ prj.pipeline<- function()
 		#	if not sensitivity analysis, reset 'sigma' to zero
 		if(1)
 			sites$sigma	<- 0	
-		#	get likelihood values for precomputed theta-E2E/Inc values
+		#	get likelihood values for precomputed theta-E2E/Inc values for both H0 and H1
 		remote.signat		<- "Fri_Oct_11_10:30:19_2013"
 		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',theta.EE.H0,'_',theta.EE.H1,'_',opt.sampling,'_',"central",'_',p.lab,'_',p.consent.coh,sep='')
-		dummy				<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=1, verbose=1, remote=0, remote.signat=remote.signat)
-		#	remote, need to collect results in next step		
+		lkl.theta			<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=1, verbose=1, remote=0, remote.signat=remote.signat)
+		#	plot lkl surface and take 95% CI subset
+		#
+		#	TODO before we turn this into a function, get H1 and compute power
+		#
+		xlab.theta="acute"
+		ylab.theta="base"
+		pdf.each=0
+		pdf.width=	ifelse(pdf.each,5,12)
+		pdf.height=	ifelse(pdf.each,5,35)
+		
+		lkl.theta.sites		<- unique( lkl.theta[,comid_old] )
+		#site<-	lkl.theta.sites[1] 
+		#hyp<- "H0"
+		layout.m			<- matrix(seq_len( 8 ), length(lkl.theta.sites), 4, byrow=1)
+		def.par <- par(no.readonly = TRUE)				
+		if(!pdf.each)
+		{			
+			file			<- paste(f.name,'_',"allsites","_","_acute_base-Inc_E2E.pdf",sep='')
+			pdf(file=file, pdf.width, pdf.height)
+			layout(layout.m)
+		} 	
+		dummy<- lapply(lkl.theta.sites, function(site)
+				{
+					#site				<- lkl.theta.sites[1]
+					lapply(c("H0","H1")[1], function(hyp)
+							{
+								#hyp					<- "H0"
+								df		<- subset(lkl.theta, comid_old==site & h==hyp)	
+								#	manual fix up
+								if( any(which(df[,acute>13])>4000) ) 	warning("\nunexpected wrong prior")
+								if( any(which(df[,acute>13])<=4000) )	df	<- df[4001:nrow(df),]
+								
+								#	plot log likelihood for theta
+								file				<- paste(f.name,'_',site,"_",hyp,"_loglkl_acute_base.pdf",sep='')
+								if(pdf.each) pdf(file=file, pdf.width, pdf.height)
+								par(mar=c(4,4,0.5,6))								
+								look		<- my.image.smooth(df[,acute], df[,base], df[,lkl], palette="rob", xlab=xlab.theta, ylab=ylab.theta, theta=0.1, cex.points=0, contour.nlevel=5, contour.col="black")
+								legend("topright", legend=paste(site, hyp), bty='n', col="white")
+								legend("topleft", legend="log likelihood", bty='n', col="white")
+								if(pdf.each) dev.off()
+								
+								#	plot normalized likelihood and 95% CI for theta
+								file				<- paste(f.name,'_',site,"_",hyp,"_ci_acute_base.pdf",sep='')
+								if(pdf.each) pdf(file=file, pdf.width, pdf.height)
+								par(mar=c(4,4,0.5,0.5))																
+								tmp			<- my.image.get.CI(look, ci=0.95, log=TRUE)
+								dx			<- tmp$dx
+								ci.theta	<- tmp$ci		
+								my.image(look$x, look$y, tmp$lkl, xlab=xlab.theta, ylab=ylab.theta, contour.nlevels=0, cex.points=0)				
+								lines(ci.theta[,x],ci.theta[,ymin],col="black")		
+								lines(ci.theta[,x],ci.theta[,ymax],col="black")
+								legend("topright", legend=paste(site, hyp), bty='n', col="white")
+								legend("topleft", legend="95% confidence interval", bty='n', col="white")
+								if(pdf.each) dev.off()
+								
+								#	plot smoothed image for Inc, E2E
+								file				<- paste(f.name,'_',site,"_",hyp,"_loglkl_Inc_E2E.pdf",sep='')
+								if(pdf.each) pdf(file=file, pdf.width, pdf.height)
+								par(mar=c(4,4,0.5,6))																
+								df			<- subset(df, E2E<0.5 & Inc<0.015)
+								look		<- my.image.smooth(df[,Inc], df[,E2E], df[,lkl], tol=3, theta=0.05, xlab="incidence/year of population", ylab="% transmission from early infection", cex.points=0, contour.nlevel=5, contour.col="black", points.col="gold")
+								look$z[ is.na(look$z) ]	<- min(look$z, na.rm=1)
+								legend("topright", legend=paste(site, hyp), bty='n')
+								legend("topleft", legend="log likelihood", bty='n', col="black")
+								if(pdf.each) dev.off()
+								
+								#	plot normalized likelihood and 95% CI for Inc, E2E
+								file				<- paste(f.name,'_',site,"_",hyp,"_ci_Inc_E2E.pdf",sep='')
+								if(pdf.each) pdf(file=file, pdf.width, pdf.height)
+								par(mar=c(4,4,0.5,0.5))																								
+								tmp			<- my.image.get.CI(look, ci=0.95, log=TRUE)
+								dx			<- tmp$dx
+								ci.e2e		<- tmp$ci		
+								my.image(look$x, look$y, tmp$lkl, palette="gray", xlab="incidence/year in % of population", ylab="% transmission from early infection", contour.nlevels=0, cex.points=0, points.col="black")
+								points(df[,Inc], df[,E2E], cex=0, col="gold")
+								lines(ci.e2e[,x],ci.e2e[,ymin],col="black")		
+								lines(ci.e2e[,x],ci.e2e[,ymax],col="black")
+								legend("topright", legend=paste(site, hyp), bty='n')
+								legend("topleft", legend="95% confidence interval", bty='n', col="black")
+								if(pdf.each) dev.off()												
+							})					
+				})
+		if(!pdf.each)
+		{
+			dev.off()
+			par(def.par)
+		} 
+		
+		
+
 	}
 	if(0)	#start 'prj.popart.powercalc.by.acutelklratio' for all locations
 	{		

@@ -112,48 +112,73 @@ my.plot.persplocfit<- function(x, y, z, theta= 30, phi= 10, palette= "gray",...)
 	list(pmat=pmat, x= x, y= y, z= z)
 }
 ###############################################################################
-my.image<- function(x,y,z, palette= "YlGnBu",nlevels=5,...)
-{
-	require(RColorBrewer)
-	
-	par(mar=c(4,4,0.5,0.5))
+my.image<- function(x,y,z, palette= "rob",nlevels=5, cex.points=0, points.col="white", points.pch=20, contour.nlevels=0, contour.col="white",...)
+{	
 	if(palette=="topo")					image(x,y,z, col=tail( topo.colors(trunc(50*1.4)), 50 ),...)
 	else if(palette=="gray")			image(x,y,z, col=head( rev(gray(seq(0.05,.98,len=trunc(50*1.4)))), 50),...)					
-	else
-	{		
-		image(x,y,z, col=colorRampPalette(c("red", "orange", "blue"), space = "Lab")( 50 ),...)			
-	}
-	contour(x,y,z,add=TRUE, nlevels=nlevels)	
+	else if(palette=="rob")				image(x,y,z, col=colorRampPalette(c("blue", "orange", "red"), space = "Lab")( 50 ),...)
+	else								image(x,y,z, col=colorRampPalette(c("red", "orange", "blue"), space = "Lab")( 50 ),...)	
+	if(cex.points>0)
+		points(x, y, cex=cex.points, col=points.col, pch=points.pch)
+	if(contour.nlevels>0)
+		contour(x,y,z,add=TRUE, nlevels=contour.nlevels,col=contour.col)	
 }
 ###############################################################################
-my.image.smooth<- function(x,y,z,xlab,ylab,nrow=50,palette="gray",ncol=50,nlevel=50,theta=.25)
+my.normalize<- function(x, scale=1, log=TRUE)
 {
-	require(fields)	
-	par(mar=c(4,4,0.5,2))
-	x<- matrix(c(x,y),ncol=2,nrow=length(x) )
-	out<- as.image(z,x=x,nrow=nrow, ncol=ncol)
-	dx<- out$x[2]- out$x[1] 
-	dy<-  out$y[2] - out$y[1] 
-	look<- image.smooth( out, theta=theta) 	
-	if(palette=="topo")			
-		col<- tail( topo.colors(trunc(nlevel*1.4)), nlevel )
-	else if(palette=="gray")	
-		col<- head( rev(gray(seq(0,.95,len=trunc(nlevel*1.4)))), nlevel)
-	else 						
-		col<- tim.colors(nlevel)
-	image.plot(look,xlab=xlab,ylab=ylab, col=col) 
-	if(palette=="topo")	
-		points( x , col="white")
-	else if(palette=="gray")
-		points( x )
-	else
-		points( x , col="white")
+	if(log)		
+		x	<- exp( x - max(x) )
+	x / sum( scale*x )	
 }
 ###############################################################################
-my.plot.2D.dens<- function(x,y,xlab,ylab,xlim=NA,ylim=NA,width.infl=2,n.hists=5,method="gauss", palette= "topo", persp.theta= -30, persp.phi= 30, zero.abline=TRUE, ...)
+my.image.get.CI<- function(look, ci=0.95, log=TRUE)
+{
+	dx		<- c( diff( look$x[1:2] ), diff( look$y[1:2] ) )
+	lkl		<- my.normalize(look$z, scale=prod(dx), log=log)
+	
+	df.CI		<- cbind( data.table( expand.grid(x=look$x, y=look$y) ), lkl=as.numeric(prod(dx)*lkl))
+	df.CI[,dummy:=-df.CI[,lkl]]
+	setkey(df.CI, dummy)
+	df.CI[,cumlkl:=cumsum(df.CI[,lkl])]
+	df.CI	<- subset(df.CI, cumlkl<ci)
+	setkey(df.CI, x)
+	df.CI	<- df.CI[,list(xl= x+c(-0.5,0.5)*dx[1], ymin=rep(min(y)-dx[2]/2,2), ymax=rep(max(y)+dx[2]/2,2)),by='x']
+	df.CI	<- rbind( rbind( df.CI[1,],df.CI ), df.CI[nrow(df.CI),] )
+	set(df.CI,1L,"ymax",df.CI[1,ymin])
+	set(df.CI,nrow(df.CI),"ymin",df.CI[nrow(df.CI),ymax])
+	df.CI	<- subset(df.CI,select=c(xl,ymin,ymax))
+	setnames(df.CI,"xl","x")
+	
+	list(lkl=lkl, ci=df.CI, dx=dx)
+}
+###############################################################################
+my.image.smooth<- function(x, y, z, xlab='', ylab='', nrow=50, palette="gray", ncol=50, nlevel=50, theta=.25, tol=1e-8, plot=1, cex.points=0, points.pch=20, points.col="white", contour.nlevels=0, contour.col="white")
+{
+	require(fields)		
+	x		<- matrix(c(x,y),ncol=2,nrow=length(x) )
+	out		<- as.image(z,x=x,nrow=nrow, ncol=ncol)
+	dx		<- out$x[2]-out$x[1] 
+	dy		<- out$y[2]-out$y[1] 
+	look	<- image.smooth( out, theta=theta, tol=tol)
+	if(plot)
+	{
+		if(palette=="topo")				col<- tail( topo.colors(trunc(nlevel*1.4)), nlevel )
+		else if(palette=="gray")		col<- head( rev(gray(seq(0,.95,len=trunc(nlevel*1.4)))), nlevel)
+		else if(palette=="rob")			col<- colorRampPalette(c("blue", "orange", "red"), space = "Lab")( 50 )
+		else 							col<- tim.colors(nlevel)
+		image.plot(look,xlab=xlab,ylab=ylab, col=col)
+		if(cex.points>0)
+			points( x , cex=cex.points, col=points.col, pch=points.pch)		
+		if(contour.nlevels>0)
+			contour(look$x, look$y, look$z, add=TRUE, nlevels=contour.nlevels, col=contour.col)
+	}
+	look
+}
+###############################################################################
+my.plot.2D.dens<- function(x,y,xlab,ylab,xlim=NA,ylim=NA,width.infl=2,n.hists=5,method="gauss", palette= "rob", persp.theta= -30, persp.phi= 30, zero.abline=TRUE, ...)
 {
 	if(!method%in%c("gauss","ash","persp"))	stop("plot.2D.dens: exception 1a")
-	if(!palette%in%c("topo","heat","gray"))	stop("plot.2D.dens: exception 1b")
+	if(!palette%in%c("topo","heat","gray","rob"))	stop("plot.2D.dens: exception 1b")
 	switch(method,
 			gauss=
 					{
@@ -171,18 +196,19 @@ my.plot.2D.dens<- function(x,y,xlab,ylab,xlim=NA,ylim=NA,width.infl=2,n.hists=5,
 						if(zero.abline) abline(h=0,col="black",lty=3,lwd=1.5)
 					},
 			ash={
-				require(ash)
-				if(any(is.na(xlim))) xlim<- range(x)*1.05
-				if(any(is.na(ylim))) ylim<- range(y)*1.05
-				bins<- bin2(cbind(x, y), ab=rbind(xlim,ylim),nbin=2*c(nclass.Sturges(x),nclass.Sturges(y)))
-				f <- ash2(bins,rep(n.hists,2))
-				#image(f$x,f$y,f$z, col=rainbow(50,start= 4/6,end=0),xlab=xlab,ylab=ylab)
-				if(palette=="topo")					image(f$x,f$y,f$z, col=tail( topo.colors(trunc(50*1.4)), 50 ),xlab=xlab,ylab=ylab,...)
-				else if(palette=="gray")			image(f$x,f$y,f$z, col=head( rev(gray(seq(0,.95,len=trunc(50*1.4)))), 50),xlab=xlab,ylab=ylab,...)					
-				else								image(f$x,f$y,f$z, col=heat.colors( 50 ),xlab=xlab,ylab=ylab,...)
-				contour(f$x,f$y,f$z,add=TRUE, nlevels= 5)
-				if(zero.abline) abline(v=0,col="black",lty=2,lwd=2)
-				if(zero.abline) abline(h=0,col="black",lty=2,lwd=2)
+						require(ash)
+						if(any(is.na(xlim))) xlim<- range(x)*1.05
+						if(any(is.na(ylim))) ylim<- range(y)*1.05
+						bins<- bin2(cbind(x, y), ab=rbind(xlim,ylim),nbin=2*c(nclass.Sturges(x),nclass.Sturges(y)))
+						f <- ash2(bins,rep(n.hists,2))
+						#image(f$x,f$y,f$z, col=rainbow(50,start= 4/6,end=0),xlab=xlab,ylab=ylab)
+						if(palette=="topo")					image(f$x,f$y,f$z, col=tail( topo.colors(trunc(50*1.4)), 50 ),xlab=xlab,ylab=ylab,...)
+						else if(palette=="gray")			image(f$x,f$y,f$z, col=head( rev(gray(seq(0,.95,len=trunc(50*1.4)))), 50),xlab=xlab,ylab=ylab,...)
+						else if(palette=="rob")				image(f$x,f$y,f$z, col=colorRampPalette(c("blue", "orange", "red"), space = "Lab")( 50 ),xlab=xlab,ylab=ylab,...)
+						else								image(f$x,f$y,f$z, col=heat.colors( 50 ),xlab=xlab,ylab=ylab,...)
+						contour(f$x,f$y,f$z,add=TRUE, nlevels= 5)
+						if(zero.abline) abline(v=0,col="black",lty=2,lwd=2)
+						if(zero.abline) abline(h=0,col="black",lty=2,lwd=2)
 			},
 			persp={
 				require(ash)
