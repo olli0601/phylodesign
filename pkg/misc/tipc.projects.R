@@ -789,6 +789,9 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 prj.popart.powercalc.by.acutelklratio.lkl4Precomputed<- function(sites=NULL, tpc.obs=NULL, cohort.dur=3, f.name=NA, replace=1, resume=1, verbose=1, remote=0, remote.signat=NA)
 {	
 	m.type			<- "Acute"
+	hpc.walltime	<- 3	#32
+	hpc.mem			<- "1600mb"
+	hpc.q			<- NA	#"pqeph"
 	f.name.remote	<- paste(f.name,'_tmp_',remote.signat,sep='')
 	if(resume)
 	{
@@ -838,13 +841,14 @@ prj.popart.powercalc.by.acutelklratio.lkl4Precomputed<- function(sites=NULL, tpc
 						#H0.H0
 						cmd			<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',sites[i,comid_old],"_H0",".R",sep=''),	sites[i,comid_old],	"H0")
 						cat(cmd)
-						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=32, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
+						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=hpc.walltime, hpc.mem=hpc.mem, hpc.load="module load R/2.15",hpc.nproc=1, hpc.q=hpc.q)
 						prj.hpccaller(paste(CODE.HOME,"misc",sep='/'), paste("phd_l0",paste(strsplit(date(),split=' ')[[1]],collapse='_',sep=''),"qsub",sep='.'), cmd)
 						#H0.H1
 						cmd			<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',sites[i,comid_old],"_H1",".R",sep=''),	sites[i,comid_old],	"H1")
 						cat(cmd)
-						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=32, hpc.mem="1600mb", hpc.load="module load R/2.15",hpc.nproc=1, hpc.q="pqeph")
-						prj.hpccaller(paste(CODE.HOME,"misc",sep='/'), paste("phd_l1",paste(strsplit(date(),split=' ')[[1]],collapse='_',sep=''),"qsub",sep='.'), cmd)						
+						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=hpc.walltime, hpc.mem=hpc.mem, hpc.load="module load R/2.15",hpc.nproc=1, hpc.q=hpc.q)
+						prj.hpccaller(paste(CODE.HOME,"misc",sep='/'), paste("phd_l1",paste(strsplit(date(),split=' ')[[1]],collapse='_',sep=''),"qsub",sep='.'), cmd)
+						stop()
 					})
 		}
 		else
