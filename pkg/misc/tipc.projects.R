@@ -2619,7 +2619,7 @@ prj.pipeline<- function()
 												tmp<- c(which.min(E2E), which.max(E2E))
 												list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp])
 											}, by=c("country", "arm","target")]
-		dummy			<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling=opt.sampling, opt.analysis=opt.analysis, pooled.n=pool.n, df.hyp=df.hyp, dir.name=dir.name, verbose=verbose, resume=resume, standalone=1)
+		dummy			<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling=opt.sampling, opt.analysis=opt.analysis, pooled.n=pooled.n, df.hyp=df.hyp, dir.name=dir.name, verbose=verbose, resume=resume, standalone=1)
 		stop()
 	}
 	#
