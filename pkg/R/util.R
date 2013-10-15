@@ -136,7 +136,7 @@ my.image.get.CI<- function(look, ci=0.95, log=TRUE)
 	dx		<- c( diff( look$x[1:2] ), diff( look$y[1:2] ) )
 	lkl		<- my.normalize(look$z, scale=prod(dx), log=log)
 	
-	df.CI		<- cbind( data.table( expand.grid(x=look$x, y=look$y) ), lkl=as.numeric(prod(dx)*lkl))
+	df.CI	<- cbind( data.table( expand.grid(x=look$x, y=look$y) ), lkl=as.numeric(prod(dx)*lkl))
 	df.CI[,dummy:=-df.CI[,lkl]]
 	setkey(df.CI, dummy)
 	df.CI[,cumlkl:=cumsum(df.CI[,lkl])]

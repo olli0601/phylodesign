@@ -225,7 +225,7 @@ acute.loglkl.batch<- function(loc.type, tpc.table, cluster.tw, theta, clu.closur
 	tpc.lkl		<- sapply(seq_len(nrow(theta)),function(i)
 			{				
 				#i<- 10
-				if(verbose && i%%100) cat(paste("\ncompute lkl for entry",i))
+				if(verbose && !i%%100) cat(paste("\ncompute lkl for entry",i))
 				ibm[["beta"]][['i']][["status"]]['i']	<- theta[i,acute]
 				ibm[["beta"]][["base"]]					<- theta[i,base]	
 				rate.m									<- acute.get.rates(ibm[["beta"]], ibm.pop= NULL, pop.n=pop.n, state.n= as.matrix(state.n), per.capita.i= 1)	
