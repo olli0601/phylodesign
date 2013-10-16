@@ -149,7 +149,7 @@ my.image.get.CI<- function(look, ci=0.95, log=TRUE)
 	df.CI	<- subset(df.CI,select=c(xl,ymin,ymax))
 	setnames(df.CI,"xl","x")
 	
-	list(lkl=lkl, ci=df.CI, dx=dx)
+	list(lkl=prod(dx)*lkl, ci=df.CI, dx=dx)
 }
 ###############################################################################
 my.image.smooth<- function(x, y, z, xlab='', ylab='', nrow=50, palette="gray", ncol=50, nlevel=50, theta=.25, tol=1e-8, plot=1, cex.points=0, points.pch=20, points.col="white", contour.nlevels=0, contour.col="white")
