@@ -628,7 +628,8 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(sites, samples.seq, coho
 	if(!resume || inherits(readAttempt, "try-error"))
 	{							
 		#print(apply(samples.seq,2,sum))		
-		sites						<- cbind(sites, samples.seq)
+		sites						<- merge(sites, samples.seq, by="comid_old")
+		setkey(sites, triplet.id, arm)
 		#each site was calibrated to match 		"mu.inc.rate.H0","mu.pE2E.H0"		"mu.inc.rate.H1","mu.pE2E.H1"
 		if(verbose)	cat(paste("\nset up default theta corresponding to %E2E 10 vs 40 -- should only use these for arm C as these theta don t reflect the induced %E2E in A,B"))
 		theta.model.Hx	<- matrix(	c(		1.25, 0.062, 4.4, 0.09,
@@ -2819,29 +2820,19 @@ prj.pipeline<- function()
 		resume			<- 1
 		verbose			<- 1
 		debug			<- 1
-		
+		#
 		m.type			<- "Acute"	
 		cohort.size		<- 2500	
 		cohort.dur		<- 3	
 		theta.EE.H0		<- 0.1
-		theta.EE.H1		<- 0.4
-				
+		theta.EE.H1		<- 0.4				
 		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								
 		p.consent.coh	<- 0.9*0.9
-		
+		#
 		opt.design		<- "PC12+HCC"
 		opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')
 		opt.analysis	<- "central-1016"
-		opt.analysis	<- "central-1017"
-		pooled.n		<- 1
-		
-		if(verbose)
-		{
-			cat(paste("\ncohort.size",cohort.size))
-			cat(paste("\ncohort.dur",cohort.dur))
-			cat(paste("\ntheta.EE.H0",theta.EE.H0))
-			cat(paste("\ntheta.EE.H1",theta.EE.H1))					
-		}	
+		opt.analysis	<- "central-1017"		
 		#load df.hyp
 		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
 		tmp				<- load(file)
@@ -2855,16 +2846,13 @@ prj.pipeline<- function()
 		#load df.contam
 		df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]							
 		#		
-		sites			<- popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug, rtn.phylostudy=1 )
+		sites			<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )
 		sites[which(sites[,"country"]==1),"country"]	<- "ZA"
 		sites[which(sites[,"country"]==2),"country"]	<- "SA"	
 		sites			<- as.data.table(sites)
-		#
 		samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)
 		samples.CD4		<- subset(samples.CD4, prediction=="central")
-		#
 		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)
-		#		
 		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)		
 		#					
 		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		
@@ -2876,7 +2864,7 @@ prj.pipeline<- function()
 	#
 	#	compute likelihood of representative theta matching H0 and H1 for all precomputed tip clusters
 	#	
-	if(0)
+	if(1)
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
@@ -2884,46 +2872,47 @@ prj.pipeline<- function()
 		dir.name		<- paste(DATA,dir.name,sep='/')	
 		resume			<- 1
 		verbose			<- 1
-		plot.increment	<- 0.05
-		
+		debug			<- 1
+		#
 		m.type			<- "Acute"	
 		cohort.size		<- 2500	
 		cohort.dur		<- 3	
 		theta.EE.H0		<- 0.1
-		theta.EE.H1		<- 0.4
-		theta.UE		<- 0.3
-		theta.TE		<- theta.UE / 5
-		test.alpha		<- 0.05
-		p.nocontam		<- 0.95
-		debug			<- 1
-		pooled.n		<- 1		
-		opt.design		<- "PC12+HCC"		#"PC and HCC"#"only HCC"	#"PC and HCC"	#
-		opt.sampling	<- "strue"
-		opt.sampling	<- "s5pc"
+		theta.EE.H1		<- 0.4				
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								
+		p.consent.coh	<- 0.9*0.9
+		#
+		opt.design		<- "PC12+HCC"
 		opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')
 		opt.analysis	<- "central-1016"
-		
-		
-		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing
-		p.consent.coh	<- 0.9*0.9			#90% consent to main study and of those 90% consent to phylo study				
-		p.consent.clu	<- 1				#waiver
-		p.vhcc.prev.AB	<- 1				#already in PopART model estimate
-		p.vhcc.inc.AB	<- 1				#already in PopART model estimate
-		p.vhcc.prev.C	<- 1				#already in PopART model estimate
-		p.vhcc.inc.C	<- 1				#already in PopART model estimate				
-					
+		opt.analysis	<- "central-1017"
+		opt.sampling	<- "strue"
+		opt.sampling	<- "s5pc"					
 		#load df.hyp
 		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
 		tmp				<- load(file)
 		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		
-		set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")
-		set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		
+		#set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")
+		#set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		
 		df.hyp			<- df.prop[, {
-												tmp<- c(which.min(E2E), which.max(E2E))
-												list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp])
-											}, by=c("country", "arm","target")]
-		#	load high acute and low acute tip clusters for each community							
-		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling=opt.design, opt.analysis=opt.analysis, pooled.n=pooled.n, df.hyp=df.hyp, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)
+					tmp<- c(which.min(E2E), which.max(E2E))
+					list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])
+				}, by=c("country", "arm","target")]
+		#load df.contam
+		df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]							
+		#		
+		sites			<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )
+		sites[which(sites[,"country"]==1),"country"]	<- "ZA"
+		sites[which(sites[,"country"]==2),"country"]	<- "SA"	
+		sites			<- as.data.table(sites)
+		samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)
+		samples.CD4		<- subset(samples.CD4, prediction=="central")
+		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)
+		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)		
+		#	load high acute and low acute tip clusters for each community					
+		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		
+		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)
+		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)		
 		tpc.obs			<- tmp$tpc.obs
 		sites			<- merge( tmp$sites, tmp$theta.model.Hx, by="comid_old")		
 		#	if not sensitivity analysis, reset 'sigma' to zero
@@ -2936,9 +2925,9 @@ prj.pipeline<- function()
 		#	get likelihood values for precomputed theta-E2E/Inc values
 		remote.signat		<- "Fri_Oct_11_10:30:19_2013"
 		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,sep='')
-		dummy				<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=1, verbose=1, remote=1, remote.signat=remote.signat)
+		dummy				<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=resume, verbose=verbose, remote=1, remote.signat=remote.signat)
 		#	remote, need to collect results in next step
-		stop()
+		stop()		
 	}	
 	#
 	#	
