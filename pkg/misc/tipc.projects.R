@@ -2810,7 +2810,7 @@ prj.pipeline<- function()
 	#
 	#	compute representative theta corresponding to H0 and H1 and simulate tip cluster table for this theta
 	#
-	if(0)	
+	if(1)	
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
@@ -2875,7 +2875,7 @@ prj.pipeline<- function()
 	#
 	#	compute likelihood of representative theta matching H0 and H1 for all precomputed tip clusters
 	#	
-	if(1)
+	if(0)
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
