@@ -2827,6 +2827,7 @@ prj.pipeline<- function()
 		theta.EE.H1		<- 0.4
 				
 		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								
+		p.consent.coh	<- 0.9*0.9
 		
 		opt.design		<- "PC12+HCC"
 		opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')
