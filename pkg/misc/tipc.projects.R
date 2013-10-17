@@ -608,15 +608,13 @@ prj.acute.test.lkl.wsampling.onlyU<- function()
 }
 ###############################################################################
 #simulate high acute and low acute tip clusters for each community	
-prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling="PC12+HCC", opt.analysis=paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep=''), pooled.n=1, df.hyp=NULL, dir.name=DATA, verbose=1, resume=1, standalone=0)
+prj.popart.powercalc.by.acutelklratio.tpcobs<- function(sites, samples.seq, cohort.dur, f.name, dir.name=DATA, verbose=1, resume=1, standalone=0)
 {	
-	if(verbose)	cat(paste("\nopt.analysis set to",opt.analysis))
 	m.type			<- "Acute"
 	hpc.q			<- NA		#"pqeph"	
 	hpc.walltime	<- 3		# 8
 	hpc.mem			<- "1850mb"	#"1600mb"
-	theta.model.Hx	<- NULL
-	f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.sampling,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')	
+	theta.model.Hx	<- NULL		
 	if(resume)
 	{
 		options(show.error.messages = FALSE)		
@@ -628,38 +626,9 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 			cat(paste("\nprj.simudata: resumed file ",paste(f.name,".R",sep='')))
 	}	
 	if(!resume || inherits(readAttempt, "try-error"))
-	{	
-		#get sites and add target effects to 'sites'
-		sites	<- popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug, rtn.phylostudy=1 )
-		sites[which(sites[,"country"]==1),"country"]	<- "ZA"
-		sites[which(sites[,"country"]==2),"country"]	<- "SA"
-		sites	<- data.table(sites)
-		
-		if(opt.analysis=="1040")
-		{
-			sites[,"mu.inc.rate.H0"]	<- sites[,inc.rate]
-			sites[,"mu.inc.rate.H1"]	<- 0.013
-			sites[,"mu.pE2E.H0"]		<- theta.EE.H0
-			sites[,"mu.pE2E.H1"]		<- theta.EE.H1
-		}
-		else
-		{
-			if(is.null(df.hyp))								stop("df.hyp is NULL")
-			if(!opt.analysis%in%unique(df.hyp[,target]))	stop("Unknown target in df.hyp")
-			tmp			<- subset(df.hyp,target==opt.analysis & h=="H0", c(country, arm, Inc, E2E))	
-			setnames(tmp,	c("Inc","E2E"),	c("mu.inc.rate.H0","mu.pE2E.H0"))
-			sites		<- merge(sites, tmp, by=c("country","arm"))
-			tmp			<- subset(df.hyp,target==opt.analysis & h=="H1", c(country, arm, Inc, E2E))	
-			setnames(tmp,	c("Inc","E2E"),	c("mu.inc.rate.H1","mu.pE2E.H1"))
-			sites		<- merge(sites, tmp, by=c("country","arm"))
-			sites		<- sites[order(sites[,triplet.id],sites[,arm]),]
-		}		
-		#print(sites)
-		samples.CD4					<- popart.predicted.firstCD4()
-		samples.seq					<- popart.predicted.sequences(sites,  samples.CD4, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method= opt.sampling)
-		#print(samples.seq)
+	{							
 		#print(apply(samples.seq,2,sum))		
-		sites						<- cbind(sites, samples.CD4, samples.seq)
+		sites						<- cbind(sites, samples.seq)
 		#each site was calibrated to match 		"mu.inc.rate.H0","mu.pE2E.H0"		"mu.inc.rate.H1","mu.pE2E.H1"
 		if(verbose)	cat(paste("\nset up default theta corresponding to %E2E 10 vs 40 -- should only use these for arm C as these theta don t reflect the induced %E2E in A,B"))
 		theta.model.Hx	<- matrix(	c(		1.25, 0.062, 4.4, 0.09,
@@ -684,11 +653,11 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 							{					
 								site		<- sites[i,comid_old]
 								if(verbose)	cat(paste("\nprocess ",site))
-								f.name		<- paste(DATA,'/',paste("acutesimu_fxs0_onlyu0",sep=''),'/',"match_INC_E2E",'_',m.type,'_',site,'_',cohort.dur,"_acute_0.5_13_base_0.01_0.13.R",sep='')								
-								readAttempt	<-	try(suppressWarnings(load(f.name)))
+								file		<- paste(DATA,'/',paste("acutesimu_fxs0_onlyu0",sep=''),'/',"match_INC_E2E",'_',m.type,'_',site,'_',cohort.dur,"_acute_0.5_13_base_0.01_0.13.R",sep='')								
+								readAttempt	<-	try(suppressWarnings(load(file)))
 								if(!inherits(readAttempt, "try-error"))	
 								{	
-									if(verbose)	cat(paste("\nloaded precomputed simulations from file",f.name))
+									if(verbose)	cat(paste("\nloaded precomputed simulations from file",file))
 									setnames(abc.struct, "INC", "Inc")
 									abc.struct[,comid_old:=site]
 									tmp			<- sites[,c("comid_old","mu.inc.rate.H0","mu.inc.rate.H1","mu.pE2E.H0","mu.pE2E.H1"), with=F]
@@ -713,7 +682,7 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 								else
 								{
 									options(warn=1)
-									warning("could not load file",f.name,"\nusing inappropriate default parameters")
+									warning("could not load file",file,"\nusing inappropriate default parameters")
 									options(warn=2)
 									ans			<- c(acute.H0=2.2, base.H0=0.052, acute.H1=15, base.H1=0.032)
 								}									
@@ -769,8 +738,7 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(theta.EE.H0, theta.EE.H1
 				})
 		if(!standalone)
 		{
-			names(tpc.obs)	<- sites[,comid_old]					
-			f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.sampling,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')
+			names(tpc.obs)	<- sites[,comid_old]								
 			if(verbose)	cat(paste("\nwrite tpc.obs to",paste(f.name,".R",sep='')))	
 			save(tpc.obs, theta.model.Hx, sites, file=paste(f.name,".R",sep=''))
 		}
@@ -877,7 +845,7 @@ prj.popart.powercalc.by.acutelklratio.lkl4Precomputed<- function(sites=NULL, tpc
 	lkl.theta
 }
 ###############################################################################
-prj.popart.powercalc.by.acutelklratio.divH0H1<- function(sites, lkl.theta, f.name, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, pdf.width=	ifelse(pdf.each,5,15), pdf.height=	ifelse(pdf.each,5,11), resume=1, verbose=1)
+prj.popart.powercalc.by.acutelklratio.divH0H1<- function(sites, lkl.theta, f.name, df.true=NULL, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, pdf.width=	ifelse(pdf.each,5,15), pdf.height=	ifelse(pdf.each,5,11), resume=1, verbose=1)
 {
 	lkl.theta.sites		<- unique( lkl.theta[,comid_old] )
 	if(resume)
@@ -893,6 +861,7 @@ prj.popart.powercalc.by.acutelklratio.divH0H1<- function(sites, lkl.theta, f.nam
 	}	
 	if(!resume || inherits(readAttempt, "try-error"))
 	{
+		
 		if(0)
 		{
 			site	<-	lkl.theta.sites[1]
@@ -926,6 +895,7 @@ prj.popart.powercalc.by.acutelklratio.divH0H1<- function(sites, lkl.theta, f.nam
 			pdf(file=file, pdf.width, pdf.height)
 			layout(layout.m)
 		} 	
+		countour.col.e2e<- "#FC4E2A"
 		lkl.e2e	<- lapply(lkl.theta.sites, function(site)
 				{
 					#site				<- lkl.theta.sites[1]
@@ -949,6 +919,7 @@ prj.popart.powercalc.by.acutelklratio.divH0H1<- function(sites, lkl.theta, f.nam
 								{
 									legend("topright", legend=paste(site, hyp), bty='n', col="white")
 									legend("topleft", legend="log likelihood", bty='n', col="white")
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, acute)), as.numeric(subset(df.true, comid_old==site & h==hyp, base)), col="black", pch=18, cex=2)
 									if(pdf.each) 	dev.off()
 								}
 								
@@ -967,6 +938,7 @@ prj.popart.powercalc.by.acutelklratio.divH0H1<- function(sites, lkl.theta, f.nam
 									lines(ci.theta[,x],ci.theta[,ymax],col="black")
 									legend("topright", legend=paste(site, hyp), bty='n', col="white")
 									legend("topleft", legend="95% confidence interval", bty='n', col="white")
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, acute)), as.numeric(subset(df.true, comid_old==site & h==hyp, base)), col="black", pch=18, cex=2)
 									if(pdf.each) dev.off()
 								}
 								
@@ -978,12 +950,13 @@ prj.popart.powercalc.by.acutelklratio.divH0H1<- function(sites, lkl.theta, f.nam
 									if(pdf.each) pdf(file=file, pdf.width, pdf.height)
 									par(mar=c(4,4,0.5,6))
 								}																
-								look		<- my.image.smooth(df[,Inc], df[,E2E], df[,lkl], tol=3, theta=0.05, plot=plot, xlab="incidence/year of population", ylab="% transmission from early infection", cex.points=0, contour.nlevel=5, contour.col="black", points.col="gold")
+								look		<- my.image.smooth(df[,Inc], df[,E2E], df[,lkl], tol=3, theta=0.05, plot=plot, xlab="incidence/year of population", ylab="% transmission from early infection", cex.points=0, contour.nlevel=5, contour.col=countour.col.e2e, points.col="gold")
 								look$z[ is.na(look$z) ]	<- min(look$z, na.rm=1)
 								if(plot)
 								{									
 									legend("topright", legend=paste(site, hyp), bty='n')
 									legend("topleft", legend="log likelihood", bty='n', col="black")
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, Inc)), as.numeric(subset(df.true, comid_old==site & h==hyp, E2E)), col=countour.col.e2e, pch=18, cex=2)
 									if(pdf.each) dev.off()
 								}								
 								
@@ -999,10 +972,11 @@ prj.popart.powercalc.by.acutelklratio.divH0H1<- function(sites, lkl.theta, f.nam
 									par(mar=c(4,4,0.5,0.5))																								
 									my.image(look$x, look$y, tmp$lkl, palette="gray", xlab="incidence/year in % of population", ylab="% transmission from early infection", contour.nlevels=0, cex.points=0, points.col="black")
 									points(df[,Inc], df[,E2E], cex=0, col="gold")
-									lines(ci.e2e[,x],ci.e2e[,ymin],col="black")		
-									lines(ci.e2e[,x],ci.e2e[,ymax],col="black")
+									lines(ci.e2e[,x],ci.e2e[,ymin],col=countour.col.e2e)		
+									lines(ci.e2e[,x],ci.e2e[,ymax],col=countour.col.e2e)
 									legend("topright", legend=paste(site, hyp), bty='n')
 									legend("topleft", legend="95% confidence interval", bty='n', col="black")
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, Inc)), as.numeric(subset(df.true, comid_old==site & h==hyp, E2E)), col=countour.col.e2e, pch=18, cex=2)
 									if(pdf.each) dev.off()											
 								}
 								#	return likelihood values for for Inc, E2E
@@ -1348,6 +1322,144 @@ prj.popart.powercalc.by.acutelklratio.matchpa<- function(sim, target, hetclu.sca
 	
 	ans			<- list(H0= ans.H0, H1= ans.H1)
 	ans
+}
+###############################################################################
+prj.popart.compute.numbers.for.protocol<- function()
+{
+	require(data.table)		
+	dir.name		<- "popartpower_acute"
+	my.mkdir(DATA,dir.name)
+	dir.name		<- paste(DATA,dir.name,sep='/')	
+	resume			<- 1
+	verbose			<- 1
+	plot.increment	<- 0.05
+	
+	m.type			<- "Acute"	
+	cohort.size		<- 2500	
+	cohort.dur		<- 3	
+	theta.EE.H0		<- 0.1
+	theta.EE.H1		<- 0.4
+	theta.UE		<- 0.3
+	theta.TE		<- theta.UE / 5
+	test.alpha		<- 0.05
+	
+	debug			<- 1
+	
+	p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing
+	p.consent.coh	<- 0.9*0.9			#90% consent to main study and of those 90% consent to phylo study				
+	p.consent.clu	<- 1				#waiver
+	p.vhcc.prev.AB	<- 1				#already in PopART model estimate
+	p.vhcc.inc.AB	<- 1				#already in PopART model estimate
+	p.vhcc.prev.C	<- 1				#already in PopART model estimate
+	p.vhcc.inc.C	<- 1				#already in PopART model estimate
+	
+	opt.design		<- "PC12+HCC"
+	opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')
+	opt.analysis	<- "central-1016"
+	pooled.n		<- 1
+	
+	
+	#compute df.hypotheses on Inc and E2E
+	file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
+	tmp				<- load(file)
+	if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		
+	set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")
+	set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		
+	df.hyp			<- df.prop[, {
+									tmp<- c(which.min(E2E), which.max(E2E))
+									list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])
+								}, by=c("country", "arm","target")]
+	#compute df.hypotheses on O2E						
+	df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]							
+	
+	
+	sites			<- popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug, rtn.phylostudy=1 )
+	sites[which(sites[,"country"]==1),"country"]	<- "ZA"
+	sites[which(sites[,"country"]==2),"country"]	<- "SA"	
+	sites			<- as.data.table(sites)
+	
+	set(df.nocontam, NULL, "p.nocontam", 1)
+	
+	samples.CD4		<- popart.predicted.firstCD4.131017(sites)
+	samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)
+	samples.seq		<- merge( subset( sites, select=c(comid_old, triplet.id) ), samples.seq, by="comid_old")
+	setkey(samples.seq, triplet.id, arm)
+	#samples by country and arm
+	samples.seq[, list(PC.prev=sum(PC.prev), PC.inc=sum(PC.inc), nonPC.prev=sum(nonPC.prev), nonPC.inc=sum(nonPC.inc), all.prev=sum(all.prev), all.inc=sum(all.inc)), by=c("country","arm")]
+	#total sum
+	samples.seq[, list(PC.prev=sum(PC.prev), PC.inc=sum(PC.inc), nonPC.prev=sum(nonPC.prev), nonPC.inc=sum(nonPC.inc), all.prev=sum(all.prev), all.inc=sum(all.inc))]	
+}
+###############################################################################
+prj.popart.convert.from.Anne<- function()
+{
+	verbose	<- 1
+	if(0)	#convert Anne s propacute into a data.table
+	{				
+		p.contam<- 0.05
+		file	<- paste(CODE.HOME,"data","popart.propacute.131015.RData",sep='/')
+		tmp		<- load(file)
+		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))
+		colnames(averageInc.SA)[2]	<- "AOptimistic" 
+		colnames(averageInc.Za)[2]	<- "AOptimistic"
+		colnames(propAcute.SA)[2]	<- "AOptimistic"
+		colnames(propAcute.Za)[2]	<- "AOptimistic"
+		
+		tmp		<- list(	data.table(country="ZA", arm='A', target="central", Inc=averageInc.Za[,"ACentral"], E2E=propAcute.Za[,"ACentral"], O2E=p.contam),
+				data.table(country="ZA", arm='A', target="optimistic", Inc=averageInc.Za[,"AOptimistic"], E2E=propAcute.Za[,"AOptimistic"], O2E=p.contam),
+				data.table(country="ZA", arm='B', target="central", Inc=averageInc.Za[,"BCentral"], E2E=propAcute.Za[,"BCentral"], O2E=p.contam),
+				data.table(country="ZA", arm='B', target="optimistic", Inc=averageInc.Za[,"BOptimistic"], E2E=propAcute.Za[,"BOptimistic"], O2E=p.contam),
+				data.table(country="ZA", arm='C', target="central", Inc=averageInc.Za[,"C"], E2E=propAcute.Za[,"C"], O2E=p.contam),
+				data.table(country="ZA", arm='C', target="optimistic", Inc=averageInc.Za[,"C"], E2E=propAcute.Za[,"C"], O2E=p.contam),		
+				data.table(country="SA", arm='A', target="central", Inc=averageInc.SA[,"ACentral"], E2E=propAcute.SA[,"ACentral"], O2E=p.contam),
+				data.table(country="SA", arm='A', target="optimistic", Inc=averageInc.SA[,"AOptimistic"], E2E=propAcute.SA[,"AOptimistic"], O2E=p.contam),
+				data.table(country="SA", arm='B', target="central", Inc=averageInc.SA[,"BCentral"], E2E=propAcute.SA[,"BCentral"], O2E=p.contam),
+				data.table(country="SA", arm='B', target="optimistic", Inc=averageInc.SA[,"BOptimistic"], E2E=propAcute.SA[,"BOptimistic"], O2E=p.contam),
+				data.table(country="SA", arm='C', target="central", Inc=averageInc.SA[,"C"], E2E=propAcute.SA[,"C"], O2E=p.contam),
+				data.table(country="SA", arm='C', target="optimistic", Inc=averageInc.SA[,"C"], E2E=propAcute.SA[,"C"], O2E=p.contam)		)
+		df.prop	<- rbindlist(tmp)
+		
+		file	<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
+		if(verbose) cat(paste("save to file",file))
+		save(df.prop, file=file)
+	}
+	if(1)	#convert Anne s propacute and propcontam into a data.table
+	{						
+		file	<- paste(CODE.HOME,"data","popart.propacute.131015.RData",sep='/')
+		tmp		<- load(file)
+		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))
+		colnames(averageInc.SA)[2]	<- "AOptimistic" 
+		colnames(averageInc.Za)[2]	<- "AOptimistic"
+		colnames(propAcute.SA)[2]	<- "AOptimistic"
+		colnames(propAcute.Za)[2]	<- "AOptimistic"
+		
+		tmp		<- list(	data.table(country="ZA", arm='A', target="central", Inc=averageInc.Za[,"ACentral"], E2E=propAcute.Za[,"ACentral"]),
+				data.table(country="ZA", arm='A', target="optimistic", Inc=averageInc.Za[,"AOptimistic"], E2E=propAcute.Za[,"AOptimistic"]),
+				data.table(country="ZA", arm='B', target="central", Inc=averageInc.Za[,"BCentral"], E2E=propAcute.Za[,"BCentral"]),
+				data.table(country="ZA", arm='B', target="optimistic", Inc=averageInc.Za[,"BOptimistic"], E2E=propAcute.Za[,"BOptimistic"]),
+				data.table(country="ZA", arm='C', target="central", Inc=averageInc.Za[,"C"], E2E=propAcute.Za[,"C"]),
+				data.table(country="ZA", arm='C', target="optimistic", Inc=averageInc.Za[,"C"], E2E=propAcute.Za[,"C"]),		
+				data.table(country="SA", arm='A', target="central", Inc=averageInc.SA[,"ACentral"], E2E=propAcute.SA[,"ACentral"]),
+				data.table(country="SA", arm='A', target="optimistic", Inc=averageInc.SA[,"AOptimistic"], E2E=propAcute.SA[,"AOptimistic"]),
+				data.table(country="SA", arm='B', target="central", Inc=averageInc.SA[,"BCentral"], E2E=propAcute.SA[,"BCentral"]),
+				data.table(country="SA", arm='B', target="optimistic", Inc=averageInc.SA[,"BOptimistic"], E2E=propAcute.SA[,"BOptimistic"]),
+				data.table(country="SA", arm='C', target="central", Inc=averageInc.SA[,"C"], E2E=propAcute.SA[,"C"]),
+				data.table(country="SA", arm='C', target="optimistic", Inc=averageInc.SA[,"C"], E2E=propAcute.SA[,"C"])		)
+		df.prop	<- rbindlist(tmp)
+		
+		file							<- paste(CODE.HOME,"data","popart.prop_results_contam.central.131016.RData",sep='/')
+		tmp								<- load(file)
+		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))
+		origin_new_infections$country	<- c(rep("ZA",6),rep("SA",6))
+		df.contam						<- as.data.table(origin_new_infections)
+		setnames(df.contam, c("allocatedArms","propContamination"), c("arm","O2E"))
+		setkey(df.contam, country, arm)
+		df.contam						<- subset( unique(df.contam), select=c(country, arm, O2E))
+		df.prop							<- merge(df.prop, df.contam, by=c("country","arm"))
+		
+		file	<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
+		if(verbose) cat(paste("save to file",file))
+		save(df.prop, file=file)
+	}
 }
 ###############################################################################
 prj.popart.powercalc.by.acutelklratio	<- function()
@@ -2694,37 +2806,7 @@ prj.pipeline<- function()
 					outfile		<- paste("phd",signat,"qsub",sep='.')
 					prj.hpccaller(outdir, outfile, cmd)			
 				})		
-	}
-	#convert Anne s propacute into a data.table
-	if(0)
-	{
-		verbose	<- 1
-		file	<- paste(CODE.HOME,"data","popart.propacute.131015.RData",sep='/')
-		tmp		<- load(file)
-		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))
-		colnames(averageInc.SA)[2]	<- "AOptimistic" 
-		colnames(averageInc.Za)[2]	<- "AOptimistic"
-		colnames(propAcute.SA)[2]	<- "AOptimistic"
-		colnames(propAcute.Za)[2]	<- "AOptimistic"
-		
-		tmp		<- list(	data.table(country="ZA", arm='A', target="central", Inc=averageInc.Za[,"ACentral"], E2E=propAcute.Za[,"ACentral"]),
-							data.table(country="ZA", arm='A', target="optimistic", Inc=averageInc.Za[,"AOptimistic"], E2E=propAcute.Za[,"AOptimistic"]),
-							data.table(country="ZA", arm='B', target="central", Inc=averageInc.Za[,"BCentral"], E2E=propAcute.Za[,"BCentral"]),
-							data.table(country="ZA", arm='B', target="optimistic", Inc=averageInc.Za[,"BOptimistic"], E2E=propAcute.Za[,"BOptimistic"]),
-							data.table(country="ZA", arm='C', target="central", Inc=averageInc.Za[,"C"], E2E=propAcute.Za[,"C"]),
-							data.table(country="ZA", arm='C', target="optimistic", Inc=averageInc.Za[,"C"], E2E=propAcute.Za[,"C"]),		
-							data.table(country="SA", arm='A', target="central", Inc=averageInc.SA[,"ACentral"], E2E=propAcute.SA[,"ACentral"]),
-							data.table(country="SA", arm='A', target="optimistic", Inc=averageInc.SA[,"AOptimistic"], E2E=propAcute.SA[,"AOptimistic"]),
-							data.table(country="SA", arm='B', target="central", Inc=averageInc.SA[,"BCentral"], E2E=propAcute.SA[,"BCentral"]),
-							data.table(country="SA", arm='B', target="optimistic", Inc=averageInc.SA[,"BOptimistic"], E2E=propAcute.SA[,"BOptimistic"]),
-							data.table(country="SA", arm='C', target="central", Inc=averageInc.SA[,"C"], E2E=propAcute.SA[,"C"]),
-							data.table(country="SA", arm='C', target="optimistic", Inc=averageInc.SA[,"C"], E2E=propAcute.SA[,"C"])		)
-		df.prop.early	<- rbindlist(tmp)
-		
-		file	<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
-		if(verbose) cat(paste("save to file",file))
-		save(df.prop.early, file=file)		
-	}
+	}			
 	#
 	#	compute representative theta corresponding to H0 and H1 and simulate tip cluster table for this theta
 	#
@@ -2736,30 +2818,20 @@ prj.pipeline<- function()
 		dir.name		<- paste(DATA,dir.name,sep='/')	
 		resume			<- 1
 		verbose			<- 1
-		plot.increment	<- 0.05
+		debug			<- 1
 		
 		m.type			<- "Acute"	
 		cohort.size		<- 2500	
 		cohort.dur		<- 3	
 		theta.EE.H0		<- 0.1
 		theta.EE.H1		<- 0.4
-		theta.UE		<- 0.3
-		theta.TE		<- theta.UE / 5
-		test.alpha		<- 0.05
-		p.nocontam		<- 0.95
-		debug			<- 1
-		
-		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing
-		p.consent.coh	<- 0.9*0.9			#90% consent to main study and of those 90% consent to phylo study				
-		p.consent.clu	<- 1				#waiver
-		p.vhcc.prev.AB	<- 1				#already in PopART model estimate
-		p.vhcc.inc.AB	<- 1				#already in PopART model estimate
-		p.vhcc.prev.C	<- 1				#already in PopART model estimate
-		p.vhcc.inc.C	<- 1				#already in PopART model estimate
+				
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								
 		
 		opt.design		<- "PC12+HCC"
 		opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')
 		opt.analysis	<- "central-1016"
+		opt.analysis	<- "central-1017"
 		pooled.n		<- 1
 		
 		if(verbose)
@@ -2767,22 +2839,37 @@ prj.pipeline<- function()
 			cat(paste("\ncohort.size",cohort.size))
 			cat(paste("\ncohort.dur",cohort.dur))
 			cat(paste("\ntheta.EE.H0",theta.EE.H0))
-			cat(paste("\ntheta.EE.H1",theta.EE.H1))
-			cat(paste("\ntest.alpha",test.alpha))	
-			cat(paste("\np.nocontam",p.nocontam))			
+			cat(paste("\ntheta.EE.H1",theta.EE.H1))					
 		}	
 		#load df.hyp
 		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
 		tmp				<- load(file)
 		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		
-		set(df.prop.early, which(df.prop.early[,target=="central"]), "target", "central-1016")
-		set(df.prop.early, which(df.prop.early[,target=="optimistic"]), "target", "optimistic-1016")		
-		df.hyp			<- df.prop.early[, {
+		#set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")
+		#set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		
+		df.hyp			<- df.prop[, {
 												tmp<- c(which.min(E2E), which.max(E2E))
-												list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp])
+												list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])
 											}, by=c("country", "arm","target")]
-		#							
-		dummy			<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling=opt.design, opt.analysis=opt.analysis, pooled.n=pooled.n, df.hyp=df.hyp, dir.name=dir.name, verbose=verbose, resume=resume, standalone=1)
+		#load df.contam
+		df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]							
+		#		
+		sites			<- popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug, rtn.phylostudy=1 )
+		sites[which(sites[,"country"]==1),"country"]	<- "ZA"
+		sites[which(sites[,"country"]==2),"country"]	<- "SA"	
+		sites			<- as.data.table(sites)
+		#
+		samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)
+		samples.CD4		<- subset(samples.CD4, prediction=="central")
+		#
+		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)
+		#		
+		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)		
+		#					
+		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		
+		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)
+		dummy			<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=1)
+		
 		stop()
 	}
 	#
@@ -2828,17 +2915,16 @@ prj.pipeline<- function()
 		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
 		tmp				<- load(file)
 		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		
-		set(df.prop.early, which(df.prop.early[,target=="central"]), "target", "central-1016")
-		set(df.prop.early, which(df.prop.early[,target=="optimistic"]), "target", "optimistic-1016")		
-		df.hyp			<- df.prop.early[, {
+		set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")
+		set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		
+		df.hyp			<- df.prop[, {
 												tmp<- c(which.min(E2E), which.max(E2E))
 												list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp])
 											}, by=c("country", "arm","target")]
 		#	load high acute and low acute tip clusters for each community							
 		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling=opt.design, opt.analysis=opt.analysis, pooled.n=pooled.n, df.hyp=df.hyp, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)
 		tpc.obs			<- tmp$tpc.obs
-		theta.model.Hx	<- tmp$theta.model.Hx 
-		sites			<- tmp$sites
+		sites			<- merge( tmp$sites, tmp$theta.model.Hx, by="comid_old")		
 		#	if not sensitivity analysis, reset 'sigma' to zero
 		if(opt.sampling=="strue")
 			sites[,sigma:= 0]	
@@ -2894,17 +2980,17 @@ prj.pipeline<- function()
 		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
 		tmp				<- load(file)
 		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		
-		set(df.prop.early, which(df.prop.early[,target=="central"]), "target", "central-1016")
-		set(df.prop.early, which(df.prop.early[,target=="optimistic"]), "target", "optimistic-1016")		
-		df.hyp			<- df.prop.early[, {
+		set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")
+		set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		
+		df.hyp			<- df.prop[, {
 												tmp<- c(which.min(E2E), which.max(E2E))
 												list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp])
 											}, by=c("country", "arm","target")]
 		#	load high acute and low acute tip clusters for each community
 		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(theta.EE.H0, theta.EE.H1, cohort.dur, p.consent.coh, p.consent.clu, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, opt.sampling=opt.design, opt.analysis=opt.analysis, pooled.n=pooled.n, df.hyp=df.hyp, dir.name=dir.name, verbose=verbose, resume=1, standalone=0)
 		tpc.obs			<- tmp$tpc.obs
-		theta.model.Hx	<- tmp$theta.model.Hx 
-		sites			<- data.table(tmp$sites)
+		theta.model.Hx	<- tmp$theta.model.Hx
+		sites			<- merge( tmp$sites, tmp$theta.model.Hx, by="comid_old")		
 		
 		#	if not sensitivity analysis, reset 'sigma' to zero
 		if(opt.sampling=="strue")
@@ -2912,13 +2998,17 @@ prj.pipeline<- function()
 		else if(opt.sampling=="s5pc")
 			sites[,sigma:= as.numeric(unlist(sites[,"%avg",with=F]))*0.05]
 		else
-			stop("Unknown opt.samling")		
+			stop("Unknown opt.samling")
+		#	get true theta and Inc,E2E points used to generate tpc.obs
+		df.true			<- rbindlist( list( 	sites[, list(comid_old, acute=acute.H0, base=base.H0, Inc=mu.inc.rate.H0, E2E=mu.pE2E.H0, h="H0")], 
+												sites[, list(comid_old, acute=acute.H1, base=base.H1, Inc=mu.inc.rate.H1, E2E=mu.pE2E.H1, h="H1")] ) )
+		setkey(df.true, comid_old)						
 		#	get likelihood values for precomputed theta-E2E/Inc values for both H0 and H1
 		remote.signat	<- "Fri_Oct_11_10:30:19_2013"
 		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,sep='')
 		lkl.theta		<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=1, verbose=1, remote=0, remote.signat=remote.signat)
 		#	plot lkl surface and take 95% CI subset
-		lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.divH0H1(sites, lkl.theta, f.name, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, resume=1, verbose=1)
+		lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.divH0H1(sites, lkl.theta, f.name, df.true=df.true, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, resume=1, verbose=1)
 		stop()
 		
 	}

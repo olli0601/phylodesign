@@ -285,6 +285,71 @@ popart.get.sampled.transmissions<- function(x, method="PC and HCC", rtn.int=1, p
 	x2i
 }
 ###############################################################################
+popart.predicted.firstCD4.131017<- function(sites, opt.design="PC12+HCC", verbose=0)
+{
+	#
+	# 	CD4 by country, arm	from HCF	
+	#	assume all FirstCD4 counts exclude PC counts
+	#
+	samples.CD4<- data.table(	FirstCD4.all= c(4623, 4078, 1032, 7358, 6353, 1159),
+								FirstCD4.inc= c(710, 929, 106, 705, 926, 57),
+								country		= c("ZA","ZA","ZA","SA","SA","SA"),
+								arm			= c("A","B","C","A","B","C"),
+								prediction	= "central",
+								p.contam.act= 0.05	)		
+	#
+	# 	patients by country, arm	from PC
+	#	assume all PC patients provide samples to HCF
+	#
+	samples.PC<- data.table(	PC0.u			= c(rep(502,3),rep(574,3)),
+								PC0.t			= c(rep(166,3),rep(162,3)),
+								PC0.l			= c(rep(74,3),rep(82,3)),
+								PC12.u			= c(164,350,448,182,370,502),
+								PC12.t			= c(408,236,154,3454,274,150),
+								PC12.l			= c(134,138,140,148,152,154),
+								SC.y1			= c(32,46,64,22,32,46),
+								SC.y2			= c(22,40,58,16,28,42),
+								SC.y3			= c(20,36,54,14,26,38),									
+								country			= c("ZA","ZA","ZA","SA","SA","SA"),
+								arm				= c("A","B","C","A","B","C"),
+								prediction		= "central",
+								p.contam.act	= 0.05		)									
+	#
+	#	total incidence and prevalence by community
+	#
+	file		<- paste(CODE.HOME,"data","popart.SummaryResultsPerCommunity.central.131016.Rdata",sep='/')
+	tmp			<- load(file)
+	if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))
+	result		<- as.data.table(result)
+	setnames(result, c("comm.name","allocatedArms"), c("comid_old","arm"))
+	pred.model	<- result[, list( arm=arm, all.prev= round(adultpopsize*prevalence36m), all.inc= round(adultpopsize*sum(cumulincyear1, cumulincyear2, cumulincyear3)) ), by="comid_old" ]
+	pred.model[,prediction:= "central"]
+	set(pred.model, which(pred.model[,comid_old]=="Town II"), "comid_old", "TownII")
+	set(pred.model, which(pred.model[,comid_old]=="Delft South"), "comid_old", "DelftSouth")
+	
+	#	recalculate CD4 by community from HCF	
+	tmp			<- sites[,list( triplet.id=triplet.id, arm=arm, comid_old=comid_old, country=country,  adultsize=popsize*p.adults )]		
+	tmp			<- merge( tmp[,	list(adultsize.arm.country=sum(adultsize)), by= c("country","arm")], tmp, by=c("country","arm"))
+	samples.CD4	<- merge(samples.CD4, tmp, by=c("country","arm"))
+	samples.CD4	<- samples.CD4[, list(country=country, prediction=prediction, FirstCD4.all=round(FirstCD4.all*adultsize/adultsize.arm.country), FirstCD4.inc=round(FirstCD4.inc*adultsize/adultsize.arm.country)), by="comid_old"]
+	samples.CD4[, FirstCD4.prev:= FirstCD4.all-FirstCD4.inc]		
+	setnames(samples.CD4, c("FirstCD4.inc","FirstCD4.prev"), c("HCF.inc", "HCF.prev"))
+	samples.CD4	<- subset( samples.CD4, select=c(comid_old, country, prediction, HCF.inc, HCF.prev) )
+	#	recalculate CD4 by community from PC
+	samples.PC	<- merge(samples.PC, tmp, by=c("country","arm"))
+	samples.PC[, scale:= adultsize/adultsize.arm.country]
+	samples.PC	<- samples.PC[, list( prediction=prediction, PC0.prev= round(PC0.u*scale), PC12.prev= round((PC12.u+SC.y1)*scale), PC0.inc= round((SC.y1+SC.y2+SC.y3)*scale), PC12.inc=round((SC.y2+SC.y3)*scale) ), by="comid_old"]
+	#	add design column
+	samples.PC	<- rbindlist( list( 	samples.PC[, list(comid_old=comid_old, prediction=prediction, design="PC+HCC", PC.prev=PC0.prev,  PC.inc=PC0.inc)],
+					samples.PC[, list(comid_old=comid_old, prediction=prediction, design="PC12+HCC", PC.prev=PC12.prev, PC.inc=PC12.inc)]	)		)
+	#	add PC and HCF samples
+	samples.CD4	<- merge(samples.PC, samples.CD4, by=c("comid_old","prediction"))
+	samples.CD4	<- merge(samples.CD4, pred.model, by=c("comid_old","prediction"))
+	#
+	samples.CD4	<- subset(samples.CD4, design==opt.design)
+	samples.CD4
+}	
+###############################################################################
 popart.predicted.firstCD4<- function(version= "130627")
 {
 	if(version=="130627")	
@@ -370,6 +435,45 @@ popart.predicted.sequences<- function(sites, first.CD4, p.consent.PC, p.consent.
 	s[, "%inc"]			<- apply(s[, c("PC.inc","nonPC.inc")],1,sum)	/ 	first.CD4[,"total inc"]
 	s[, "%avg"]			<- (s[, "%prev"] + s[, "%inc"])/2				
 	as.data.frame(s[,-c(1,2)])	
+}
+###############################################################################
+popart.set.hypo<- function(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=NULL)
+{
+	if(opt.analysis=="1040")
+	{
+		sites[,"mu.inc.rate.H0"]	<- sites[,inc.rate]
+		sites[,"mu.inc.rate.H1"]	<- 0.013
+		sites[,"mu.pE2E.H0"]		<- theta.EE.H0
+		sites[,"mu.pE2E.H1"]		<- theta.EE.H1
+	}
+	else
+	{
+		if(is.null(df.hyp))								stop("df.hyp is NULL")
+		opt.analysis<- ifelse( grepl("central",opt.analysis), "central", ifelse( grepl("optimistic",opt.analysis), "optimistic", "pessimistic" ) )
+		if(!opt.analysis%in%unique(df.hyp[,target]))	stop("Unknown target in df.hyp")
+		tmp			<- subset(df.hyp,target==opt.analysis & h=="H0", c(country, arm, Inc, E2E))	
+		setnames(tmp,	c("Inc","E2E"),	c("mu.inc.rate.H0","mu.pE2E.H0"))
+		sites		<- merge(sites, tmp, by=c("country","arm"))
+		tmp			<- subset(df.hyp,target==opt.analysis & h=="H1", c(country, arm, Inc, E2E))	
+		setnames(tmp,	c("Inc","E2E"),	c("mu.inc.rate.H1","mu.pE2E.H1"))
+		sites		<- merge(sites, tmp, by=c("country","arm"))				
+	}	
+	sites		<- sites[order(sites[,triplet.id],sites[,arm]),]
+	sites
+}
+###############################################################################
+popart.predicted.sequences.130717<- function(samples.CD4, df.nocontam, opt.analysis, p.lab)
+{
+	opt.prediction	<- ifelse( grepl("central",opt.analysis), "central", ifelse( grepl("optimistic",opt.analysis), "optimistic", "pessimistic" ) )
+	tmp				<- subset(df.nocontam, target==opt.prediction, c(country, arm, p.nocontam))
+	samples.seq		<- subset(samples.CD4, prediction==opt.prediction)
+	samples.seq		<- merge(samples.seq, tmp, by=c("country","arm"))
+	samples.seq		<- samples.seq[, list(country=country, arm=arm, PC.prev=round(PC.prev*p.lab*p.nocontam), PC.inc=round(PC.inc*p.lab*p.nocontam), HCF.inc=round(HCF.inc*p.lab*p.nocontam), HCF.prev=round(HCF.prev*p.lab*p.nocontam), all.prev=all.prev, all.inc=all.inc), by="comid_old"]
+	samples.seq[,"%prev":=round( samples.seq[, (PC.prev+HCF.prev) / all.prev], d=3)]
+	samples.seq[,"%inc":=round( samples.seq[, (PC.inc+HCF.inc) / all.inc], d=3)]
+	samples.seq[,"%avg":=round( samples.seq[, (PC.inc+HCF.inc+PC.prev+HCF.prev) / (all.prev+all.inc)], d=3)]
+	setnames(samples.seq, c("HCF.inc","HCF.prev"), c("nonPC.inc","nonPC.prev") )		#to match previous data table
+	samples.seq
 }
 ###############################################################################
 popart.sampling.init<- function(x, p.consent.PC, p.consent.HCC, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method="PC and HCC")
