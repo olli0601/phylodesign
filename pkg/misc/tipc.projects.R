@@ -796,7 +796,7 @@ prj.popart.powercalc.by.acutelklratio.lkl4Precomputed<- function(sites=NULL, tpc
 							#abc.struct[,sample:= rnorm(nrow(abc.struct),mean=as.numeric(sites[i,"%avg",with=F]), sd=sites[i,sigma])]
 							abc.struct								
 						}) )
-		#print(lkl.theta)
+		print(lkl.theta)
 		if(remote)
 		{
 			#save job specifics to temporary file					
@@ -2811,7 +2811,7 @@ prj.pipeline<- function()
 	#
 	#	compute representative theta corresponding to H0 and H1 and simulate tip cluster table for this theta
 	#
-	if(1)	
+	if(0)	
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
