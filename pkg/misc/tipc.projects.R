@@ -2944,12 +2944,12 @@ prj.pipeline<- function()
 		sites			<- merge( tmp$sites, tmp$theta.model.Hx, by="comid_old")		
 		setkey(sites, triplet.id, arm)
 		#	if not sensitivity analysis, reset 'sigma' to zero
-		if(opt.sampling=="strue")
+		if(grepl("strue", opt.sampling))
 			sites[,sigma:= 0]	
 		else if(opt.sampling=="s5pc")
 			sites[,sigma:= as.numeric(unlist(sites[,"%avg",with=F]))*0.05]
 		else
-			stop("Unknown opt.samling")
+			stop("Unknown opt.sampling")
 		#print(sites)
 		#	get likelihood values for precomputed theta-E2E/Inc values
 		remote.signat		<- "Fri_Oct_11_10:30:19_2013"
