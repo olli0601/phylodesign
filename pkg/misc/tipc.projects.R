@@ -2811,7 +2811,7 @@ prj.pipeline<- function()
 	#
 	#	compute representative theta corresponding to H0 and H1 and simulate tip cluster table for this theta
 	#
-	if(0)	
+	if(1)	
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
@@ -2832,7 +2832,12 @@ prj.pipeline<- function()
 		opt.design		<- "PC12+HCC"
 		opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')
 		opt.analysis	<- "central-1016"
-		opt.analysis	<- "central-1017"		
+		opt.analysis	<- "central-1017"
+		opt.sampling	<- "strue"
+		opt.sampling	<- "struefx20"
+		opt.sampling	<- "struefx40"
+		opt.sampling	<- "struefx60"
+		opt.sampling	<- "struefx80"
 		#load df.hyp
 		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
 		tmp				<- load(file)
@@ -2853,8 +2858,16 @@ prj.pipeline<- function()
 		samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)
 		samples.CD4		<- subset(samples.CD4, prediction=="central")
 		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)
-		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)		
-		#					
+		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)
+		#	adjust sampling percentages if required
+		if(grepl("fx", opt.sampling))
+		{
+			tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100
+			if(verbose)	cat(paste("\nSetting sampling percentages to", tmp))
+			set(samples.seq, NULL, c("%prev","%inc","%avg"), tmp)
+			p.lab<- p.consent.coh<- tmp
+		}		
+		#			
 		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		
 		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)
 		dummy			<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=1)
