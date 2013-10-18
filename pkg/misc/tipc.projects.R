@@ -758,7 +758,7 @@ prj.popart.powercalc.by.acutelklratio.lkl4Precomputed<- function(sites=NULL, tpc
 	m.type			<- "Acute"
 	hpc.walltime	<- 32
 	hpc.mem			<- "1600mb"
-	hpc.q			<- NA	#"pqeph"
+	hpc.q			<- "pqeph"
 	f.name.remote	<- paste(f.name,'_tmp_',remote.signat,sep='')
 	if(resume)
 	{
@@ -2811,7 +2811,7 @@ prj.pipeline<- function()
 	#
 	#	compute representative theta corresponding to H0 and H1 and simulate tip cluster table for this theta
 	#
-	if(1)	
+	if(0)	
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
@@ -2838,6 +2838,7 @@ prj.pipeline<- function()
 		opt.sampling	<- "struefx40"
 		opt.sampling	<- "struefx60"
 		opt.sampling	<- "struefx80"
+		opt.sampling	<- "struefx99"
 		#load df.hyp
 		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
 		tmp				<- load(file)
@@ -2900,6 +2901,11 @@ prj.pipeline<- function()
 		opt.analysis	<- "central-1016"
 		opt.analysis	<- "central-1017"
 		opt.sampling	<- "strue"
+		opt.sampling	<- "struefx20"
+		opt.sampling	<- "struefx40"
+		#opt.sampling	<- "struefx60"
+		#opt.sampling	<- "struefx80"
+		#opt.sampling	<- "struefx99"		
 		#opt.sampling	<- "s5pc"					
 		#load df.hyp
 		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
@@ -2921,13 +2927,22 @@ prj.pipeline<- function()
 		samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)
 		samples.CD4		<- subset(samples.CD4, prediction=="central")
 		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)
-		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)		
+		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)	
+		#	adjust sampling percentages if required
+		if(grepl("fx", opt.sampling))
+		{
+			tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100
+			if(verbose)	cat(paste("\nSetting sampling percentages to", tmp))
+			set(samples.seq, NULL, c("%prev","%inc","%avg"), tmp)
+			p.lab<- p.consent.coh<- tmp
+		}	
 		#	load high acute and low acute tip clusters for each community					
 		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		
 		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)
 		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)		
 		tpc.obs			<- tmp$tpc.obs
 		sites			<- merge( tmp$sites, tmp$theta.model.Hx, by="comid_old")		
+		setkey(sites, triplet.id, arm)
 		#	if not sensitivity analysis, reset 'sigma' to zero
 		if(opt.sampling=="strue")
 			sites[,sigma:= 0]	
