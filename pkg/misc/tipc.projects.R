@@ -796,6 +796,19 @@ prj.popart.powercalc.by.acutelklratio.lkl4Precomputed<- function(sites=NULL, tpc
 							#abc.struct[,sample:= rnorm(nrow(abc.struct),mean=as.numeric(sites[i,"%avg",with=F]), sd=sites[i,sigma])]
 							abc.struct								
 						}) )
+		#	add pool lkl.theta if there are pools in tpc.obs
+		if(length(setdiff( names(tpc.obs), as.character(sites[,comid_old])) ))
+		{
+			tmp			<- rbind( sites[, list(pool=arm) ,by="comid_old"], sites[, list(pool=paste(arm,country,sep='')) ,by="comid_old"] )
+			setkey(tmp, pool)
+			tmp			<- unique(tmp)		
+			tmp			<- tmp[, 	{
+										z	<- comid_old					
+										subset(lkl.theta, comid_old==z, select=c(acute,base,Inc,E2E,sample))									
+									},by="pool"]
+			setnames(tmp, "pool", "comid_old")
+			lkl.theta	<- rbind(lkl.theta, tmp, use.names=T)
+		}		
 		print(lkl.theta)
 		if(remote)
 		{
@@ -803,35 +816,33 @@ prj.popart.powercalc.by.acutelklratio.lkl4Precomputed<- function(sites=NULL, tpc
 			if(verbose)	cat(paste("\nremote job. saving lkl.theta to file", f.name.remote))			
 			save(lkl.theta, sites,  tpc.obs, cohort.dur, file=paste(f.name.remote,".R",sep=''))
 			
-			#call acute.loglkl.batch remotely
-			dummy			<- lapply(seq_len(nrow(sites)),function(i)
+			#call acute.loglkl.batch remotely			
+			dummy			<- lapply(rev(names(tpc.obs)),function(x)
 					{														
 						#print( mlkl.theta[[i]] )
 						#H0.H0
-						cmd			<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',sites[i,comid_old],"_H0",".R",sep=''),	sites[i,comid_old],	"H0")
+						cmd			<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',x,"_H0",".R",sep=''),	x,	"H0")
 						cat(cmd)
 						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=hpc.walltime, hpc.mem=hpc.mem, hpc.load="module load R/2.15",hpc.nproc=1, hpc.q=hpc.q)
 						prj.hpccaller(paste(CODE.HOME,"misc",sep='/'), paste("phd_l0",paste(strsplit(date(),split=' ')[[1]],collapse='_',sep=''),"qsub",sep='.'), cmd)
 						#H0.H1
-						cmd			<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',sites[i,comid_old],"_H1",".R",sep=''),	sites[i,comid_old],	"H1")
+						cmd			<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',x,"_H1",".R",sep=''),	x,	"H1")
 						cat(cmd)
 						cmd			<- prj.hpcwrapper(cmd, hpc.walltime=hpc.walltime, hpc.mem=hpc.mem, hpc.load="module load R/2.15",hpc.nproc=1, hpc.q=hpc.q)
 						prj.hpccaller(paste(CODE.HOME,"misc",sep='/'), paste("phd_l1",paste(strsplit(date(),split=' ')[[1]],collapse='_',sep=''),"qsub",sep='.'), cmd)
 					})
 		}
 		else
-		{	
-			lkl.theta.comid		<- seq_len(nrow(sites))[-which(sites$comid_old=="Ikhwezi")]			
-			lkl.theta			<- rbindlist( lapply(lkl.theta.comid,function(i)
-					{	
-						site		<- sites[i,comid_old]
-						tmp			<- subset(lkl.theta, comid_old==site)
-						if(verbose)	cat(paste("\nacute.loglkl.batch, process ",site,"\nnumber lkl evaluations: ",nrow(tmp)))						
-						argv		<<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',sites[i,comid_old],"_H0",".R",sep=''),	sites[i,comid_old],	"H0")
+		{				
+			lkl.theta			<- rbindlist( lapply(names(tpc.obs),function(x)
+					{							
+						tmp			<- subset(lkl.theta, comid_old==x)
+						if(verbose)	cat(paste("\nacute.loglkl.batch, process ",x,"\nnumber lkl evaluations: ",nrow(tmp)))						
+						argv		<<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',x,"_H0",".R",sep=''),	x,	"H0")
 						argv		<<- unlist(strsplit(argv,' '))						
 						ans			<- prog.acute.loglkl.batch()
 						ans[, h:="H0"]
-						argv		<<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',sites[i,comid_old],"_H1",".R",sep=''),	sites[i,comid_old],	"H1")
+						argv		<<- prog.acute.loglkl.batch.cmd(CODE.HOME, paste(f.name.remote,".R",sep=''),	paste(f.name.remote,'_',x,"_H1",".R",sep=''),	x,	"H1")
 						argv		<<- unlist(strsplit(argv,' '))						
 						tmp			<- prog.acute.loglkl.batch()
 						tmp[, h:="H1"]
@@ -1203,11 +1214,18 @@ prog.acute.loglkl.batch<- function()
 		if(verbose)	cat(paste("\nloading file",infile))
 		load(infile)
 		
-		i	<- which( sites[,comid_old]==site )
-		tmp	<- subset(lkl.theta, comid_old==site)
+		tpc.obs		<- tpc.obs[[site]][[tpcHx]]
+		lkl.theta	<- subset(lkl.theta, comid_old==site)
 		if(verbose)	cat(paste("\nprocessing"))
-		if(verbose)	print(tmp)
-		ans	<- acute.loglkl.batch(sites[i,comid_old], tpc.obs[[i]][[tpcHx]], cohort.dur, tmp, clu.closure= 12, verbose=verbose)
+		if(verbose)	print(tpc.obs)		
+		if(verbose)	print(lkl.theta)
+		
+		tmp			<- rbind( sites[, list(pool=arm) ,by="comid_old"], sites[, list(pool=paste(arm,country,sep='')) ,by="comid_old"] )
+		setkey(tmp, pool)
+		tmp			<- unique(tmp)
+		if(site %in% tmp[,pool])
+			site	<- subset(tmp,pool==site)[,comid_old]
+		ans	<- acute.loglkl.batch(site, tpc.obs, cohort.dur, lkl.theta, clu.closure= 12, verbose=verbose)
 		if(verbose)	cat(paste("\nsaving output to file",outfile))
 		save(ans, file=outfile)
 	}
@@ -2901,12 +2919,16 @@ prj.pipeline<- function()
 		opt.analysis	<- "central-1016"
 		opt.analysis	<- "central-1017"
 		opt.sampling	<- "strue"
-		opt.sampling	<- "struefx20"
-		opt.sampling	<- "struefx40"
+		#opt.sampling	<- "struefx40"
 		#opt.sampling	<- "struefx60"
 		#opt.sampling	<- "struefx80"
-		#opt.sampling	<- "struefx99"		
-		#opt.sampling	<- "s5pc"					
+		#opt.sampling	<- "struefx99"
+		#opt.sampling	<- "s5pc"
+		#opt.sampling	<- "s5pcfx40"
+		#opt.sampling	<- "s5pcfx60"
+		#opt.sampling	<- "s5pcfx80"
+		#opt.sampling	<- "s5pcfx99"		
+									
 		#load df.hyp
 		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
 		tmp				<- load(file)
@@ -2946,20 +2968,23 @@ prj.pipeline<- function()
 		#	if not sensitivity analysis, reset 'sigma' to zero
 		if(grepl("strue", opt.sampling))
 			sites[,sigma:= 0]	
-		else if(opt.sampling=="s5pc")
+		else if(grepl("s5pc", opt.sampling))
 			sites[,sigma:= as.numeric(unlist(sites[,"%avg",with=F]))*0.05]
 		else
 			stop("Unknown opt.sampling")
-		#print(sites)
+		#	add pools
+		tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(tpc.obs))
+		#	take out Ikhwezi
+		tpc.obs			<- tpc.obs[names(tpc.obs)!="Ikhwezi"]
 		#	get likelihood values for precomputed theta-E2E/Inc values
 		remote.signat		<- "Fri_Oct_11_10:30:19_2013"
 		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,sep='')
-		dummy				<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=resume, verbose=verbose, remote=1, remote.signat=remote.signat)
+		dummy				<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=0, verbose=verbose, remote=1, remote.signat=remote.signat)
 		#	remote, need to collect results in next step
 		stop()		
 	}	
 	#
-	#	
+	#	compute divergence between H0 and H1 for each of the communities
 	#	
 	if(0)
 	{
@@ -2984,7 +3009,11 @@ prj.pipeline<- function()
 		opt.analysis	<- "central-1016"
 		opt.analysis	<- "central-1017"
 		opt.sampling	<- "strue"
-		opt.sampling	<- "s5pc"					
+		opt.sampling	<- "struefx40"
+		#opt.sampling	<- "struefx60"
+		#opt.sampling	<- "struefx80"
+		#opt.sampling	<- "struefx99"				
+		#opt.sampling	<- "s5pc"					
 		#load df.hyp
 		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
 		tmp				<- load(file)
@@ -3005,20 +3034,29 @@ prj.pipeline<- function()
 		samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)
 		samples.CD4		<- subset(samples.CD4, prediction=="central")
 		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)
-		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)		
+		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)
+		#	adjust sampling percentages if required
+		if(grepl("fx", opt.sampling))
+		{
+			tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100
+			if(verbose)	cat(paste("\nSetting sampling percentages to", tmp))
+			set(samples.seq, NULL, c("%prev","%inc","%avg"), tmp)
+			p.lab<- p.consent.coh<- tmp
+		}
 		#	load high acute and low acute tip clusters for each community					
 		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		
 		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)
 		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)		
 		tpc.obs			<- tmp$tpc.obs
-		sites			<- merge( tmp$sites, tmp$theta.model.Hx, by="comid_old")		
+		sites			<- merge( tmp$sites, tmp$theta.model.Hx, by="comid_old")
+		setkey(sites, triplet.id, arm)
 		#	if not sensitivity analysis, reset 'sigma' to zero
-		if(opt.sampling=="strue")
-			sites[,sigma:= 0]	
+		if(grepl("strue", opt.sampling))
+			sites[,sigma:= 0]	 
 		else if(opt.sampling=="s5pc")
 			sites[,sigma:= as.numeric(unlist(sites[,"%avg",with=F]))*0.05]
 		else
-			stop("Unknown opt.samling")		
+			stop("Unknown opt.sampling")
 		#	get likelihood values for precomputed theta-E2E/Inc values
 		remote.signat		<- "Fri_Oct_11_10:30:19_2013"
 		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,sep='')

@@ -691,6 +691,52 @@ popart.get.sampled.transmissions.p<- function(pop.size,f.coh,f.susc,f.untreated,
 	linked
 }	
 ###############################################################################
+popart.pool.tpc.obs<- function(tpc.obs)
+{
+	#convert tpc.obs into data.table
+	tpc.mxcol	<- max(sapply(tpc.obs, function(x)	max(ncol(x$H0), ncol(x$H1))))
+	tmp			<- lapply( seq_along(tpc.obs), function(i)
+			{
+				x				<- tpc.obs[[i]][["H0"]]
+				tmp				<- cbind( x, matrix(0, ncol= tpc.mxcol-ncol(x), nrow=nrow(x)) )
+				colnames(tmp)	<- paste("ns",seq.int(0, ncol(tmp)-1),sep='')
+				ans				<- cbind( as.data.table(tmp), index=rownames(tmp), h="H0", comid_old=names(tpc.obs)[i] )
+				x				<- tpc.obs[[i]][["H1"]]
+				tmp				<- cbind( x, matrix(0, ncol= tpc.mxcol-ncol(x), nrow=nrow(x)) )
+				colnames(tmp)	<- paste("ns",seq.int(0, ncol(tmp)-1),sep='')
+				ans				<- rbind(ans, cbind( as.data.table(tmp), index=rownames(tmp), h="H1", comid_old=names(tpc.obs)[i] ))
+				ans
+			})
+	tpc.obs		<- rbindlist( tmp )
+	tpc.obs		<- merge(subset(sites, select=c(comid_old, arm, country)), tpc.obs, by="comid_old")
+	#	form pools
+	tpc.pools	<- 	c( 	lapply(c("A","B","C"), function(x) 	subset(tpc.obs, arm==x) ), 
+			lapply(c("A","B","C"), function(x) 	subset(tpc.obs, arm==x & country=="SA") ),
+			lapply(c("A","B","C"), function(x) 	subset(tpc.obs, arm==x & country=="ZA") )	)
+	#	for each pool, take sum by index and hypothesis
+	tpc.pools	<- lapply(tpc.pools, function(x)
+			{
+				tmp	<- colnames(x)[grepl("ns",colnames(x))]		
+				tmp <- paste(tmp,"=sum(",tmp,")", sep='', collapse=",")
+				eval(parse(text=paste('x[, list(',tmp,'),by=c("h","index")]', sep='')))					
+			})
+	#	for each pool, convert back to matrices
+	tpc.pools	<- lapply(tpc.pools, function(x)
+			{
+				ans		<- list()
+				ans$H0	<- as.matrix( subset(x, h=="H0")[,colnames(x)[grepl("ns",colnames(x))], with=F] )
+				ans$H0	<- ans$H0[,apply(ans$H0,2,sum)>0]		
+				ans$H1	<- as.matrix( subset(x, h=="H1")[,colnames(x)[grepl("ns",colnames(x))], with=F] )
+				ans$H1	<- ans$H1[,apply(ans$H1,2,sum)>0]
+				rownames(ans$H0)	<- subset(x, h=="H0")[, index]
+				rownames(ans$H1)	<- subset(x, h=="H1")[, index]
+				ans
+			})
+	#	set names		
+	names(tpc.pools)	<- c("A","B","C","ASA","BSA","CSA","AZA","BZA","CZA")
+	tpc.pools
+}
+###############################################################################
 #'	pool the number of transmissions according to a pooling option
 #' 	@param sites	data frame of trial sites
 #' 	@param inc		matrix of transmissions
