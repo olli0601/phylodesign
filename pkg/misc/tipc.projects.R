@@ -2973,7 +2973,7 @@ prj.pipeline<- function()
 		else
 			stop("Unknown opt.sampling")
 		#	add pools
-		tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(tpc.obs))
+		tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))
 		#	take out Ikhwezi
 		tpc.obs			<- tpc.obs[names(tpc.obs)!="Ikhwezi"]
 		#	get likelihood values for precomputed theta-E2E/Inc values

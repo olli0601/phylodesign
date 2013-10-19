@@ -691,7 +691,7 @@ popart.get.sampled.transmissions.p<- function(pop.size,f.coh,f.susc,f.untreated,
 	linked
 }	
 ###############################################################################
-popart.pool.tpc.obs<- function(tpc.obs)
+popart.pool.tpc.obs<- function(sites, tpc.obs)
 {
 	#convert tpc.obs into data.table
 	tpc.mxcol	<- max(sapply(tpc.obs, function(x)	max(ncol(x$H0), ncol(x$H1))))
