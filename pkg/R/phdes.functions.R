@@ -555,6 +555,33 @@ popart.predicted.sequences.130717<- function(samples.CD4, df.nocontam, opt.analy
 	samples.seq
 }
 ###############################################################################
+popart.predicted.sequences.131023<- function(samples.CD4, df.nocontam, opt.analysis, p.lab, p.inpatient.c=0.95, p.inpatient.p=0.9)
+{	
+	#determine p.nocontam among incident
+	opt.prediction	<- ifelse( grepl("central",opt.analysis), "central", ifelse( grepl("optimistic",opt.analysis), "optimistic", "pessimistic" ) )
+	tmp				<- subset(df.nocontam, target==opt.prediction, c(country, arm, p.nocontam))
+	setnames(tmp, "p.nocontam", "p.nocontam.inc")
+	#add p.inpatient
+	df.inpatient	<- data.table(target=c("optimistic","central","pessimistic"), p.inpatient=c(p.inpatient.c,p.inpatient.c,p.inpatient.p))
+	tmp[,p.inpatient:= subset(df.inpatient, target==opt.prediction)[1,p.inpatient]]
+	#determine p.nocontam.prev among prevalent
+	tmp[,p.nocontam.prev:= subset(df.nocontam, arm=='C' & target=="central" )[1, p.nocontam]]
+	
+	samples.seq		<- subset(samples.CD4, prediction==opt.prediction)
+	samples.seq		<- merge(samples.seq, tmp, by=c("country","arm"))
+	samples.seq		<- samples.seq[, list(	country=country, arm=arm, all.prev=all.prev, all.inc=all.inc,
+											PC.prev=round(PC.prev*p.lab*p.nocontam.prev), 
+											PC.inc=round(PC.inc*p.lab*p.nocontam.inc), 
+											HCF.inc=round(HCF.inc*p.lab*p.nocontam.inc*p.inpatient), 
+											HCF.prev=round(HCF.prev*p.lab*p.nocontam.prev*p.inpatient)), by="comid_old"]
+	samples.seq[,"pc.prev":=round( samples.seq[, (PC.prev+HCF.prev) / all.prev], d=3)]
+	samples.seq[,"pc.inc":=round( samples.seq[, (PC.inc+HCF.inc) / all.inc], d=3)]
+	#samples.seq[,"%avg":=round( samples.seq[, (PC.inc+HCF.inc+PC.prev+HCF.prev) / (all.prev+all.inc)], d=3)]
+	samples.seq		<- merge(samples.seq, samples.seq[, list(pc.avg=min(pc.prev,pc.inc)), by="comid_old"], by="comid_old")
+	setnames(samples.seq, c("HCF.inc","HCF.prev","pc.prev","pc.inc","pc.avg"), c("nonPC.inc","nonPC.prev","%prev","%inc","%avg") )		#to match previous data table
+	samples.seq	
+}
+###############################################################################
 popart.sampling.init<- function(x, p.consent.PC, p.consent.HCC, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method="PC and HCC")
 {
 	s<- matrix(NA,nrow=nrow(x),ncol=7,dimnames= list(x$comid, c("visit.prev","visit.inc","PC.prev","nonPC.prev","PC.inc","nonPC.inc","baseline")))

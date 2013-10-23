@@ -1385,31 +1385,51 @@ prj.popart.compute.numbers.for.protocol<- function()
 	file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
 	tmp				<- load(file)
 	if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		
-	set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")
-	set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		
+	#set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")
+	#set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		
 	df.hyp			<- df.prop[, {
 									tmp<- c(which.min(E2E), which.max(E2E))
 									list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])
 								}, by=c("country", "arm","target")]
-	#compute df.hypotheses on O2E						
-	df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]							
-	
-	
+	#compute df.hypotheses on O2E
+	df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]
 	sites			<- popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug, rtn.phylostudy=1 )
 	sites[which(sites[,"country"]==1),"country"]	<- "ZA"
 	sites[which(sites[,"country"]==2),"country"]	<- "SA"	
 	sites			<- as.data.table(sites)
+
+	if(1)
+	{
+		#Table 4.7 --> no adjustment for contamination
+		set(df.nocontam, NULL, "p.nocontam", 1)
+		
+		#samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)
+		samples.CD4		<- popart.predicted.firstCD4.131023(sites, opt.design)
+		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)
+		samples.seq		<- merge( subset( sites, select=c(comid_old, triplet.id) ), samples.seq, by="comid_old")
+		setkey(samples.seq, triplet.id, arm)
+		#samples by country and arm
+		samples.seq[, list(PC.prev=sum(PC.prev), PC.inc=sum(PC.inc), nonPC.prev=sum(nonPC.prev), nonPC.inc=sum(nonPC.inc), all.prev=sum(all.prev), all.inc=sum(all.inc)), by=c("country","arm")]
+		#total sum
+		samples.seq[, list(PC.prev=sum(PC.prev), PC.inc=sum(PC.inc), nonPC.prev=sum(nonPC.prev), nonPC.inc=sum(nonPC.inc), all.prev=sum(all.prev), all.inc=sum(all.inc))]		
+	}
+	if(1)
+	{
+		#with adjustment for contamination and outpatients
 	
-	set(df.nocontam, NULL, "p.nocontam", 1)
+		#samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)
+		samples.CD4		<- popart.predicted.firstCD4.131023(sites, opt.design)
+		samples.seq		<- popart.predicted.sequences.131023(samples.CD4, df.nocontam, opt.analysis, p.lab, p.inpatient.c=0.95, p.inpatient.p=0.9)
+		samples.seq		<- merge( subset( sites, select=c(comid_old, triplet.id) ), samples.seq, by="comid_old")
+		setkey(samples.seq, triplet.id, arm)		
+		setnames(samples.seq, c("%prev","%inc","%avg"), c("pc.prev","pc.inc","pc.avg"))
+		samples.seq		<- samples.seq[, list(PC.prev=sum(PC.prev), PC.inc=sum(PC.inc), nonPC.prev=sum(nonPC.prev), nonPC.inc=sum(nonPC.inc), all.prev=sum(all.prev), all.inc=sum(all.inc), pc.prev=mean(pc.prev), pc.inc=mean(pc.inc), pc.avg=mean(pc.avg)), by=c("country","arm")]
+		samples.seq		<- merge(samples.seq, subset(df.nocontam, target=="central", c(arm, country, p.nocontam)), by=c("country","arm"))
+		print(samples.seq)
+		#total sum
+		samples.seq[, list(PC.prev=sum(PC.prev), PC.inc=sum(PC.inc), nonPC.prev=sum(nonPC.prev), nonPC.inc=sum(nonPC.inc), all.prev=sum(all.prev), all.inc=sum(all.inc))]
+	}	
 	
-	samples.CD4		<- popart.predicted.firstCD4.131017(sites)
-	samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)
-	samples.seq		<- merge( subset( sites, select=c(comid_old, triplet.id) ), samples.seq, by="comid_old")
-	setkey(samples.seq, triplet.id, arm)
-	#samples by country and arm
-	samples.seq[, list(PC.prev=sum(PC.prev), PC.inc=sum(PC.inc), nonPC.prev=sum(nonPC.prev), nonPC.inc=sum(nonPC.inc), all.prev=sum(all.prev), all.inc=sum(all.inc)), by=c("country","arm")]
-	#total sum
-	samples.seq[, list(PC.prev=sum(PC.prev), PC.inc=sum(PC.inc), nonPC.prev=sum(nonPC.prev), nonPC.inc=sum(nonPC.inc), all.prev=sum(all.prev), all.inc=sum(all.inc))]	
 }
 ###############################################################################
 prj.popart.convert.from.Anne<- function()
@@ -2857,6 +2877,7 @@ prj.pipeline<- function()
 		#opt.analysis	<- "central-1016"
 		#opt.analysis	<- "central-1017"
 		opt.sampling	<- "strue"
+		#opt.sampling	<- "struefx10"
 		#opt.sampling	<- "struefx20"
 		#opt.sampling	<- "struefx40"
 		#opt.sampling	<- "struefx60"
@@ -2880,8 +2901,9 @@ prj.pipeline<- function()
 		sites[which(sites[,"country"]==2),"country"]	<- "SA"	
 		sites			<- as.data.table(sites)
 		samples.CD4		<- popart.predicted.firstCD4.131023(sites, opt.design)	
-		#samples.CD4	<- popart.predicted.firstCD4.131017(sites, opt.design)	
-		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)
+		#samples.CD4	<- popart.predicted.firstCD4.131017(sites, opt.design)			
+		samples.seq		<- popart.predicted.sequences.131023(samples.CD4, df.nocontam, opt.analysis, p.lab, p.inpatient.c=0.95, p.inpatient.p=0.9)
+		#samples.seq	<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)
 		samples.CD4		<- subset(samples.CD4, prediction=="central")			
 		#samples.CD4	<- subset(samples.CD4, prediction=="optimistic")								
 		sites			<- popart.set.hypo(sites, opt.analysis, df.hyp=df.hyp)
@@ -2922,16 +2944,17 @@ prj.pipeline<- function()
 		p.consent.coh	<- 0.9*0.9
 		#
 		opt.design		<- "PC12+HCC"
-		opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')
+		opt.analysis	<- "1040"
 		opt.analysis	<- "central-1016"
 		opt.analysis	<- "central-1017"
-		#opt.analysis	<- "central-1023"
+		opt.analysis	<- "central-SC12-1023"
+		opt.analysis	<- "central-SC45-1023"
 		opt.sampling	<- "strue"
 		#opt.sampling	<- "struefx40"
 		#opt.sampling	<- "struefx60"
 		#opt.sampling	<- "struefx80"
 		#opt.sampling	<- "struefx99"
-		opt.sampling	<- "s5pc"
+		#opt.sampling	<- "s5pc"
 									
 		#load df.hyp
 		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
@@ -2939,23 +2962,20 @@ prj.pipeline<- function()
 		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		
 		#set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")
 		#set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		
-		df.hyp			<- df.prop[, {
-					tmp<- c(which.min(E2E), which.max(E2E))
-					list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])
-				}, by=c("country", "arm","target")]
-		#load df.contam
+		df.hyp			<- NULL		#df.prop[, {	tmp<- c(which.min(E2E), which.max(E2E));  list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])	}, by=c("country", "arm","target")]
 		df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]							
 		#		
 		sites			<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )
 		sites[which(sites[,"country"]==1),"country"]	<- "ZA"
 		sites[which(sites[,"country"]==2),"country"]	<- "SA"	
 		sites			<- as.data.table(sites)
-		if(grepl("1023", opt.analysis))		samples.CD4	<- popart.predicted.firstCD4.131023(sites, opt.design)
-		else								samples.CD4	<- popart.predicted.firstCD4.131017(sites, opt.design)
-		if(grepl("central", opt.analysis))	samples.CD4	<- subset(samples.CD4, prediction=="central")
-		else								samples.CD4	<- subset(samples.CD4, prediction=="optimistic")		
-		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)
-		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)	
+		samples.CD4		<- popart.predicted.firstCD4.131023(sites, opt.design)
+		#samples.CD4	<- popart.predicted.firstCD4.131017(sites, opt.design)
+		samples.seq		<- popart.predicted.sequences.131023(samples.CD4, df.nocontam, opt.analysis, p.lab, p.inpatient.c=0.95, p.inpatient.p=0.9)
+		#samples.seq	<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)
+		samples.CD4		<- subset(samples.CD4, prediction=="central")
+		#samples.CD4	<- subset(samples.CD4, prediction=="optimistic")				
+		sites			<- popart.set.hypo(sites, opt.analysis, df.hyp=df.hyp)	
 		#	adjust sampling percentages if required
 		if(grepl("fx", opt.sampling))
 		{
@@ -2967,17 +2987,13 @@ prj.pipeline<- function()
 		#	load high acute and low acute tip clusters for each community					
 		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		
 		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)
-		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=0, standalone=0)		
+		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=0, standalone=0, nrep=200)		
 		tpc.obs			<- tmp$tpc.obs
 		sites			<- merge( tmp$sites, tmp$theta.model.Hx, by="comid_old")		
 		setkey(sites, triplet.id, arm)
 		#	if not sensitivity analysis, reset 'sigma' to zero
-		if(grepl("strue", opt.sampling))
-			sites[,sigma:= 0]	
-		else if(grepl("s5pc", opt.sampling))
-			sites[,sigma:= as.numeric(unlist(sites[,"%avg",with=F]))*0.05]
-		else
-			stop("Unknown opt.sampling")
+		if(grepl("strue", opt.sampling))	sites[,sigma:= 0]	
+		if(grepl("s5pc", opt.sampling))		sites[,sigma:= as.numeric(unlist(sites[,"%avg",with=F]))*0.05]
 		#	add pools
 		tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))
 		#	take out Ikhwezi
