@@ -613,7 +613,7 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(sites, samples.seq, coho
 	m.type			<- "Acute"
 	hpc.q			<- "pqeph"	#"pqeph"	
 	hpc.walltime	<- 8		# 8
-	hpc.mem			<- "1850mb"	#"1600mb"
+	hpc.mem			<- "3850mb"	#"1600mb"
 	theta.model.Hx	<- NULL		
 	if(resume)
 	{
@@ -2832,7 +2832,7 @@ prj.pipeline<- function()
 	#
 	#	compute representative theta corresponding to H0 and H1 and simulate tip cluster table for this theta
 	#
-	if(0)	
+	if(1)	
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
