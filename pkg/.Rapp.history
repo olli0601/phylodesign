@@ -1,309 +1,2187 @@
-require(abc.n)
-nabc.mutost.onesample.n.of.y(obs.n, s.of.lkl, mx.pw, sim.sd, alpha, tau.u.ub=0.0003, tol= s.of.lkl*s.of.lkl*1e-3)
-require(abc.n)#
-#
-sim<- {tmp<-c(0.01218,0.01267,0.01273,0.01309,0.01364,0.0138,0.01397,0.0132,0.0139,0.01374,0.01513,0.01515,0.01557,0.01579,0.01596,0.01565,0.01566,0.01589,0.01532,0.01556,0.01593,0.01583,0.01595,0.01538,0.01654,0.01614,0.01502,0.01547,0.01555,0.01546,0.01534,0.01557,0.01577,0.0158,0.01637,0.01558,0.01572,0.01557,0.01529,0.01504); names(tmp)<- c("30.000000", "32.000000", "34.000000", "36.000000", "38.000000", "40.000000", "42.000000", "44.000000", "46.000000", "48.000000", "50.000000", "52.000000", "54.000000", "56.000000", "58.000000", "60.000000", "62.000000", "64.000000", "66.000000", "68.000000", "70.000000", "72.000000", "74.000000", "76.000000", "78.000000", "80.000000", "82.000000", "84.000000", "86.000000", "88.000000", "90.000000", "92.000000", "94.000000", "96.000000", "98.000000", "100.000000", "102.000000", "104.000000", "106.000000", "108.000000"); tmp}#
-#
-obs<- {tmp<-c(0.01293,0.01278,0.01286,0.01278,0.01261,0.01301,0.01297,0.01251); names(tmp)<- c("30.000000", "32.000000", "34.000000", "36.000000", "38.000000", "40.000000", "42.000000", "44.000000"); tmp}#
-#
-obs.n<- length(obs)#
-s.of.lkl<- sqrt( var(obs)*(obs.n-1)/obs.n  * (obs.n-1)/(obs.n-3)	)#
-sim.sd	<- sd(sim); mx.pw<- 0.9; alpha<- 0.01; annealing<- 5
-nabc.mutost.onesample.n.of.y(obs.n, s.of.lkl, mx.pw, sim.sd, alpha, tau.u.ub=0.0003, tol= s.of.lkl*s.of.lkl*1e-3)
-require(abc.n)#
-#
-sim<- {tmp<-c(0.01218,0.01267,0.01273,0.01309,0.01364,0.0138,0.01397,0.0132,0.0139,0.01374,0.01513,0.01515,0.01557,0.01579,0.01596,0.01565,0.01566,0.01589,0.01532,0.01556,0.01593,0.01583,0.01595,0.01538,0.01654,0.01614,0.01502,0.01547,0.01555,0.01546,0.01534,0.01557,0.01577,0.0158,0.01637,0.01558,0.01572,0.01557,0.01529,0.01504); names(tmp)<- c("30.000000", "32.000000", "34.000000", "36.000000", "38.000000", "40.000000", "42.000000", "44.000000", "46.000000", "48.000000", "50.000000", "52.000000", "54.000000", "56.000000", "58.000000", "60.000000", "62.000000", "64.000000", "66.000000", "68.000000", "70.000000", "72.000000", "74.000000", "76.000000", "78.000000", "80.000000", "82.000000", "84.000000", "86.000000", "88.000000", "90.000000", "92.000000", "94.000000", "96.000000", "98.000000", "100.000000", "102.000000", "104.000000", "106.000000", "108.000000"); tmp}#
-#
-obs<- {tmp<-c(0.01293,0.01278,0.01286,0.01278,0.01261,0.01301,0.01297,0.01251); names(tmp)<- c("30.000000", "32.000000", "34.000000", "36.000000", "38.000000", "40.000000", "42.000000", "44.000000"); tmp}#
-#
-obs.n<- length(obs)#
-s.of.lkl<- sqrt( var(obs)*(obs.n-1)/obs.n  * (obs.n-1)/(obs.n-3)	)#
-sim.sd	<- sd(sim); mx.pw<- 0.9; alpha<- 0.01; annealing<- 5#
-nabc.mutost.onesample.n.of.y(obs.n, s.of.lkl, mx.pw, sim.sd, alpha, tau.u.ub=0.0003, tol= s.of.lkl*s.of.lkl*1e-3)
-outdir<- "/Users/Oliver/duke/2013_HIV_NL/ATHENA_2013/data/tmp"
-signat.out	<- signat.in	<- "Wed_May__1_17/08/15_2013"
-file								<- paste(outdir,"/ATHENA_2013_03_FirstAliSequences_HXB2PROTRT_",gsub('/',':',signat.out),".fasta.clustalo",sep='')#
-		if(verbose) cat(paste("\nread ",file))#
-		seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
-require(ape)
-seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
-dim(seq.PROT.RT)
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3495, c("g","-","-","-","g"))
-hivx.seq.find<- function(char.matrix, pos0= NA, from= c(), verbose=1)#
-{#
-	if(is.na(pos0)) 	stop("start position of token to be replaced is missing")#
-	if(!length(from))	stop("token to be replaced is missing")#
-	query.colidx	<- seq.int(pos0,pos0+length(from)-1)#
-	query.yes		<- which( apply(char.matrix, 1, function(x)	all(x[query.colidx]==from) ) )#
-	query.yes	#
-}
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3495, c("g","-","-","-","g"))
-query.yes
-seq.PROT.RT[query.yes,3495:3499]<- matrix( c("g","g","-","-","-"), nrow=length(query.yes), ncol=5, byrow=1 )
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("-","t","a"))
-query.yes
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("a","-"))
-query.yes
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3502, c("a","-"))
-query.yes
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("-","t","a"))
-query.yes
-seq.PROT.RT[345, 3500:3520]
-write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
+sites[, mu.pE2E.H1-mu.pE2E.H0]
+source("misc/phdes.startme.R")
+sites
+33/(33+55)
+1/0.375
+1/0.375 * 750
+df.hyp
+df.hyp			<- subset(df.hyp, target=="central", c(country, arm,  h, Inc, E2E, O2E))
+df.hyp
+set(df.hyp, NULL, "Inc",round(df.hyp[,Inc]*100, d=1))
+df.hyp
+set(df.hyp, NULL, "E2E",round(df.hyp[,Inc]*100, d=0))#
+		set(df.hyp, NULL, "O2E",round(df.hyp[,Inc]*100, d=0))
+df.hyp
+df.hyp			<- df.prop[, {#
+										tmp<- c(which.min(E2E), which.max(E2E))#
+										list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+									}, by=c("country", "arm","target")]#
+		df.hyp			<- subset(df.hyp, target=="central", c(country, arm,  h, Inc, E2E, O2E))#
+		set(df.hyp, NULL, "Inc",round(df.hyp[,Inc]*100, d=1))#
+		set(df.hyp, NULL, "E2E",round(df.hyp[,E2E]*100, d=0))#
+		set(df.hyp, NULL, "O2E",round(df.hyp[,O2E]*100, d=0))
+df.hyp
+df.hyp[,list("effect size"= E2E[2]-E2E[1]), by=c("country","arm")]
+merge(df.hyp, df.hyp[,list("effect size"= E2E[2]-E2E[1]), by=c("country","arm")], by=c("country","arm"))
+df.hyp			<- merge(df.hyp, df.hyp[,list("effect size"= E2E[2]-E2E[1]), by=c("country","arm")], by=c("country","arm"))
+df.hyp
+setnames(df.hyp, c("country","arm","h","Inc","E2E","O2E"), c("Country","Arm","Hyp","% incidence\nper year","% transmission\nfrom early","% transmission\nfrom outside community"))
+df.hyp
+txt.start	<- "\\begin{table}[htbp]\n\\centering\n{\\footnotesize\n"#
+		txt.table	<- print( xtable(as.matrix(df.hyp),digits=0), floating=FALSE, print.results=FALSE )#
+		txt.caption	<- "Potential model scenarios considered for power calculations"#
+		txt.end		<- paste( "}\n\\caption{", txt.caption ,"}\n\\end{table}\n", sep='')#
+		paste(txt.start, txt.table, txt.end, sep='')
+require(xtable)
+txt.start	<- "\\begin{table}[htbp]\n\\centering\n{\\footnotesize\n"#
+		txt.table	<- print( xtable(as.matrix(df.hyp),digits=0), floating=FALSE, print.results=FALSE )#
+		txt.caption	<- "Potential model scenarios considered for power calculations"#
+		txt.end		<- paste( "}\n\\caption{", txt.caption ,"}\n\\end{table}\n", sep='')#
+		paste(txt.start, txt.table, txt.end, sep='')
+ans			<- paste(txt.start, txt.table, txt.end, sep='')#
+		cat(ans)
+df.hyp			<- df.prop[, {#
+										tmp<- c(which.min(E2E), which.max(E2E))#
+										list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+									}, by=c("country", "arm","target")]#
+		df.hyp			<- subset(df.hyp, target=="central", c(country, arm,  h, Inc, E2E, O2E))#
+		set(df.hyp, NULL, "Inc",round(df.hyp[,Inc]*100, d=1))#
+		set(df.hyp, NULL, "E2E",round(df.hyp[,E2E]*100, d=0))#
+		set(df.hyp, NULL, "O2E",round(df.hyp[,O2E]*100, d=0))			#
+		df.hyp			<- merge(df.hyp, df.hyp[,list("effect size"= E2E[2]-E2E[1]), by=c("country","arm")], by=c("country","arm"))#
+		setnames(df.hyp, c("country","arm","h","Inc","E2E","O2E"), c("Country","Arm","Hyp","% incidence\\nper year","% transmission\\nfrom early","% transmission\\nfrom outside community"))#
+		txt.start	<- "\\begin{table}[htbp]\n\\centering\n{\\footnotesize\n"#
+		txt.table	<- print( xtable(as.matrix(df.hyp),digits=0), floating=FALSE, print.results=FALSE )#
+		txt.caption	<- "Potential model scenarios considered for power calculations"#
+		txt.end		<- paste( "}\n\\caption{", txt.caption ,"}\n\\end{table}\n", sep='')#
+		ans			<- paste(txt.start, txt.table, txt.end, sep='')#
+		cat(ans)
+df.hyp			<- df.prop[, {#
+										tmp<- c(which.min(E2E), which.max(E2E))#
+										list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+									}, by=c("country", "arm","target")]#
+		df.hyp			<- subset(df.hyp, target=="central", c(country, arm,  h, Inc, E2E, O2E))#
+		set(df.hyp, NULL, "Inc",round(df.hyp[,Inc]*100, d=1))#
+		set(df.hyp, NULL, "E2E",round(df.hyp[,E2E]*100, d=0))#
+		set(df.hyp, NULL, "O2E",round(df.hyp[,O2E]*100, d=0))			#
+		df.hyp			<- merge(df.hyp, df.hyp[,list("effect size"= E2E[2]-E2E[1]), by=c("country","arm")], by=c("country","arm"))#
+		setnames(df.hyp, c("country","arm","h","Inc","E2E","O2E"), c("Country","Arm","Hyp","\% incidence\\nper year","\% transmission\\nfrom early","\% transmission\\nfrom outside community"))#
+		txt.start	<- "\\begin{table}[htbp]\n\\centering\n{\\footnotesize\n"#
+		txt.table	<- print( xtable(as.matrix(df.hyp),digits=0), floating=FALSE, print.results=FALSE )#
+		txt.caption	<- "Potential model scenarios considered for power calculations"#
+		txt.end		<- paste( "}\n\\caption{", txt.caption ,"}\n\\end{table}\n", sep='')#
+		ans			<- paste(txt.start, txt.table, txt.end, sep='')#
+		cat(ans)
+df.hyp			<- df.prop[, {#
+										tmp<- c(which.min(E2E), which.max(E2E))#
+										list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+									}, by=c("country", "arm","target")]#
+		df.hyp			<- subset(df.hyp, target=="central", c(country, arm,  h, Inc, E2E, O2E))#
+		set(df.hyp, NULL, "Inc",round(df.hyp[,Inc]*100, d=1))#
+		set(df.hyp, NULL, "E2E",round(df.hyp[,E2E]*100, d=0))#
+		set(df.hyp, NULL, "O2E",round(df.hyp[,O2E]*100, d=0))			#
+		df.hyp			<- merge(df.hyp, df.hyp[,list("effect size"= E2E[2]-E2E[1]), by=c("country","arm")], by=c("country","arm"))#
+		setnames(df.hyp, c("country","arm","h","Inc","E2E","O2E"), c("Country","Arm","Hyp","% incidence\\nper year","% transmission\\nfrom early","% transmission\\nfrom outside community"))#
+		txt.start	<- "\\begin{table}[htbp]\n\\centering\n{\\footnotesize\n"#
+		txt.table	<- print( xtable(as.matrix(df.hyp),digits=0), floating=FALSE, print.results=FALSE )#
+		txt.caption	<- "Potential model scenarios considered for power calculations"#
+		txt.end		<- paste( "}\n\\caption{", txt.caption ,"}\n\\end{table}\n", sep='')#
+		ans			<- paste(txt.start, txt.table, txt.end, sep='')#
+		cat(ans)
+df.hyp			<- df.prop[, {#
+										tmp<- c(which.min(E2E), which.max(E2E))#
+										list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+									}, by=c("country", "arm","target")]#
+		df.hyp			<- subset(df.hyp, target=="central", c(country, arm,  h, Inc, E2E, O2E))#
+		set(df.hyp, NULL, "Inc",round(df.hyp[,Inc]*100, d=1))#
+		set(df.hyp, NULL, "E2E",round(df.hyp[,E2E]*100, d=0))#
+		set(df.hyp, NULL, "O2E",round(df.hyp[,O2E]*100, d=0))			#
+		df.hyp			<- merge(df.hyp, df.hyp[,list("effect size"= E2E[2]-E2E[1]), by=c("country","arm")], by=c("country","arm"))#
+		setnames(df.hyp, c("country","arm","h","Inc","E2E","O2E"), c("Country","Arm","Hyp","% incidence\newline per year","% transmission\newline from early","% transmission\newline from outside community"))#
+		txt.start	<- "\\begin{table}[htbp]\n\\centering\n{\\footnotesize\n"#
+		txt.table	<- print( xtable(as.matrix(df.hyp),digits=0), floating=FALSE, print.results=FALSE )#
+		txt.caption	<- "Potential model scenarios considered for power calculations"#
+		txt.end		<- paste( "}\n\\caption{", txt.caption ,"}\n\\end{table}\n", sep='')#
+		ans			<- paste(txt.start, txt.table, txt.end, sep='')#
+		cat(ans)
+df.hyp			<- df.prop[, {#
+										tmp<- c(which.min(E2E), which.max(E2E))#
+										list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+									}, by=c("country", "arm","target")]#
+		df.hyp			<- subset(df.hyp, target=="central", c(country, arm,  h, Inc, E2E, O2E))#
+		set(df.hyp, NULL, "Inc",round(df.hyp[,Inc]*100, d=1))#
+		set(df.hyp, NULL, "E2E",round(df.hyp[,E2E]*100, d=0))#
+		set(df.hyp, NULL, "O2E",round(df.hyp[,O2E]*100, d=0))			#
+		df.hyp			<- merge(df.hyp, df.hyp[,list("effect size"= E2E[2]-E2E[1]), by=c("country","arm")], by=c("country","arm"))#
+		setnames(df.hyp, c("country","arm","h","Inc","E2E","O2E"), c("Country","Arm","Hyp","% incidence\\newline per year","% transmission\\newline from early","% transmission\\newline from outside community"))#
+		txt.start	<- "\\begin{table}[htbp]\n\\centering\n{\\footnotesize\n"#
+		txt.table	<- print( xtable(as.matrix(df.hyp),digits=0), floating=FALSE, print.results=FALSE )#
+		txt.caption	<- "Potential model scenarios considered for power calculations"#
+		txt.end		<- paste( "}\n\\caption{", txt.caption ,"}\n\\end{table}\n", sep='')#
+		ans			<- paste(txt.start, txt.table, txt.end, sep='')#
+		cat(ans)
+?xtable
+df.hyp			<- df.prop[, {#
+										tmp<- c(which.min(E2E), which.max(E2E))#
+										list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+									}, by=c("country", "arm","target")]#
+		df.hyp			<- subset(df.hyp, target=="central", c(country, arm,  h, Inc, E2E, O2E))#
+		set(df.hyp, NULL, "Inc",round(df.hyp[,Inc]*100, d=1))#
+		set(df.hyp, NULL, "E2E",round(df.hyp[,E2E]*100, d=0))#
+		set(df.hyp, NULL, "O2E",round(df.hyp[,O2E]*100, d=0))			#
+		df.hyp			<- merge(df.hyp, df.hyp[,list("effect size"= E2E[2]-E2E[1]), by=c("country","arm")], by=c("country","arm"))#
+		setnames(df.hyp, c("country","arm","h","Inc","E2E","O2E"), c("Country","Arm","Hyp","% incidence_per year","% transmission_from early","% transmission_from outside community"))
+df.hyp
+df.hyp			<- df.prop[, {#
+										tmp<- c(which.min(E2E), which.max(E2E))#
+										list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+									}, by=c("country", "arm","target")]#
+		df.hyp			<- subset(df.hyp, target=="central", c(country, arm,  h, Inc, E2E, O2E))#
+		set(df.hyp, NULL, "Inc",round(df.hyp[,Inc]*100, d=1))#
+		set(df.hyp, NULL, "E2E",round(df.hyp[,E2E]*100, d=0))#
+		set(df.hyp, NULL, "O2E",round(df.hyp[,O2E]*100, d=0))			#
+		df.hyp			<- merge(df.hyp, df.hyp[,list("effect size"= E2E[2]-E2E[1]), by=c("country","arm")], by=c("country","arm"))#
+		setnames(df.hyp, c("country","arm","h","Inc","E2E","O2E"), c("Country_","Arm_","Hyp_","% incidence_per year","% transmission_from early","% transmission_from outside community"))#
+		strsplit(colnames(df.hyp),'_')
+df.hyp			<- df.prop[, {#
+										tmp<- c(which.min(E2E), which.max(E2E))#
+										list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+									}, by=c("country", "arm","target")]#
+		df.hyp			<- subset(df.hyp, target=="central", c(country, arm,  h, Inc, E2E, O2E))#
+		set(df.hyp, NULL, "Inc",round(df.hyp[,Inc]*100, d=1))#
+		set(df.hyp, NULL, "E2E",round(df.hyp[,E2E]*100, d=0))#
+		set(df.hyp, NULL, "O2E",round(df.hyp[,O2E]*100, d=0))			#
+		df.hyp			<- merge(df.hyp, df.hyp[,list("effect size"= E2E[2]-E2E[1]), by=c("country","arm")], by=c("country","arm"))#
+		setnames(df.hyp, c("country","arm","h","Inc","E2E","O2E"), c("Country_ ","Arm_ ","Hyp_ ","% incidence_per year","% transmission_from early","% transmission_from outside community"))#
+		strsplit(colnames(df.hyp),'_')
+df.hyp			<- df.prop[, {#
+										tmp<- c(which.min(E2E), which.max(E2E))#
+										list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+									}, by=c("country", "arm","target")]#
+		df.hyp			<- subset(df.hyp, target=="central", c(country, arm,  h, Inc, E2E, O2E))#
+		set(df.hyp, NULL, "Inc",round(df.hyp[,Inc]*100, d=1))#
+		set(df.hyp, NULL, "E2E",round(df.hyp[,E2E]*100, d=0))#
+		set(df.hyp, NULL, "O2E",round(df.hyp[,O2E]*100, d=0))			#
+		df.hyp			<- merge(df.hyp, df.hyp[,list("effect size_ "= E2E[2]-E2E[1]), by=c("country","arm")], by=c("country","arm"))#
+		setnames(df.hyp, c("country","arm","h","Inc","E2E","O2E"), c("Country_ ","Arm_ ","Hyp_ ","% incidence_per year","% transmission_from early","% transmission_from outside community"))#
+		strsplit(colnames(df.hyp),'_')
+paste( sapply( txt.coln, function(x) x[1] ), collaps="& " )
+txt.coln	<- strsplit(colnames(df.hyp),'_')#
+		paste( sapply( txt.coln, function(x) x[1] ), collaps="& " )
+paste( sapply( txt.coln, function(x) x[1] ), collapse="& " )
+txt.coln	<- c( paste( sapply( txt.coln, function(x) x[1] ), collapse="& " ), paste( sapply( txt.coln, function(x) x[2] ), collapse="& " ) )
+txt.coln
+paste( txt.coln[1], '\\ \n', txt.coln[1], '\hline \\n', sep='' )
+paste( txt.coln[1], '\\ \n', txt.coln[1], '\\hline \\n', sep='' )
+cat(paste( txt.coln[1], '\\ \n', txt.coln[1], '\\hline \\n', sep='' ))
+txt.coln	<- paste( txt.coln[1], '\\ \n', txt.coln[2], '\\hline \\n', sep='' )
+gsub("%","\%", txt.coln)
+gsub("%","\\%", txt.coln)
+gsub("\%","\\%", txt.coln)
+gsub("%","\\%", txt.coln)
+cat(gsub("%","\\%", txt.coln))
+df.hyp			<- df.prop[, {#
+										tmp<- c(which.min(E2E), which.max(E2E))#
+										list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+									}, by=c("country", "arm","target")]#
+		df.hyp			<- subset(df.hyp, target=="central", c(country, arm,  h, Inc, E2E, O2E))#
+		set(df.hyp, NULL, "Inc",round(df.hyp[,Inc]*100, d=1))#
+		set(df.hyp, NULL, "E2E",round(df.hyp[,E2E]*100, d=0))#
+		set(df.hyp, NULL, "O2E",round(df.hyp[,O2E]*100, d=0))			#
+		df.hyp			<- merge(df.hyp, df.hyp[,list("effect size_ "= E2E[2]-E2E[1]), by=c("country","arm")], by=c("country","arm"))#
+		setnames(df.hyp, c("country","arm","h","Inc","E2E","O2E"), c("Country_ ","Arm_ ","Hyp_ ","% incidence_per year","% transmission_from early","% transmission_from outside community"))#
+		txt.coln	<- strsplit(colnames(df.hyp),'_')#
+		txt.coln	<- c( paste( sapply( txt.coln, function(x) x[1] ), collapse="& " ), paste( sapply( txt.coln, function(x) x[2] ), collapse="& " ) )#
+		txt.coln	<- paste( txt.coln[1], '\\ \n', txt.coln[2], '\\hline \\n', sep='' )#
+		txt.start	<- "\\begin{table}[htbp]\n\\centering\n{\\footnotesize\n"#
+		txt.table	<- print( xtable(as.matrix(df.hyp),digits=0), floating=FALSE, print.results=FALSE, include.colnames=F )#
+		txt.caption	<- "Potential model scenarios considered for power calculations"#
+		txt.end		<- paste( "}\n\\caption{", txt.caption ,"}\n\\end{table}\n", sep='')#
+		ans			<- paste(txt.start, txt.table, txt.end, sep='')#
+		cat(ans)
+cat(txt.coln)
+txt.coln	<- strsplit(colnames(df.hyp),'_')#
+		txt.coln	<- c( paste( sapply( txt.coln, function(x) x[1] ), collapse="& " ), paste( sapply( txt.coln, function(x) x[2] ), collapse="& " ) )#
+		txt.coln	<- paste( txt.coln[1], '\\\\\n', txt.coln[2], '\\n', sep='' )
+cat(txt.coln)
+txt.coln	<- strsplit(colnames(df.hyp),'_')#
+		txt.coln	<- c( paste( sapply( txt.coln, function(x) x[1] ), collapse="& " ), paste( sapply( txt.coln, function(x) x[2] ), collapse="& " ) )#
+		txt.coln	<- paste( txt.coln[1], '\\\\\n', txt.coln[2], '\n', sep='' )
+cat(txt.coln)
+txt.start	<- "\\begin{table}[htbp]\n\\centering\n{\\footnotesize\n"#
+		txt.table	<- print( xtable(as.matrix(df.hyp),digits=0), floating=FALSE, print.results=FALSE, include.colnames=F, include.rownames=F )#
+		txt.caption	<- "Potential model scenarios considered for power calculations"#
+		txt.end		<- paste( "}\n\\caption{", txt.caption ,"}\n\\end{table}\n", sep='')#
+		ans			<- paste(txt.start, txt.table, txt.end, sep='')#
+		cat(ans)
+df.hyp			<- df.prop[, {#
+										tmp<- c(which.min(E2E), which.max(E2E))#
+										list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+									}, by=c("country", "arm","target")]#
+		df.hyp			<- subset(df.hyp, target=="central", c(country, arm,  h, Inc, E2E, O2E))#
+		set(df.hyp, NULL, "Inc",round(df.hyp[,Inc]*100, d=1))#
+		set(df.hyp, NULL, "E2E",round(df.hyp[,E2E]*100, d=0))#
+		set(df.hyp, NULL, "O2E",round(df.hyp[,O2E]*100, d=0))			#
+		df.hyp			<- merge(df.hyp, df.hyp[,list("effect size_ "= E2E[2]-E2E[1]), by=c("country","arm")], by=c("country","arm"))#
+		setnames(df.hyp, c("country","arm","h","Inc","E2E","O2E"), c("Country_ ","Arm_ ","Scenario_ ","% incidence_per year","% transmission_from early","% transmission_from outside community"))#
+		txt.coln	<- strsplit(colnames(df.hyp),'_')#
+		txt.coln	<- c( paste( sapply( txt.coln, function(x) x[1] ), collapse="& " ), paste( sapply( txt.coln, function(x) x[2] ), collapse="& " ) )#
+		txt.coln	<- paste( txt.coln[1], '\\\\\n', txt.coln[2], '\\\\\n', sep='' )#
+		txt.start	<- "\\begin{table}[htbp]\n\\centering\n{\\footnotesize\n"#
+		txt.table	<- print( xtable(as.matrix(df.hyp),digits=0), floating=FALSE, print.results=FALSE, include.colnames=F, include.rownames=F )#
+		txt.caption	<- "Potential model scenarios considered for power calculations"#
+		txt.end		<- paste( "}\n\\caption{", txt.caption ,"}\n\\end{table}\n", sep='')#
+		ans			<- paste(txt.start, txt.table, txt.end, sep='')#
+		cat(ans)#
+		cat(txt.coln)
+require(data.table)		#
+		dir.name		<- "popartpower_acute"#
+		my.mkdir(DATA,dir.name)#
+		dir.name		<- paste(DATA,dir.name,sep='/')	#
+		resume			<- 1#
+		verbose			<- 1#
+		debug			<- 1#
+		##
+		m.type			<- "Acute"	#
+		cohort.size		<- 2500	#
+		cohort.dur		<- 3	#
+		theta.EE.H0		<- 0.1#
+		theta.EE.H1		<- 0.4				#
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								#
+		p.consent.coh	<- 0.9*0.9#
+		##
+		opt.design		<- "PC12+HCC"#
+		opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')#
+		opt.analysis	<- "central-1016"#
+		opt.analysis	<- "central-1017"#
+		opt.sampling	<- "strue"#
+		opt.sampling	<- "struefx40"#
+		opt.sampling	<- "struefx60"#
+		#opt.sampling	<- "struefx80"#
+		#opt.sampling	<- "struefx99"				#
+		#opt.sampling	<- "s5pc"					#
+		#load df.hyp#
+		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')#
+		tmp				<- load(file)#
+		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		#
+		#set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")#
+		#set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		#
+		df.hyp			<- df.prop[, {#
+					tmp<- c(which.min(E2E), which.max(E2E))#
+					list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+				}, by=c("country", "arm","target")]#
+		#load df.contam#
+		df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]							#
+		#		#
+		sites			<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )#
+		sites[which(sites[,"country"]==1),"country"]	<- "ZA"#
+		sites[which(sites[,"country"]==2),"country"]	<- "SA"	#
+		sites			<- as.data.table(sites)#
+		samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)#
+		samples.CD4		<- subset(samples.CD4, prediction=="central")#
+		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)#
+		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)#
+		#	adjust sampling percentages if required#
+		if(grepl("fx", opt.sampling))#
+		{#
+			tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+			if(verbose)	cat(paste("\nSetting sampling percentages to", tmp))#
+			set(samples.seq, NULL, c("%prev","%inc","%avg"), tmp)#
+			p.lab<- p.consent.coh<- tmp#
+		}#
+		#	load high acute and low acute tip clusters for each community					#
+		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		#
+		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)#
+		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)		#
+		tpc.obs			<- tmp$tpc.obs#
+		#	add pools#
+		tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))
+tpc.obs[[1]]
+require(data.table)		#
+		dir.name		<- "popartpower_acute"#
+		my.mkdir(DATA,dir.name)#
+		dir.name		<- paste(DATA,dir.name,sep='/')	#
+		resume			<- 1#
+		verbose			<- 1#
+		debug			<- 1#
+		##
+		m.type			<- "Acute"	#
+		cohort.size		<- 2500	#
+		cohort.dur		<- 3	#
+		theta.EE.H0		<- 0.1#
+		theta.EE.H1		<- 0.4				#
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								#
+		p.consent.coh	<- 0.9*0.9#
+		##
+		opt.design		<- "PC12+HCC"#
+		opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')#
+		opt.analysis	<- "central-1016"#
+		opt.analysis	<- "central-1017"#
+		opt.sampling	<- "strue"#
+		opt.sampling	<- "struefx40"#
+		opt.sampling	<- "struefx60"#
+		#opt.sampling	<- "struefx80"#
+		#opt.sampling	<- "struefx99"				#
+		#opt.sampling	<- "s5pc"					#
+		#load df.hyp#
+		#		#
+		sites			<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )#
+		sites[which(sites[,"country"]==1),"country"]	<- "ZA"#
+		sites[which(sites[,"country"]==2),"country"]	<- "SA"	#
+		sites			<- as.data.table(sites)#
+		sites			<- popart.set.hypo(sites, 0.1, 0.4, opt.analysis, df.hyp=df.hyp)#
+		#	adjust sampling percentages if required#
+		if(grepl("fx", opt.sampling))#
+		{#
+			tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+			p.lab<- p.consent.coh<- tmp#
+		}#
+		#	load high acute and low acute tip clusters for each community					#
+		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')				#
+		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(NULL, NULL, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)		#
+		tpc.obs			<- tmp$tpc.obs#
+		#	add pools#
+		tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))
+tpc.obs[[1]]
+require(data.table)				#
+		dir.name		<- paste(DATA,dir.name,sep='/')	#
+		resume			<- 1#
+		verbose			<- 1#
+		debug			<- 1#
+		##
+		m.type			<- "Acute"							#
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								#
+		p.consent.coh	<- 0.9*0.9#
+		##
+		opt.design		<- "PC12+HCC"#
+		opt.analysis	<- "central-1017"					#
+		#		#
+		sites			<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )#
+		sites[which(sites[,"country"]==1),"country"]	<- "ZA"#
+		sites[which(sites[,"country"]==2),"country"]	<- "SA"	#
+		sites			<- as.data.table(sites)#
+		sites			<- popart.set.hypo(sites, 0.1, 0.4, opt.analysis, df.hyp=df.hyp)#
+		##
+		tpc.obs			<- lapply(c("strue","struefx40","struefx60","struefx80"), function(opt.sampling)#
+				{		#
+					if(grepl("fx", opt.sampling))#
+					{#
+						tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+						p.lab<- p.consent.coh<- tmp#
+					}									#
+					f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')				#
+					tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(NULL, NULL, 3, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)		#
+					tpc.obs			<- tmp$tpc.obs					#
+					tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))#
+					tpc.obs#
+				})#
+		names(tpc.obs)	<- c("strue","struefx40","struefx60","struefx80")
+tpc.obs			<- lapply(c("strue","struefx40","struefx60","struefx80"), function(opt.sampling)#
+				{		#
+					print(opt.sampling)#
+					stop()#
+					if(grepl("fx", opt.sampling))#
+					{#
+						tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+						p.lab<- p.consent.coh<- tmp#
+					}									#
+					f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')				#
+					tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(NULL, NULL, 3, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)		#
+					tpc.obs			<- tmp$tpc.obs					#
+					tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))#
+					tpc.obs#
+				})
+tpc.obs			<- lapply(c("strue","struefx40","struefx60","struefx80"), function(opt.sampling)#
+				{		#
+					print(opt.sampling)#
+					if(grepl("fx", opt.sampling))#
+					{#
+						tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+						p.lab<- p.consent.coh<- tmp#
+					}									#
+					f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')				#
+					tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(NULL, NULL, 3, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)		#
+					tpc.obs			<- tmp$tpc.obs					#
+					tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))#
+					tpc.obs#
+				})
+tpc.obs			<- lapply(c("struefx40","struefx60","struefx80"), function(opt.sampling)#
+				{		#
+					print(opt.sampling)#
+					if(grepl("fx", opt.sampling))#
+					{#
+						tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+						p.lab<- p.consent.coh<- tmp#
+					}									#
+					f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')				#
+					tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(NULL, NULL, 3, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)		#
+					tpc.obs			<- tmp$tpc.obs					#
+					tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))#
+					tpc.obs#
+				})
+traceback()
+file			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,".R",sep='')
 file
-file<- "/Users/Oliver/duke/2013_HIV_NL/ATHENA_2013/data/tmp/ATHENA_2013_03_FirstAliSequences_HXB2PROTRT_Wed_May__1_17:08:15_2013.fasta.clustalo2"
-seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3495, c("g","-","-","-","g"))
-query.yes
-seq.PROT.RT[query.yes,3495:3499]<- matrix( c("g","g","-","-","-"), nrow=length(query.yes), ncol=5, byrow=1 )
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("-","t","a"))
-query.yes
-seq.PROT.RT[query.yes,3501:3503]<- matrix( c("t","a","-"), nrow=length(query.yes), ncol=3, byrow=1 )
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3502, c("-","a"))
-query.yes
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3502, c("a","-"))
-query.yes
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("a","-"))
-query.yes
-seq.PROT.RT[query.yes,3501:3502]<- matrix( c("-","a"), nrow=length(query.yes), ncol=2, byrow=1 )
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3505, c("-","-","-","-","a"))
-query.yes
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3504, c("g","a","c"))
-query.yes
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3507, c("-","-","-","g","a"))
-query.yes
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3551, c("g","g"))
-query.yes
-query.yes[1:10]
-for(i in query.yes)#
-			seq.PROT.RT[i,3551:3600]		<-	c("-",seq.PROT.RT[i,3551:3599])
-write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3552, c("g","c"))
-query.yes
-for(i in query.yes)#
-			seq.PROT.RT[i,3552:3600]		<-	c("-",seq.PROT.RT[i,3552:3599])
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3501, c("-","t","t"))
-query.yes
-for(i in query.yes)#
-			seq.PROT.RT[i,3501:3600]		<-	c("-",seq.PROT.RT[i,3501:3599])
-seq.PROT.RT[17,3501:3510]
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3498, c("c","g","t"))
-query.yes
-for(i in query.yes)#
-			seq.PROT.RT[i,3498:3520]		<-	c("-",seq.PROT.RT[i,3498:3519])
-write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3552, c("-","g","g"))
-query.yes
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3549, c("-","c","a"))
-query.yes
-seq.PROT.RT[query.yes,3549:3551]<- matrix( c("c","a","-"), nrow=length(query.yes), ncol=3, byrow=1 )
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a"))
-query.yes
-seq.PROT.RT[query.yes,3543:3545]<- matrix( c("c","a","-"), nrow=length(query.yes), ncol=3, byrow=1 )
-seq.PROT.RT[query.yes,3543:3545]<- matrix( c("-","c","a"), nrow=length(query.yes), ncol=3, byrow=1 )
-seq.PROT.RT[query.yes,3543:3555]
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a","g","g","g","g","c","a"))
-query.yes
-seq.PROT.RT[query.yes,3543:3551]<- matrix( c("c","a","g","g","g","g","c","a","-"), nrow=length(query.yes), ncol=9, byrow=1 )
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a"))
-query.yes
-seq.PROT.RT[query.yes,3543:3555]
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a","g","g","a","g","c","a"))#
-		if(length(query.yes))#
-			seq.PROT.RT[query.yes,3543:3551]<- matrix( c("c","a","g","g","a","g","c","a","-"), nrow=length(query.yes), ncol=9, byrow=1 )
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a","k","g","g","a","c","a"))#
-		if(length(query.yes))#
-			seq.PROT.RT[query.yes,3543:3551]<- matrix( c("c","a","k","g","g","a","c","a","-"), nrow=length(query.yes), ncol=9, byrow=1 )
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a"))
-query.yes
-seq.PROT.RT[query.yes,3543:3555]
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a","g","g","g","g","g","a"))
-seq.PROT.RT[query.yes,3543:3551]<- matrix( c("c","a","g","g","g","g","g","a","-"), nrow=length(query.yes), ncol=9, byrow=1 )
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","t"))
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","a","g","g","g","g","g","a"))
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3543, c("-","c","t"))
-query.yes
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3549, c("a","a","-"))
-query.yes
-seq.PROT.RT[query.yes,3549:3551]<- matrix( c("-","-","-"), nrow=length(query.yes), ncol=3, byrow=1 )
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3551, c("g","a","c"))
-seq.PROT.RT[query.yes,3551:3560]
-for(i in query.yes)#
-			seq.PROT.RT[i,3551:3560]		<-	c("-",seq.PROT.RT[i,3551:3559])
-seq.PROT.RT[query.yes,3551:3560]
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3551, c("g","a","y"))
-query.yes
-seq.PROT.RT[query.yes,3551:3560]
-if(length(query.yes))#
-			seq.PROT.RT[query.yes,3551:3554]<- matrix( c("-","g","a","y"), nrow=length(query.yes), ncol=4, byrow=1 )
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3549, c("-","c","c"))
-query.yes
-seq.PROT.RT[query.yes,3549:3560]
-query.yes							<- hivx.seq.find(seq.PROT.RT, 3549, c("-","c","c","g","g"))
-query.yes
-seq.PROT.RT[query.yes,3549:3551]<- matrix( c("c","-","c"), nrow=length(query.yes), ncol=3, byrow=1 )
-write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
-file
-seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
-dim(seq.PROT.RT)
-seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
-dim(seq.PROT.RT)
-file
-seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
-dim(seq.PROT.RT)
-seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
-dim(seq.PROT.RT)
-seq.PROT.RT							<- seq.PROT.RT[,2253:ncol(seq.PROT.RT)]
-dim(seq.PROT.RT)
-3877-2253
-seq.PROT.RT[1:5,1620:1630]
-ncol(seq.PROT.RT)<- 1624
-dim(seq.PROT.RT)[2]<- 1624
-dim(seq.PROT.RT)
-seq.PROT.RT							<- seq.PROT.RT[,1:1624]
-file
-file<- "/Users/Oliver/duke/2013_HIV_NL/ATHENA_2013/data/tmp/ATHENA_2013_03_FirstAliSequences_HXB2PROTRT_Wed_May__1_17:08:15_2013.fasta.clustalo3"
-write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
-apply(matrix(c(1,2,3,4),2,2),1,sum)
-tmp<- apply(seq.PROT.RT,1,function(x)		which(rev(x)!="-" )[1]  )
+load(file)
+dir.name
+dir.name		<- paste(DATA,"popartpower_acute",sep='/')
+file			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,".R",sep='')
+load(file)
+names(ans)
+print(load(file))
+tpc.obs			<- lapply(c("struefx40","struefx60","struefx80"), function(opt.sampling)#
+				{							#
+					if(grepl("fx", opt.sampling))#
+					{#
+						tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+						p.lab<- p.consent.coh<- tmp#
+					}									#
+					file			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,".R",sep='')#
+					load(file)#
+					tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))#
+					tpc.obs#
+				})
+length(tpc.obs)
+names(tpc.obs)	<- c("struefx40","struefx60","struefx80")
+tpc.obs.Ndeke	<- lapply(tpc.obs, function(x)	x[["Ndeke"]]	)
+tpc.obs.Ndeke
+require(data.table)				#
+		dir.name		<- paste(DATA,"popartpower_acute",sep='/')	#
+		resume			<- 1#
+		verbose			<- 1#
+		debug			<- 1#
+		##
+		m.type			<- "Acute"							#
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								#
+		p.consent.coh	<- 0.9*0.9#
+		##
+		opt.design		<- "PC12+HCC"#
+		opt.analysis	<- "central-1017"					#
+		#		#
+		sites			<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )#
+		sites[which(sites[,"country"]==1),"country"]	<- "ZA"#
+		sites[which(sites[,"country"]==2),"country"]	<- "SA"	#
+		sites			<- as.data.table(sites)#
+		sites			<- popart.set.hypo(sites, 0.1, 0.4, opt.analysis, df.hyp=df.hyp)#
+		##
+		tpc.obs			<- lapply(c("struefx40","struefx60","struefx80","struefx99"), function(opt.sampling)#
+				{							#
+					if(grepl("fx", opt.sampling))#
+					{#
+						tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+						p.lab<- p.consent.coh<- tmp#
+					}									#
+					file			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,".R",sep='')#
+					load(file)#
+					tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))#
+					tpc.obs#
+				})#
+		names(tpc.obs)	<- c("struefx40","struefx60","struefx80","struefx99")
+tpc.obs.Ndeke	<- lapply(tpc.obs, function(x)	x[["Ndeke"]]	)
+tpc.obs.Ndeke
+x[["H1"]]
+lapply(tpc.obs.Ndeke, function(x)		x[["H1"]][, 2:ncol(x[["H1"]])]		)
+sapply(tpc.obs.Ndeke, function(x)		sum(x[["H1"]][, 2:ncol(x[["H1"]])])		)
+tmp				<- sapply(tpc.obs.Ndeke, function(x)		sum(x[["H1"]][, 2:ncol(x[["H1"]])])		)
+plot(c(40,60,80,100), tmp, type='l')
+tmp				<- list( 	sapply(tpc.obs.Ndeke, function(x)		sum(x[["H1"]][, 2:ncol(x[["H1"]])])		),#
+									sapply(tpc.obs.Ndeke, function(x)		sum(x[["H1"]][, 3:ncol(x[["H1"]])])		),#
+									sapply(tpc.obs.Ndeke, function(x)		ifelse(ncol(x[["H1"]])<4,0,sum(x[["H1"]][, 4:ncol(x[["H1"]])]))		)		)
 tmp
-?sort
-seq.PROT.RT							<- seq.PROT.RT[sort(seq.PROT.RT.sort.by, index.return=1)$ix,]
-seq.PROT.RT.sort.by<- mtp
-seq.PROT.RT.sort.by<- tmp
-seq.PROT.RT							<- seq.PROT.RT[sort(seq.PROT.RT.sort.by, index.return=1)$ix,]
-write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
-file
-seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
-seq.PROT.TR[1,1294:1299]
-seq.PROT.RT[1,1294:1299]
-dim(seq.PROT.RT)
-file
-seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
-dim(seq.PROT.RT)
-seq.PROT.RT							<- read.dna(file, format="fasta", as.character=1)
-dim(seq.PROT.RT)
-seq.PROT.RT[1,1294:1299]
-seq.PROT.RT[,1294:1299]				<- matrix( c("-","-","-","-","-","-"), nrow=length(query.yes), ncol=6, byrow=1 )
-seq.PROT.RT[,1294:1299]				<- matrix( c("-","-","-","-","-","-"), nrow=ncol(seq.PROT.RT), ncol=6, byrow=1 )
-seq.PROT.RT[,1294:1299]				<- matrix( c("-","-","-","-","-","-"), nrow=nrow(seq.PROT.RT), ncol=6, byrow=1 )
-file<- "/Users/Oliver/duke/2013_HIV_NL/ATHENA_2013/data/tmp/ATHENA_2013_03_FirstAliSequences_HXB2PROTRT_Wed_May__1_17:08:15_2013.fasta.clustalo4"
-write.dna(as.DNAbin(seq.PROT.RT), file=file, format="fasta", colsep='', colw=ncol(seq.PROT.RT), blocksep=0)
-which( rownames(seq.PROT.RT)=="HXB2" )
-signat.in	<- "Wed_May__1_17/08/15_2013"#
-		signat.out	<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')#
-		file<- paste(outdir,"/ATHENA_2013_03_FirstAliSequences_HXB2PROTRT_",gsub('/',':',signat.in),".fasta.clustalo4",sep='')
-file
-seq.PROT.RT	<- read.dna(file, format="fasta")
-dim(seq.PROT.RT)
-seq.PROT.RT	<- seq.PROT.RT[ rownames(seq.PROT.RT)!="HXB2", ]
-signat.out	<- paste(strsplit(date(),split=' ')[[1]],collapse='_',sep='')
-signat.out
-file		<- paste(outdir,"/ATHENA_2013_03_FirstCurSequences_PROTRT_",gsub('/',':',signat.out),".R",sep='')
-verbose<- 1
-if(verbose) cat(paste("\nwrite to",file))#
-		save(seq.PROT.RT, file=file)#
-		file		<- paste(outdir,"/ATHENA_2013_03_FirstCurSequences_PROTRT_",gsub('/',':',signat.out),".phylip",sep='')#
-		if(verbose) cat(paste("\nwrite to ",file))
-hivc.seq.write.dna.phylip<- function(seq.DNAbin.mat, file)#
-{		#
-	tmp<- cbind( rownames(seq.DNAbin.mat), apply( as.character( seq.DNAbin.mat ), 1, function(x) paste(x,sep='',collapse='')  ) )#
-	tmp<- paste(t(tmp),collapse='\n',sep='')	#
-	tmp<- paste( paste(c(nrow(seq.DNAbin.mat),ncol(seq.DNAbin.mat)),sep='',collapse=' '),'\n',tmp,'\n',collapse='',sep='' )#
-	cat(tmp, file=file)#
+tmp				<- list( 	sapply(tpc.obs.Ndeke, function(x)		sum(x[["H1"]][, 2:ncol(x[["H1"]])])		),#
+									sapply(tpc.obs.Ndeke, function(x)		sum(x[["H1"]][, 3:ncol(x[["H1"]])])		),#
+									sapply(tpc.obs.Ndeke, function(x)		ifelse(ncol(x[["H1"]])<4,0,sum(x[["H1"]][, 4:ncol(x[["H1"]])])) ),#
+									sapply(tpc.obs.Ndeke, function(x)		ifelse(ncol(x[["H1"]])<5,0,sum(x[["H1"]][, 5:ncol(x[["H1"]])]))	)		)
+tmp
+tpc.obs.Ndeke.sum	<- do.call("rbind", tmp )
+rownames(tpc.obs.Ndeke.sum)	<- c("#E>=1","#E>=2","#E>=3","#E>=4")
+tpc.obs.Ndeke.sum
+rownames(tpc.obs.Ndeke.sum)	<- c("#E>0","#E>1","#E>2","#E>3")
+tpc.obs.Ndeke.sum
+x							<- c(40,60,80,100)
+?brewer.pal
+??brewer.pal
+require(RColorBrewer)
+display.brewer.all()
+tpc.obs.Ndeke.sum
+x							<- c(40,60,80,100)		#
+		cols<- tail(brewer.pal(nrow(tpc.obs.Ndeke.sum)+2,"YlGnBu"),nrow(tpc.obs.Ndeke.sum)) #
+		plot(1,1, xlim=range(x), ylim=range(tpc.obs.Ndeke.sum), tmp, type='n')#
+		sapply(seq_len(nrow(tpc.obs.Ndeke.sum)), function(i)#
+				{#
+					lines(x, tpc.obs.Ndeke.sum[i,], col=cols[i])#
+				})
+x							<- c(40,60,80,100)		#
+		cols<- tail(brewer.pal(nrow(tpc.obs.Ndeke.sum)+2,"YlGnBu"),nrow(tpc.obs.Ndeke.sum)) #
+		plot(1,1, xlim=range(x), ylim=range(tpc.obs.Ndeke.sum), type='n')#
+		dummy	<- sapply(seq_len(nrow(tpc.obs.Ndeke.sum)), function(i)#
+				{#
+					lines(x, tpc.obs.Ndeke.sum[i,], col=cols[i])#
+				})
+?points
+legend("topleft", legend=rownames(tpc.obs.Ndeke.sum), fill=cols, bty='n', border=NA)
+x							<- c(40,60,80,100)		#
+		cols<- rev( tail(brewer.pal(nrow(tpc.obs.Ndeke.sum)+2,"YlGnBu"),nrow(tpc.obs.Ndeke.sum)) ) #
+		plot(1,1, xlim=range(x), ylim=range(tpc.obs.Ndeke.sum), type='n', bty='n', xlab="% sampling coverage", ylab="#individuals w early HIV\nin tip cluster")#
+		dummy	<- sapply(seq_len(nrow(tpc.obs.Ndeke.sum)), function(i)#
+				{#
+					lines(x, tpc.obs.Ndeke.sum[i,], col=cols[i], type='b')#
+				})#
+		legend("topleft", legend=rownames(tpc.obs.Ndeke.sum), fill=cols, bty='n', border=NA)
+par(mar=c(4,5,0.5,0.5))#
+		x							<- c(40,60,80,100)		#
+		cols<- rev( tail(brewer.pal(nrow(tpc.obs.Ndeke.sum)+2,"YlGnBu"),nrow(tpc.obs.Ndeke.sum)) ) #
+		plot(1,1, xlim=range(x), ylim=range(tpc.obs.Ndeke.sum), type='n', bty='n', xlab="% sampling coverage", ylab="#individuals w early HIV\nin tip cluster")#
+		dummy	<- sapply(seq_len(nrow(tpc.obs.Ndeke.sum)), function(i)#
+				{#
+					lines(x, tpc.obs.Ndeke.sum[i,], col=cols[i], type='b')#
+				})#
+		legend("topleft", legend=rownames(tpc.obs.Ndeke.sum), fill=cols, bty='n', border=NA)
+par(mar=c(4,5,0.5,0.5))#
+		x							<- c(40,60,80,100)		#
+		cols<- rev( tail(brewer.pal(nrow(tpc.obs.Ndeke.sum)+2,"YlGnBu"),nrow(tpc.obs.Ndeke.sum)) ) #
+		plot(1,1, xlim=range(x), ylim=range(tpc.obs.Ndeke.sum), type='n', bty='n', xlab="% sampling coverage", ylab="#individuals with early HIV\nin tip cluster", log='y')#
+		dummy	<- sapply(seq_len(nrow(tpc.obs.Ndeke.sum)), function(i)#
+				{#
+					lines(x, tpc.obs.Ndeke.sum[i,], col=cols[i], type='b')#
+				})#
+		legend("topleft", legend=rownames(tpc.obs.Ndeke.sum), fill=cols, bty='n', border=NA)
+par(mar=c(4,5,0.5,0.5))#
+		x							<- c(40,60,80,100)		#
+		cols<- rev( tail(brewer.pal(nrow(tpc.obs.Ndeke.sum)+2,"YlGnBu"),nrow(tpc.obs.Ndeke.sum)) ) #
+		plot(1,1, xlim=range(x), ylim=range(tpc.obs.Ndeke.sum), type='n', bty='n', xlab="% sampling coverage", ylab="#individuals with early HIV\nin tip cluster")#
+		dummy	<- sapply(seq_len(nrow(tpc.obs.Ndeke.sum)), function(i)#
+				{#
+					lines(x, tpc.obs.Ndeke.sum[i,], col=cols[i], type='b')#
+				})#
+		legend("topleft", legend=rownames(tpc.obs.Ndeke.sum), fill=cols, bty='n', border=NA)
+tpc.obs.Ndeke.sum
+rbind( c(x/100 * max(tpc.obs.Ndeke.sum)), tpc.obs.Ndeke.sum)
+x							<- c(40,60,80,100)#
+		tpc.obs.Ndeke.sum			<- rbind( c(x/100 * max(tpc.obs.Ndeke.sum)), tpc.obs.Ndeke.sum)#
+		par(mar=c(4,5,0.5,0.5))#
+		rownames(tpc.obs.Ndeke.sum)	<- c("linear","#E>0","#E>1","#E>2","#E>3")#
+		cols	<- c("black",rev( tail(brewer.pal(nrow(tpc.obs.Ndeke.sum)+1,"YlGnBu"),nrow(tpc.obs.Ndeke.sum)-1) ))#
+		ltys	<- c(3, nrow(tpc.obs.Ndeke.sum)-1)#
+		plot(1,1, xlim=range(x), ylim=range(tpc.obs.Ndeke.sum), type='n', bty='n', xlab="% sampling coverage", ylab="#individuals with early HIV\nin tip cluster")#
+		dummy	<- sapply(seq_len(nrow(tpc.obs.Ndeke.sum)), function(i)#
+				{#
+					lines(x, tpc.obs.Ndeke.sum[i,], col=cols[i], lty=ltys[i], type='b')#
+				})#
+		legend("topleft", legend=rownames(tpc.obs.Ndeke.sum), fill=cols, bty='n', border=NA)
+ltys	<- c(3, rep(1,nrow(tpc.obs.Ndeke.sum)-1))#
+		plot(1,1, xlim=range(x), ylim=range(tpc.obs.Ndeke.sum), type='n', bty='n', xlab="% sampling coverage", ylab="#individuals with early HIV\nin tip cluster")#
+		dummy	<- sapply(seq_len(nrow(tpc.obs.Ndeke.sum)), function(i)#
+				{#
+					lines(x, tpc.obs.Ndeke.sum[i,], col=cols[i], lty=ltys[i], type='b')#
+				})#
+		legend("topleft", legend=rownames(tpc.obs.Ndeke.sum), fill=cols, bty='n', border=NA)
+tmp					<- list( 	sapply(tpc.obs.Ndeke, function(x)		sum(x[["H1"]][, 2:ncol(x[["H1"]])])		),#
+										sapply(tpc.obs.Ndeke, function(x)		sum(x[["H1"]][, 3:ncol(x[["H1"]])])		),#
+										sapply(tpc.obs.Ndeke, function(x)		ifelse(ncol(x[["H1"]])<4,0,sum(x[["H1"]][, 4:ncol(x[["H1"]])])) ),#
+										sapply(tpc.obs.Ndeke, function(x)		ifelse(ncol(x[["H1"]])<5,0,sum(x[["H1"]][, 5:ncol(x[["H1"]])]))	)		)#
+		tpc.obs.Ndeke.sum			<- do.call("rbind", tmp )		#
+		par(mar=c(4,5,0.5,0.5))#
+		x							<- c(40,60,80,100)#
+		rownames(tpc.obs.Ndeke.sum)	<- c("#E>0","#E>1","#E>2","#E>3")#
+		cols	<- rev( tail(brewer.pal(nrow(tpc.obs.Ndeke.sum)+2,"YlGnBu"),nrow(tpc.obs.Ndeke.sum)) )		#
+		plot(1,1, xlim=range(x), ylim=range(tpc.obs.Ndeke.sum), type='n', bty='n', xlab="% sampling coverage", ylab="#individuals with early HIV\nin tip cluster")#
+		dummy	<- sapply(seq_len(nrow(tpc.obs.Ndeke.sum)), function(i)#
+				{#
+					lines(x, tpc.obs.Ndeke.sum[i,], col=cols[i], type='b')#
+				})#
+		legend("topleft", legend=rownames(tpc.obs.Ndeke.sum), fill=cols, bty='n', border=NA)#
+		lines(x, c(x/100 * max(tpc.obs.Ndeke.sum)), lty=2)
+par(mar=c(4,5,0.5,0.5))#
+		x							<- c(40,60,80,100)		#
+		rownames(tpc.obs.Ndeke.sum)	<- c("#E>0","#E>1","#E>2","#E>3")#
+		cols	<- rev( tail(brewer.pal(nrow(tpc.obs.Ndeke.sum)+2,"YlGnBu"),nrow(tpc.obs.Ndeke.sum)) )		#
+		plot(1,1, xlim=range(x), ylim=range(tpc.obs.Ndeke.sum), type='n', bty='n', xlab="% sampling coverage", ylab="#individuals with early HIV\nin tip cluster")#
+		dummy	<- sapply(seq_len(nrow(tpc.obs.Ndeke.sum)), function(i)#
+				{#
+					lines(x, tpc.obs.Ndeke.sum[i,], col=cols[i], type='b')#
+				})#
+		legend("topleft", legend=rownames(tpc.obs.Ndeke.sum), fill=cols, bty='n', border=NA)		#
+		lines(x, c(x/100 * max(tpc.obs.Ndeke.sum)), lty=3)
+file			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_samplingeffect4Ndeke_',p.lab,'_',p.consent.coh,".pdf",sep='')#
+		print(file)
+file			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design'_',opt.analysis,'_samplingeffect4Ndeke_',p.lab,'_',p.consent.coh,".pdf",sep='')#
+		print(file)
+file			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_samplingeffect4Ndeke_',p.lab,'_',p.consent.coh,".pdf",sep='')#
+		print(file)
+file			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_samplingeffect4Ndeke_',p.lab,'_',p.consent.coh,".pdf",sep='')#
+		print(file)#
+		pdf(file, 5,5)#
+		par(mar=c(4,5,0.5,0.5))#
+		x							<- c(40,60,80,100)		#
+		rownames(tpc.obs.Ndeke.sum)	<- c("#E>0","#E>1","#E>2","#E>3")#
+		cols	<- rev( tail(brewer.pal(nrow(tpc.obs.Ndeke.sum)+2,"YlGnBu"),nrow(tpc.obs.Ndeke.sum)) )		#
+		plot(1,1, xlim=range(x), ylim=range(tpc.obs.Ndeke.sum), type='n', bty='n', xlab="% sampling coverage", ylab="#individuals with early HIV\nin tip cluster")#
+		dummy	<- sapply(seq_len(nrow(tpc.obs.Ndeke.sum)), function(i)#
+				{#
+					lines(x, tpc.obs.Ndeke.sum[i,], col=cols[i], type='b')#
+				})#
+		legend("topleft", legend=rownames(tpc.obs.Ndeke.sum), fill=cols, bty='n', border=NA)		#
+		lines(x, c(x/100 * max(tpc.obs.Ndeke.sum)), lty=3)#
+		dev.off()
+tmp				<- list( 	sapply(tpc.obs.Ndeke, function(x)		sum(x[["H0"]][, 2:ncol(x[["H0"]])])		),#
+									sapply(tpc.obs.Ndeke, function(x)		sum(x[["H0"]][, 3:ncol(x[["H0"]])])		),#
+									sapply(tpc.obs.Ndeke, function(x)		ifelse(ncol(x[["H0"]])<4,0,sum(x[["H0"]][, 4:ncol(x[["H0"]])])) ),#
+									sapply(tpc.obs.Ndeke, function(x)		ifelse(ncol(x[["H0"]])<5,0,sum(x[["H0"]][, 5:ncol(x[["H0"]])]))	)		)#
+		tpc.obs.Ndeke.sum0	<- do.call("rbind", tmp )
+tpc.obs.Ndeke.sum0
+tpc.obs.Ndeke.t		<- c( tpc.obs.Ndeke[["struefx40"]][["H0"]], tpc.obs.Ndeke[["struefx40"]][["H1"]], tpc.obs.Ndeke[["struefx99"]][["H0"]], tpc.obs.Ndeke[["struefx99"]][["H1"]] )
+tpc.obs.Ndeke.t
+tpc.obs.Ndeke.t		<- list( tpc.obs.Ndeke[["struefx40"]][["H0"]], tpc.obs.Ndeke[["struefx40"]][["H1"]], tpc.obs.Ndeke[["struefx99"]][["H0"]], tpc.obs.Ndeke[["struefx99"]][["H1"]] )
+tpc.obs.Ndeke.t
+names(tpc.obs.Ndeke.t)	<- c("Scenario H0, s=40%", "Scenario H1, s=40%","Scenario H0, s=100%", "Scenario H1, s=100%")
+lapply(tpc.obs.Ndeke.t, function(x)#
+				{#
+					colnames(x)	<- paste("#E=",seq_len(ncol(x))-1,sep='')#
+					x			<- x[-1,]#
+					rownames(x)	<- c("Index on ART","Index untreated")#
+					x#
+				})
+tmp		<- lapply(seq_along(tpc.obs.Ndeke.t), function(i)#
+				{#
+					txt.start	<- "\\begin{table}[htbp]\n\\centering\n{\\footnotesize\n"#
+					txt.table	<- print( xtable(x,digits=0), floating=FALSE, print.results=FALSE, include.colnames=T, include.rownames=T )#
+					txt.caption	<- names(tpc.obs.Ndeke.t)[i]#
+					txt.end		<- paste( "}\n\\caption{", txt.caption ,"}\n\\end{table}\n", sep='')#
+					ans			<- paste(txt.start, txt.table, txt.end, sep='')#
+					ans#
+				})
+tmp		<- lapply(seq_along(tpc.obs.Ndeke.t), function(i)#
+				{#
+					txt.start	<- "\\begin{table}[htbp]\n\\centering\n{\\footnotesize\n"#
+					txt.table	<- print( xtable(tpc.obs.Ndeke.t[[i]],digits=0), floating=FALSE, print.results=FALSE, include.colnames=T, include.rownames=T )#
+					txt.caption	<- names(tpc.obs.Ndeke.t)[i]#
+					txt.end		<- paste( "}\n\\caption{", txt.caption ,"}\n\\end{table}\n", sep='')#
+					ans			<- paste(txt.start, txt.table, txt.end, sep='')#
+					ans#
+				})
+tmp
+cat(tmp[[1]])
+tpc.obs.Ndeke.t			<- lapply(tpc.obs.Ndeke.t, function(x)#
+				{#
+					colnames(x)	<- paste("#E=",seq_len(ncol(x))-1,sep='')#
+					x			<- x[-1,]#
+					rownames(x)	<- c("Index on ART","Index untreated")#
+					x#
+				})#
+		tmp		<- lapply(seq_along(tpc.obs.Ndeke.t), function(i)#
+				{#
+					txt.start	<- "\\begin{table}[htbp]\n\\centering\n{\\footnotesize\n"#
+					txt.table	<- print( xtable(tpc.obs.Ndeke.t[[i]],digits=0), floating=FALSE, print.results=FALSE, include.colnames=T, include.rownames=T )#
+					txt.caption	<- names(tpc.obs.Ndeke.t)[i]#
+					txt.end		<- paste( "}\n\\caption{", txt.caption ,"}\n\\end{table}\n", sep='')#
+					ans			<- paste(txt.start, txt.table, txt.end, sep='')#
+					ans#
+				})#
+		cat(tmp[[1]])
+cat(paste(tmp, collapse=="\\n\\n"))
+cat(paste(tmp, collapse="\\n\\n"))
+cat(paste(tmp, collapse="\n\n"))
+prj.popart.powercalc.by.acutelklratio.divH0H1<- function(sites, lkl.theta, f.name, df.true=NULL, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, pdf.width=	ifelse(pdf.each,5,15), pdf.height=	ifelse(pdf.each,5,11), resume=1, verbose=1)#
+{	#
+	if(resume)#
+	{#
+		file	<- paste(f.name,"_H0H1divergence.R",sep='')#
+		options(show.error.messages = FALSE)		#
+		if(verbose)#
+			cat(paste("\nprj.simudata: try to resume file ",file))#
+		readAttempt<-	try(suppressWarnings(load(file)))#
+		options(show.error.messages = TRUE)#
+		if(!inherits(readAttempt, "try-error") && verbose)#
+			cat(paste("\nprj.simudata: resumed file ",file))#
+	}	#
+	if(!resume || inherits(readAttempt, "try-error"))#
+	{#
+		lkl.theta.sites		<- unique( lkl.theta[,comid_old] )#
+		if(0)#
+		{#
+			site	<-	lkl.theta.sites[1]#
+			lkl.e2e	<- lapply(c("H0","H1"), function(hyp)#
+					{#
+						#hyp					<- "H0"#
+						df		<- subset(lkl.theta, comid_old==site & h==hyp)					#
+						#	plot smoothed image for Inc, E2E#
+						df			<- subset(df, E2E<0.5 & Inc<0.015)#
+						look		<- my.image.smooth(df[,Inc], df[,E2E], df[,lkl], tol=3, theta=0.05, xlab="incidence/year of population", ylab="% transmission from early infection", cex.points=0, contour.nlevel=5, contour.col="black", points.col="gold")#
+						look$z[ is.na(look$z) ]	<- min(look$z, na.rm=1)#
+						legend("topright", legend=paste(site, hyp), bty='n')#
+						legend("topleft", legend="log likelihood", bty='n', col="black")#
+						tmp			<- my.image.get.CI(look, ci=0.95, log=TRUE)#
+						dx			<- tmp$dx#
+						ci.e2e		<- tmp$ci		#
+						my.image(look$x, look$y, tmp$lkl, palette="gray", xlab="incidence/year in % of population", ylab="% transmission from early infection", contour.nlevels=0, cex.points=0, points.col="black")#
+						cbind( data.table( expand.grid(Inc=look$x, E2E=look$y) ), comid_old=site, pixel=seq_len(prod(dim(look$z))), lkl=as.numeric(look$z), p=as.numeric(tmp$lkl), h=hyp)				#
+					})		#
+			lkl.e2e	<- rbindlist(lkl.e2e)#
+		}#
+		layout.m			<- matrix(seq_len( 8 ), 2, 4, byrow=1)#
+		def.par <- par(no.readonly = TRUE)				#
+		if(plot & !pdf.each)#
+		{			#
+			file			<- paste(f.name,'_',"allsites","_","acute_base-Inc_E2E.pdf",sep='')#
+			if(verbose)	cat(paste("\nplot likelihoods to file",file))#
+			pdf(file=file, pdf.width, pdf.height)#
+			layout(layout.m)#
+		} 	#
+		countour.col.e2e<- "#FC4E2A"#
+		lkl.e2e	<- lapply(lkl.theta.sites, function(site)#
+				{#
+					#site				<- lkl.theta.sites[1]#
+					lkl.e2e.site	<- lapply(c("H0","H1"), function(hyp)#
+							{#
+								#hyp					<- "H0"#
+								df		<- subset(lkl.theta, comid_old==site & h==hyp)	#
+								#	manual fix up#
+								if( any(which(df[,acute>13])>4000) ) 	warning("\nunexpected wrong prior")#
+								if( any(which(df[,acute>13])<=4000) )	df	<- df[4001:nrow(df),]#
+								#	get and plot log likelihood for theta				#
+								if(plot) 	#
+								{#
+									file	<- paste(f.name,'_',site,"_",hyp,"_loglkl_acute_base.pdf",sep='')#
+									if(pdf.each)	pdf(file=file, pdf.width, pdf.height)#
+									par(mar=c(4,4,0.5,6))#
+								}																				#
+								look		<- my.image.smooth(df[,acute], df[,base], df[,lkl], palette="rob", xlab=xlab.theta, ylab=ylab.theta, theta=0.1, plot=plot, cex.points=0, contour.nlevel=5, contour.col="black")#
+								if(plot)				#
+								{#
+									legend("topright", legend=paste(site, hyp), bty='n', col="white")#
+									legend("topleft", legend="log likelihood", bty='n', col="white")#
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, acute)), as.numeric(subset(df.true, comid_old==site & h==hyp, base)), col="black", pch=18, cex=2)#
+									if(pdf.each) 	dev.off()#
+								}#
+								#	get normalized likelihood and 95% CI for theta																								#
+								tmp			<- my.image.get.CI(look, ci=0.95, log=TRUE)#
+								dx			<- tmp$dx#
+								ci.theta	<- tmp$ci#
+								#	plot normalized likelihood and 95% CI for theta#
+								if(plot)#
+								{#
+									file				<- paste(f.name,'_',site,"_",hyp,"_ci_acute_base.pdf",sep='')#
+									if(pdf.each) pdf(file=file, pdf.width, pdf.height)									#
+									par(mar=c(4,4,0.5,0.5))#
+									my.image(look$x, look$y, tmp$lkl, xlab=xlab.theta, ylab=ylab.theta, contour.nlevels=0, cex.points=0)				#
+									lines(ci.theta[,x],ci.theta[,ymin],col="black")		#
+									lines(ci.theta[,x],ci.theta[,ymax],col="black")#
+									legend("topright", legend=paste(site, hyp), bty='n', col="white")#
+									legend("topleft", legend="95% confidence interval", bty='n', col="white")#
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, acute)), as.numeric(subset(df.true, comid_old==site & h==hyp, base)), col="black", pch=18, cex=2)#
+									if(pdf.each) dev.off()#
+								}#
+								df			<- subset(df, E2E<0.5 & Inc<0.015)#
+								#	get and plot smoothed image for Inc, E2E#
+								if(plot)#
+								{#
+									file	<- paste(f.name,'_',site,"_",hyp,"_loglkl_Inc_E2E.pdf",sep='')#
+									if(pdf.each) pdf(file=file, pdf.width, pdf.height)#
+									par(mar=c(4,4,0.5,6))#
+								}																#
+								look		<- my.image.smooth(df[,Inc], df[,E2E], df[,lkl], tol=3, theta=0.05, plot=plot, xlab="incidence/year of population", ylab="% transmission from early infection", cex.points=0, contour.nlevel=5, contour.col=countour.col.e2e, points.col="gold")#
+								look$z[ is.na(look$z) ]	<- min(look$z, na.rm=1)#
+								if(plot)#
+								{									#
+									legend("topright", legend=paste(site, hyp), bty='n')#
+									legend("topleft", legend="log likelihood", bty='n', col="black")#
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, Inc)), as.numeric(subset(df.true, comid_old==site & h==hyp, E2E)), col=countour.col.e2e, pch=18, cex=2)#
+									if(pdf.each) dev.off()#
+								}								#
+								#	get normalized likelihood and 95% CI for Inc, E2E#
+								tmp			<- my.image.get.CI(look, ci=0.95, log=TRUE)#
+								dx			<- tmp$dx#
+								ci.e2e		<- tmp$ci		#
+								#	plot normalized likelihood and 95% CI for Inc, E2E#
+								if(plot)#
+								{#
+									file	<- paste(f.name,'_',site,"_",hyp,"_ci_Inc_E2E.pdf",sep='')#
+									if(pdf.each) pdf(file=file, pdf.width, pdf.height)#
+									par(mar=c(4,4,0.5,0.5))																								#
+									my.image(look$x, look$y, tmp$lkl, palette="gray", xlab="incidence/year in % of population", ylab="% transmission from early infection", contour.nlevels=0, cex.points=0, points.col="black")#
+									points(df[,Inc], df[,E2E], cex=0, col="gold")#
+									lines(ci.e2e[,x],ci.e2e[,ymin],col=countour.col.e2e)		#
+									lines(ci.e2e[,x],ci.e2e[,ymax],col=countour.col.e2e)#
+									legend("topright", legend=paste(site, hyp), bty='n')#
+									legend("topleft", legend="95% confidence interval", bty='n', col="black")#
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, Inc)), as.numeric(subset(df.true, comid_old==site & h==hyp, E2E)), col=countour.col.e2e, pch=18, cex=2)#
+									if(pdf.each) dev.off()											#
+								}#
+								#	return likelihood values for for Inc, E2E#
+								cbind( data.table( expand.grid(Inc=look$x, E2E=look$y) ), comid_old=site, pixel=seq_len(prod(dim(look$z))), lkl=as.numeric(look$z), p=as.numeric(tmp$lkl), h=hyp)#
+							})	#
+					rbindlist( lkl.e2e.site )		#
+				})#
+		if(plot & !pdf.each)#
+		{#
+			par(def.par)#
+			dev.off()			#
+		} #
+		lkl.e2e		<- rbindlist( lkl.e2e )#
+		setkey(lkl.e2e, comid_old,pixel)#
+		if(sum(subset(lkl.e2e, comid_old=="Ndeke" & h=="H0")[,p])!=1)	cat(paste("\nColumn p in lkl.e2e not normalized?",	sum(subset(lkl.e2e, comid_old=="Ndeke" & h=="H0")[,p])))#
+		lkl.e2e.div	<- lkl.e2e[,	list( min.p=min(p), KL.f1t0= log(p[1]/p[2])*p[1], KL.f0t1= log(p[2]/p[1])*p[2] )	, by=c("comid_old","pixel")]#
+		lkl.e2e.div	<- lkl.e2e.div[, list(min.p=sum(min.p), KL.f1t0=sum(KL.f1t0), KL.f0t1=sum(KL.f0t1)), by="comid_old"]#
+		lkl.e2e.div	<- merge( sites[, c("country", "triplet.id", "arm", "comid_old", "hivcomb", "artadjust", "popsize", "mu.inc.rate.H0", "mu.inc.rate.H1", "mu.pE2E.H0", "mu.pE2E.H1", "%prev", "%inc", "%avg", "sigma"), with=F], lkl.e2e.div, all.y=1, by="comid_old")#
+		setkey(lkl.e2e.div, triplet.id, arm)#
+		file		<- paste(f.name,"_H0H1divergence.R",sep='')#
+		if(verbose)	cat(paste("\nsave output to file",file))#
+		save(lkl.e2e.div, file=file)#
+	}#
+	lkl.e2e.div#
 }
-hivc.seq.write.dna.phylip(seq.PROT.RT, file=file)
-70-33
-2013+37
-37700+45000
-outdir
-signat.in	<- "Sat_May_11_14:23:46_2013"#
-		signat.out	<- "Sat_May_11_14:23:46_2013"#
-#
-		file		<- paste(outdir,"/ATHENA_2013_03_FirstCurSequences_PROTRT_",gsub('/',':',signat.in),".R",sep='')#
-		if(verbose) cat(paste("\nload ",file))			#
-		load(file)
-seq.PROT.RT
-seq.PROT.RT[1,]
-x<- as.character(seq.PROT.RT[1,])
+require(data.table)		#
+		dir.name		<- "popartpower_acute"#
+		my.mkdir(DATA,dir.name)#
+		dir.name		<- paste(DATA,dir.name,sep='/')	#
+		resume			<- 1#
+		verbose			<- 1#
+		debug			<- 1#
+		##
+		m.type			<- "Acute"	#
+		cohort.size		<- 2500	#
+		cohort.dur		<- 3	#
+		theta.EE.H0		<- 0.1#
+		theta.EE.H1		<- 0.4				#
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								#
+		p.consent.coh	<- 0.9*0.9#
+		##
+		opt.design		<- "PC12+HCC"#
+		opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')#
+		opt.analysis	<- "central-1016"#
+		opt.analysis	<- "central-1017"#
+		opt.sampling	<- "strue"#
+		#opt.sampling	<- "struefx40"#
+		#opt.sampling	<- "struefx60"#
+		#opt.sampling	<- "struefx80"#
+		#opt.sampling	<- "struefx99"				#
+		#opt.sampling	<- "s5pc"					#
+		#load df.hyp#
+		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')#
+		tmp				<- load(file)#
+		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		#
+		#set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")#
+		#set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		#
+		df.hyp			<- df.prop[, {#
+					tmp<- c(which.min(E2E), which.max(E2E))#
+					list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+				}, by=c("country", "arm","target")]#
+		#load df.contam#
+		df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]							#
+		#		#
+		sites			<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )#
+		sites[which(sites[,"country"]==1),"country"]	<- "ZA"#
+		sites[which(sites[,"country"]==2),"country"]	<- "SA"	#
+		sites			<- as.data.table(sites)#
+		samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)#
+		samples.CD4		<- subset(samples.CD4, prediction=="central")#
+		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)#
+		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)#
+		#	adjust sampling percentages if required#
+		if(grepl("fx", opt.sampling))#
+		{#
+			tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+			if(verbose)	cat(paste("\nSetting sampling percentages to", tmp))#
+			set(samples.seq, NULL, c("%prev","%inc","%avg"), tmp)#
+			p.lab<- p.consent.coh<- tmp#
+		}#
+		#	load high acute and low acute tip clusters for each community					#
+		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		#
+		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)#
+		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)		#
+		tpc.obs			<- tmp$tpc.obs#
+		sites			<- merge( tmp$sites, tmp$theta.model.Hx, by="comid_old")#
+		setkey(sites, triplet.id, arm)
+sites[,sigma:= 0]
+tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))#
+		#	take out Ikhwezi#
+		tpc.obs			<- tpc.obs[names(tpc.obs)!="Ikhwezi"]#
+		#	get likelihood values for precomputed theta-E2E/Inc values#
+		remote.signat		<- "Fri_Oct_11_10:30:19_2013"#
+		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,sep='')#
+		lkl.theta			<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=0, verbose=1, remote=0, remote.signat=remote.signat)
+df.true				<- rbind( 	sites[, list(comid_old, acute=acute.H0, base=base.H0, Inc=mu.inc.rate.H0, E2E=mu.pE2E.H0, h="H0")], #
+										sites[, list(comid_old, acute=acute.H1, base=base.H1, Inc=mu.inc.rate.H1, E2E=mu.pE2E.H1, h="H1")] )									#
+		tmp			<- rbind( sites[, list(pool=arm) ,by="comid_old"], sites[, list(pool=paste(arm,country,sep='')) ,by="comid_old"] )#
+		setkey(tmp, pool)#
+		tmp			<- unique(tmp)#
+		tmp			<- subset( merge(df.true, tmp, by="comid_old"), select=c(pool,acute,base,Inc,E2E,h) )#
+		setnames(tmp, "pool", "comid_old")#
+		df.true		<- rbind(df.true, tmp)#
+		setkey(df.true, comid_old)		#
+		#	df.true (Inc,E2E) is the same for pools within country only			subset(sites, select=c(country, arm, comid_old))#
+		set(df.true, which(df.true[,comid_old%in%c("A","B","C")]), c("acute","base","Inc","E2E"), NA)
+df.true
+set(df.true, which(df.true[,comid_old%in%c("AZA","BZA","CZA","ASA","BSA","CSA")]), c("acute","base"), NA)
+df.true
+lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.divH0H1(sites, lkl.theta, f.name, df.true=df.true, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, resume=0, verbose=1)
+require(data.table)		#
+		dir.name		<- "popartpower_acute"#
+		my.mkdir(DATA,dir.name)#
+		dir.name		<- paste(DATA,dir.name,sep='/')	#
+		resume			<- 1#
+		verbose			<- 1#
+		debug			<- 1#
+		##
+		m.type			<- "Acute"	#
+		cohort.size		<- 2500	#
+		cohort.dur		<- 3	#
+		theta.EE.H0		<- 0.1#
+		theta.EE.H1		<- 0.4				#
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								#
+		p.consent.coh	<- 0.9*0.9#
+		##
+		opt.design		<- "PC12+HCC"#
+		opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')#
+		opt.analysis	<- "central-1016"#
+		opt.analysis	<- "central-1017"#
+		opt.sampling	<- "strue"#
+		opt.sampling	<- "struefx40"#
+		#opt.sampling	<- "struefx60"#
+		#opt.sampling	<- "struefx80"#
+		#opt.sampling	<- "struefx99"				#
+		#opt.sampling	<- "s5pc"					#
+		#load df.hyp#
+		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')#
+		tmp				<- load(file)#
+		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		#
+		#set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")#
+		#set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		#
+		df.hyp			<- df.prop[, {#
+					tmp<- c(which.min(E2E), which.max(E2E))#
+					list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+				}, by=c("country", "arm","target")]#
+		#load df.contam#
+		df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]							#
+		#		#
+		sites			<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )#
+		sites[which(sites[,"country"]==1),"country"]	<- "ZA"#
+		sites[which(sites[,"country"]==2),"country"]	<- "SA"	#
+		sites			<- as.data.table(sites)#
+		samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)#
+		samples.CD4		<- subset(samples.CD4, prediction=="central")#
+		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)#
+		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)#
+		#	adjust sampling percentages if required#
+		if(grepl("fx", opt.sampling))#
+		{#
+			tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+			if(verbose)	cat(paste("\nSetting sampling percentages to", tmp))#
+			set(samples.seq, NULL, c("%prev","%inc","%avg"), tmp)#
+			p.lab<- p.consent.coh<- tmp#
+		}#
+		#	load high acute and low acute tip clusters for each community					#
+		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		#
+		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)#
+		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)		#
+		tpc.obs			<- tmp$tpc.obs#
+		sites			<- merge( tmp$sites, tmp$theta.model.Hx, by="comid_old")#
+		setkey(sites, triplet.id, arm)
+sites[,sigma:= 0]
+add pools#
+		tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))#
+		#	take out Ikhwezi#
+		tpc.obs			<- tpc.obs[names(tpc.obs)!="Ikhwezi"]#
+		#	get likelihood values for precomputed theta-E2E/Inc values#
+		remote.signat		<- "Fri_Oct_11_10:30:19_2013"#
+		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,sep='')#
+		lkl.theta			<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=0, verbose=1, remote=0, remote.signat=remote.signat)#
+		#	get true theta and Inc,E2E points used to generate tpc.obs#
+		df.true				<- rbind( 	sites[, list(comid_old, acute=acute.H0, base=base.H0, Inc=mu.inc.rate.H0, E2E=mu.pE2E.H0, h="H0")], #
+										sites[, list(comid_old, acute=acute.H1, base=base.H1, Inc=mu.inc.rate.H1, E2E=mu.pE2E.H1, h="H1")] )									#
+		tmp			<- rbind( sites[, list(pool=arm) ,by="comid_old"], sites[, list(pool=paste(arm,country,sep='')) ,by="comid_old"] )#
+		setkey(tmp, pool)#
+		tmp			<- unique(tmp)#
+		tmp			<- subset( merge(df.true, tmp, by="comid_old"), select=c(pool,acute,base,Inc,E2E,h) )#
+		setnames(tmp, "pool", "comid_old")#
+		df.true		<- rbind(df.true, tmp)#
+		setkey(df.true, comid_old)		#
+		#	df.true (Inc,E2E) is the same for pools within country only			subset(sites, select=c(country, arm, comid_old))#
+		set(df.true, which(df.true[,comid_old%in%c("A","B","C")]), c("acute","base","Inc","E2E"), NA)#
+		set(df.true, which(df.true[,comid_old%in%c("AZA","BZA","CZA","ASA","BSA","CSA")]), c("acute","base"), NA)#
+		#	plot lkl surface and take 95% CI subset#
+		lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.divH0H1(sites, lkl.theta, f.name, df.true=df.true, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, resume=0, verbose=1)
+lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.divH0H1(sites, lkl.theta, f.name, df.true=df.true, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=1, resume=0, verbose=1)
+prj.popart.powercalc.by.acutelklratio.divH0H1<- function(sites, lkl.theta, f.name, df.true=NULL, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, pdf.width=	ifelse(pdf.each,5,15), pdf.height=	ifelse(pdf.each,5,11), resume=1, verbose=1)#
+{	#
+	if(resume)#
+	{#
+		file	<- paste(f.name,"_H0H1divergence.R",sep='')#
+		options(show.error.messages = FALSE)		#
+		if(verbose)#
+			cat(paste("\nprj.simudata: try to resume file ",file))#
+		readAttempt<-	try(suppressWarnings(load(file)))#
+		options(show.error.messages = TRUE)#
+		if(!inherits(readAttempt, "try-error") && verbose)#
+			cat(paste("\nprj.simudata: resumed file ",file))#
+	}	#
+	if(!resume || inherits(readAttempt, "try-error"))#
+	{#
+		lkl.theta.sites		<- unique( lkl.theta[,comid_old] )#
+		if(0)#
+		{#
+			site	<-	lkl.theta.sites[1]#
+			lkl.e2e	<- lapply(c("H0","H1"), function(hyp)#
+					{#
+						#hyp					<- "H0"#
+						df		<- subset(lkl.theta, comid_old==site & h==hyp)					#
+						#	plot smoothed image for Inc, E2E#
+						df			<- subset(df, E2E<0.5 & Inc<0.015)#
+						look		<- my.image.smooth(df[,Inc], df[,E2E], df[,lkl], tol=3, theta=0.05, xlab="% incidence/year", ylab="% transmission from early infection", cex.points=0, contour.nlevel=5, contour.col="black", points.col="gold")#
+						look$z[ is.na(look$z) ]	<- min(look$z, na.rm=1)#
+						legend("topright", legend=paste(site, hyp), bty='n')#
+						legend("topleft", legend="log likelihood", bty='n', col="black")#
+						tmp			<- my.image.get.CI(look, ci=0.95, log=TRUE)#
+						dx			<- tmp$dx#
+						ci.e2e		<- tmp$ci		#
+						my.image(look$x, look$y, tmp$lkl, palette="gray", xlab="% incidence/year", ylab="% transmission from early infection", contour.nlevels=0, cex.points=0, points.col="black")#
+						cbind( data.table( expand.grid(Inc=look$x, E2E=look$y) ), comid_old=site, pixel=seq_len(prod(dim(look$z))), lkl=as.numeric(look$z), p=as.numeric(tmp$lkl), h=hyp)				#
+					})		#
+			lkl.e2e	<- rbindlist(lkl.e2e)#
+		}#
+		layout.m			<- matrix(seq_len( 8 ), 2, 4, byrow=1)#
+		def.par <- par(no.readonly = TRUE)				#
+		if(plot & !pdf.each)#
+		{			#
+			file			<- paste(f.name,'_',"allsites","_","acute_base-Inc_E2E.pdf",sep='')#
+			if(verbose)	cat(paste("\nplot likelihoods to file",file))#
+			pdf(file=file, pdf.width, pdf.height)#
+			layout(layout.m)#
+		} 	#
+		countour.col.e2e<- "#FC4E2A"#
+		lkl.e2e	<- lapply(lkl.theta.sites, function(site)#
+				{#
+					#site				<- lkl.theta.sites[1]#
+					lkl.e2e.site	<- lapply(c("H0","H1"), function(hyp)#
+							{#
+								#hyp					<- "H0"#
+								df		<- subset(lkl.theta, comid_old==site & h==hyp)	#
+								#	manual fix up#
+								if( any(which(df[,acute>13])>4000) ) 	warning("\nunexpected wrong prior")#
+								if( any(which(df[,acute>13])<=4000) )	df	<- df[4001:nrow(df),]#
+								#	get and plot log likelihood for theta				#
+								if(plot) 	#
+								{#
+									file	<- paste(f.name,'_site_',site,"_",hyp,"_loglkl_acute_base.pdf",sep='')#
+									if(pdf.each)	pdf(file=file, pdf.width, pdf.height)#
+									par(mar=c(4,4,0.5,6))#
+								}																				#
+								look		<- my.image.smooth(df[,acute], df[,base], df[,lkl], palette="rob", xlab=xlab.theta, ylab=ylab.theta, theta=0.1, plot=plot, cex.points=0, contour.nlevel=5, contour.col="black")#
+								if(plot)				#
+								{#
+									if(!pdf.each)	legend("topright", legend=paste(site, hyp), bty='n', col="white")#
+									legend("topleft", legend="log likelihood", bty='n', col="white")#
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, acute)), as.numeric(subset(df.true, comid_old==site & h==hyp, base)), col="black", pch=18, cex=2)#
+									if(pdf.each) 	dev.off()#
+								}#
+								#	get normalized likelihood and 95% CI for theta																								#
+								tmp			<- my.image.get.CI(look, ci=0.95, log=TRUE)#
+								dx			<- tmp$dx#
+								ci.theta	<- tmp$ci#
+								#	plot normalized likelihood and 95% CI for theta#
+								if(plot)#
+								{#
+									file				<- paste(f.name,'_site_',site,"_",hyp,"_ci_acute_base.pdf",sep='')#
+									if(pdf.each) pdf(file=file, pdf.width, pdf.height)									#
+									par(mar=c(4,4,0.5,0.5))#
+									my.image(look$x, look$y, tmp$lkl, xlab=xlab.theta, ylab=ylab.theta, contour.nlevels=0, cex.points=0)				#
+									lines(ci.theta[,x],ci.theta[,ymin],col="black")		#
+									lines(ci.theta[,x],ci.theta[,ymax],col="black")#
+									if(!pdf.each)	legend("topright", legend=paste(site, hyp), bty='n', col="white")#
+									legend("topleft", legend="95% confidence interval", bty='n', col="white")#
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, acute)), as.numeric(subset(df.true, comid_old==site & h==hyp, base)), col="black", pch=18, cex=2)#
+									if(pdf.each) dev.off()#
+								}#
+								df			<- subset(df, E2E<0.5 & Inc<0.015)#
+								#	get and plot smoothed image for Inc, E2E#
+								if(plot)#
+								{#
+									file	<- paste(f.name,'_site_',site,"_",hyp,"_loglkl_Inc_E2E.pdf",sep='')#
+									if(pdf.each) pdf(file=file, pdf.width, pdf.height)#
+									par(mar=c(4,4,0.5,6))#
+								}																#
+								look		<- my.image.smooth(df[,Inc], df[,E2E], df[,lkl], tol=3, theta=0.05, plot=plot, xlab="% incidence/year", ylab="% transmission from early infection", cex.points=0, contour.nlevel=5, contour.col=countour.col.e2e, points.col="gold")#
+								look$z[ is.na(look$z) ]	<- min(look$z, na.rm=1)#
+								if(plot)#
+								{									#
+									if(!pdf.each)	legend("topright", legend=paste(site, hyp), bty='n')#
+									legend("topleft", legend="log likelihood", bty='n', col="black")#
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, Inc)), as.numeric(subset(df.true, comid_old==site & h==hyp, E2E)), col=countour.col.e2e, pch=18, cex=2)#
+									if(pdf.each) dev.off()#
+								}								#
+								#	get normalized likelihood and 95% CI for Inc, E2E#
+								tmp			<- my.image.get.CI(look, ci=0.95, log=TRUE)#
+								dx			<- tmp$dx#
+								ci.e2e		<- tmp$ci		#
+								#	plot normalized likelihood and 95% CI for Inc, E2E#
+								if(plot)#
+								{#
+									file	<- paste(f.name,'_site_',site,"_",hyp,"_ci_Inc_E2E.pdf",sep='')#
+									if(pdf.each) pdf(file=file, pdf.width, pdf.height)#
+									par(mar=c(4,4,0.5,0.5))																								#
+									my.image(look$x, look$y, tmp$lkl, palette="gray", xlab="% incidence/year", ylab="% transmission from early infection", contour.nlevels=0, cex.points=0, points.col="black")#
+									points(df[,Inc], df[,E2E], cex=0, col="gold")#
+									lines(ci.e2e[,x],ci.e2e[,ymin],col=countour.col.e2e)		#
+									lines(ci.e2e[,x],ci.e2e[,ymax],col=countour.col.e2e)#
+									if(!pdf.each)	legend("topright", legend=paste(site, hyp), bty='n')#
+									legend("topleft", legend="95% confidence interval", bty='n', col="black")#
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, Inc)), as.numeric(subset(df.true, comid_old==site & h==hyp, E2E)), col=countour.col.e2e, pch=18, cex=2)#
+									if(pdf.each) dev.off()											#
+								}#
+								#	return likelihood values for for Inc, E2E#
+								cbind( data.table( expand.grid(Inc=look$x, E2E=look$y) ), comid_old=site, pixel=seq_len(prod(dim(look$z))), lkl=as.numeric(look$z), p=as.numeric(tmp$lkl), h=hyp)#
+							})	#
+					rbindlist( lkl.e2e.site )		#
+				})#
+		if(plot & !pdf.each)#
+		{#
+			par(def.par)#
+			dev.off()			#
+		} #
+		lkl.e2e		<- rbindlist( lkl.e2e )#
+		setkey(lkl.e2e, comid_old,pixel)#
+		if(sum(subset(lkl.e2e, comid_old=="Ndeke" & h=="H0")[,p])!=1)	cat(paste("\nColumn p in lkl.e2e not normalized?",	sum(subset(lkl.e2e, comid_old=="Ndeke" & h=="H0")[,p])))#
+		lkl.e2e.div	<- lkl.e2e[,	list( min.p=min(p), KL.f1t0= log(p[1]/p[2])*p[1], KL.f0t1= log(p[2]/p[1])*p[2] )	, by=c("comid_old","pixel")]#
+		lkl.e2e.div	<- lkl.e2e.div[, list(min.p=sum(min.p), KL.f1t0=sum(KL.f1t0), KL.f0t1=sum(KL.f0t1)), by="comid_old"]#
+		lkl.e2e.div	<- merge( sites[, c("country", "triplet.id", "arm", "comid_old", "hivcomb", "artadjust", "popsize", "mu.inc.rate.H0", "mu.inc.rate.H1", "mu.pE2E.H0", "mu.pE2E.H1", "%prev", "%inc", "%avg", "sigma"), with=F], lkl.e2e.div, all.y=1, by="comid_old")#
+		setkey(lkl.e2e.div, triplet.id, arm)#
+		file		<- paste(f.name,"_H0H1divergence.R",sep='')#
+		if(verbose)	cat(paste("\nsave output to file",file))#
+		save(lkl.e2e.div, file=file)#
+	}#
+	lkl.e2e.div#
+}
+lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.divH0H1(sites, lkl.theta, f.name, df.true=df.true, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=1, resume=0, verbose=1)
+require(data.table)		#
+		dir.name		<- "popartpower_acute"#
+		my.mkdir(DATA,dir.name)#
+		dir.name		<- paste(DATA,dir.name,sep='/')	#
+		resume			<- 1#
+		verbose			<- 1#
+		debug			<- 1#
+		##
+		m.type			<- "Acute"	#
+		cohort.size		<- 2500	#
+		cohort.dur		<- 3	#
+		theta.EE.H0		<- 0.1#
+		theta.EE.H1		<- 0.4				#
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								#
+		p.consent.coh	<- 0.9*0.9#
+		##
+		opt.design		<- "PC12+HCC"#
+		opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')#
+		opt.analysis	<- "central-1016"#
+		opt.analysis	<- "central-1017"#
+		opt.sampling	<- "strue"#
+		opt.sampling	<- "struefx40"#
+		opt.sampling	<- "struefx60"#
+		#opt.sampling	<- "struefx80"#
+		#opt.sampling	<- "struefx99"				#
+		#opt.sampling	<- "s5pc"					#
+		#load df.hyp#
+		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')#
+		tmp				<- load(file)#
+		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		#
+		#set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")#
+		#set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		#
+		df.hyp			<- df.prop[, {#
+					tmp<- c(which.min(E2E), which.max(E2E))#
+					list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+				}, by=c("country", "arm","target")]#
+		#load df.contam#
+		df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]							#
+		#		#
+		sites			<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )#
+		sites[which(sites[,"country"]==1),"country"]	<- "ZA"#
+		sites[which(sites[,"country"]==2),"country"]	<- "SA"	#
+		sites			<- as.data.table(sites)#
+		samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)#
+		samples.CD4		<- subset(samples.CD4, prediction=="central")#
+		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)#
+		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)#
+		#	adjust sampling percentages if required#
+		if(grepl("fx", opt.sampling))#
+		{#
+			tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+			if(verbose)	cat(paste("\nSetting sampling percentages to", tmp))#
+			set(samples.seq, NULL, c("%prev","%inc","%avg"), tmp)#
+			p.lab<- p.consent.coh<- tmp#
+		}#
+		#	load high acute and low acute tip clusters for each community					#
+		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		#
+		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)#
+		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)		#
+		tpc.obs			<- tmp$tpc.obs#
+		sites			<- merge( tmp$sites, tmp$theta.model.Hx, by="comid_old")#
+		setkey(sites, triplet.id, arm)
+sites[,sigma:= 0]
+add pools#
+		tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))#
+		#	take out Ikhwezi#
+		tpc.obs			<- tpc.obs[names(tpc.obs)!="Ikhwezi"]#
+		#	get likelihood values for precomputed theta-E2E/Inc values#
+		remote.signat		<- "Fri_Oct_11_10:30:19_2013"#
+		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,sep='')#
+		lkl.theta			<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=1, verbose=1, remote=0, remote.signat=remote.signat)#
+		#	get true theta and Inc,E2E points used to generate tpc.obs#
+		df.true				<- rbind( 	sites[, list(comid_old, acute=acute.H0, base=base.H0, Inc=mu.inc.rate.H0, E2E=mu.pE2E.H0, h="H0")], #
+										sites[, list(comid_old, acute=acute.H1, base=base.H1, Inc=mu.inc.rate.H1, E2E=mu.pE2E.H1, h="H1")] )									#
+		tmp			<- rbind( sites[, list(pool=arm) ,by="comid_old"], sites[, list(pool=paste(arm,country,sep='')) ,by="comid_old"] )#
+		setkey(tmp, pool)#
+		tmp			<- unique(tmp)#
+		tmp			<- subset( merge(df.true, tmp, by="comid_old"), select=c(pool,acute,base,Inc,E2E,h) )#
+		setnames(tmp, "pool", "comid_old")#
+		df.true		<- rbind(df.true, tmp)#
+		setkey(df.true, comid_old)		#
+		#	df.true (Inc,E2E) is the same for pools within country only			subset(sites, select=c(country, arm, comid_old))#
+		set(df.true, which(df.true[,comid_old%in%c("A","B","C")]), c("acute","base","Inc","E2E"), NA)#
+		set(df.true, which(df.true[,comid_old%in%c("AZA","BZA","CZA","ASA","BSA","CSA")]), c("acute","base"), NA)#
+		#	plot lkl surface and take 95% CI subset#
+		lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.divH0H1(sites, lkl.theta, f.name, df.true=df.true, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=1, resume=0, verbose=1)
+require(data.table)		#
+		dir.name		<- "popartpower_acute"#
+		my.mkdir(DATA,dir.name)#
+		dir.name		<- paste(DATA,dir.name,sep='/')	#
+		resume			<- 1#
+		verbose			<- 1#
+		debug			<- 1#
+		##
+		m.type			<- "Acute"	#
+		cohort.size		<- 2500	#
+		cohort.dur		<- 3	#
+		theta.EE.H0		<- 0.1#
+		theta.EE.H1		<- 0.4				#
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								#
+		p.consent.coh	<- 0.9*0.9#
+		##
+		opt.design		<- "PC12+HCC"#
+		opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')#
+		opt.analysis	<- "central-1016"#
+		opt.analysis	<- "central-1017"#
+		opt.sampling	<- "strue"#
+		opt.sampling	<- "struefx40"#
+		opt.sampling	<- "struefx60"#
+		opt.sampling	<- "struefx80"#
+		#opt.sampling	<- "struefx99"				#
+		#opt.sampling	<- "s5pc"					#
+		#load df.hyp#
+		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')#
+		tmp				<- load(file)#
+		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		#
+		#set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")#
+		#set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		#
+		df.hyp			<- df.prop[, {#
+					tmp<- c(which.min(E2E), which.max(E2E))#
+					list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+				}, by=c("country", "arm","target")]#
+		#load df.contam#
+		df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]							#
+		#		#
+		sites			<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )#
+		sites[which(sites[,"country"]==1),"country"]	<- "ZA"#
+		sites[which(sites[,"country"]==2),"country"]	<- "SA"	#
+		sites			<- as.data.table(sites)#
+		samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)#
+		samples.CD4		<- subset(samples.CD4, prediction=="central")#
+		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)#
+		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)#
+		#	adjust sampling percentages if required#
+		if(grepl("fx", opt.sampling))#
+		{#
+			tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+			if(verbose)	cat(paste("\nSetting sampling percentages to", tmp))#
+			set(samples.seq, NULL, c("%prev","%inc","%avg"), tmp)#
+			p.lab<- p.consent.coh<- tmp#
+		}#
+		#	load high acute and low acute tip clusters for each community					#
+		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		#
+		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)#
+		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)		#
+		tpc.obs			<- tmp$tpc.obs#
+		sites			<- merge( tmp$sites, tmp$theta.model.Hx, by="comid_old")#
+		setkey(sites, triplet.id, arm)
+sites[,sigma:= 0]
+add pools#
+		tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))#
+		#	take out Ikhwezi#
+		tpc.obs			<- tpc.obs[names(tpc.obs)!="Ikhwezi"]#
+		#	get likelihood values for precomputed theta-E2E/Inc values#
+		remote.signat		<- "Fri_Oct_11_10:30:19_2013"#
+		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,sep='')#
+		lkl.theta			<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=1, verbose=1, remote=0, remote.signat=remote.signat)#
+		#	get true theta and Inc,E2E points used to generate tpc.obs#
+		df.true				<- rbind( 	sites[, list(comid_old, acute=acute.H0, base=base.H0, Inc=mu.inc.rate.H0, E2E=mu.pE2E.H0, h="H0")], #
+										sites[, list(comid_old, acute=acute.H1, base=base.H1, Inc=mu.inc.rate.H1, E2E=mu.pE2E.H1, h="H1")] )									#
+		tmp			<- rbind( sites[, list(pool=arm) ,by="comid_old"], sites[, list(pool=paste(arm,country,sep='')) ,by="comid_old"] )#
+		setkey(tmp, pool)#
+		tmp			<- unique(tmp)#
+		tmp			<- subset( merge(df.true, tmp, by="comid_old"), select=c(pool,acute,base,Inc,E2E,h) )#
+		setnames(tmp, "pool", "comid_old")#
+		df.true		<- rbind(df.true, tmp)#
+		setkey(df.true, comid_old)		#
+		#	df.true (Inc,E2E) is the same for pools within country only			subset(sites, select=c(country, arm, comid_old))#
+		set(df.true, which(df.true[,comid_old%in%c("A","B","C")]), c("acute","base","Inc","E2E"), NA)#
+		set(df.true, which(df.true[,comid_old%in%c("AZA","BZA","CZA","ASA","BSA","CSA")]), c("acute","base"), NA)#
+		#	plot lkl surface and take 95% CI subset#
+		lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.divH0H1(sites, lkl.theta, f.name, df.true=df.true, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=1, resume=0, verbose=1)
+traceback()
+df.true
+require(data.table)		#
+		dir.name		<- "popartpower_acute"#
+		my.mkdir(DATA,dir.name)#
+		dir.name		<- paste(DATA,dir.name,sep='/')	#
+		resume			<- 1#
+		verbose			<- 1#
+		debug			<- 1#
+		##
+		m.type			<- "Acute"	#
+		cohort.size		<- 2500	#
+		cohort.dur		<- 3	#
+		theta.EE.H0		<- 0.1#
+		theta.EE.H1		<- 0.4				#
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								#
+		p.consent.coh	<- 0.9*0.9#
+		##
+		opt.design		<- "PC12+HCC"#
+		opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')#
+		opt.analysis	<- "central-1016"#
+		opt.analysis	<- "central-1017"#
+		opt.sampling	<- "strue"#
+		opt.sampling	<- "struefx40"#
+		opt.sampling	<- "struefx60"#
+		opt.sampling	<- "struefx80"#
+		#opt.sampling	<- "struefx99"				#
+		#opt.sampling	<- "s5pc"					#
+		#load df.hyp#
+		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')#
+		tmp				<- load(file)#
+		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		#
+		#set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")#
+		#set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		#
+		df.hyp			<- df.prop[, {#
+					tmp<- c(which.min(E2E), which.max(E2E))#
+					list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+				}, by=c("country", "arm","target")]#
+		#load df.contam#
+		df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]							#
+		#		#
+		sites			<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )#
+		sites[which(sites[,"country"]==1),"country"]	<- "ZA"#
+		sites[which(sites[,"country"]==2),"country"]	<- "SA"	#
+		sites			<- as.data.table(sites)#
+		samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)#
+		samples.CD4		<- subset(samples.CD4, prediction=="central")#
+		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)#
+		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)#
+		#	adjust sampling percentages if required#
+		if(grepl("fx", opt.sampling))#
+		{#
+			tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+			if(verbose)	cat(paste("\nSetting sampling percentages to", tmp))#
+			set(samples.seq, NULL, c("%prev","%inc","%avg"), tmp)#
+			p.lab<- p.consent.coh<- tmp#
+		}#
+		#	load high acute and low acute tip clusters for each community					#
+		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		#
+		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)#
+		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)		#
+		tpc.obs			<- tmp$tpc.obs#
+		sites			<- merge( tmp$sites, tmp$theta.model.Hx, by="comid_old")#
+		setkey(sites, triplet.id, arm)
+sites[,sigma:= 0]
+tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))#
+		#	take out Ikhwezi#
+		tpc.obs			<- tpc.obs[names(tpc.obs)!="Ikhwezi"]#
+		#	get likelihood values for precomputed theta-E2E/Inc values#
+		remote.signat		<- "Fri_Oct_11_10:30:19_2013"#
+		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,sep='')#
+		lkl.theta			<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=1, verbose=1, remote=0, remote.signat=remote.signat)#
+		#	get true theta and Inc,E2E points used to generate tpc.obs#
+		df.true				<- rbind( 	sites[, list(comid_old, acute=acute.H0, base=base.H0, Inc=mu.inc.rate.H0, E2E=mu.pE2E.H0, h="H0")], #
+										sites[, list(comid_old, acute=acute.H1, base=base.H1, Inc=mu.inc.rate.H1, E2E=mu.pE2E.H1, h="H1")] )									#
+		tmp			<- rbind( sites[, list(pool=arm) ,by="comid_old"], sites[, list(pool=paste(arm,country,sep='')) ,by="comid_old"] )#
+		setkey(tmp, pool)#
+		tmp			<- unique(tmp)#
+		tmp			<- subset( merge(df.true, tmp, by="comid_old"), select=c(pool,acute,base,Inc,E2E,h) )#
+		setnames(tmp, "pool", "comid_old")#
+		df.true		<- rbind(df.true, tmp)#
+		setkey(df.true, comid_old)		#
+		#	df.true (Inc,E2E) is the same for pools within country only			subset(sites, select=c(country, arm, comid_old))#
+		set(df.true, which(df.true[,comid_old%in%c("A","B","C")]), c("acute","base","Inc","E2E"), NA)#
+		set(df.true, which(df.true[,comid_old%in%c("AZA","BZA","CZA","ASA","BSA","CSA")]), c("acute","base"), NA)#
+		#	plot lkl surface and take 95% CI subset#
+		lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.divH0H1(sites, lkl.theta, f.name, df.true=df.true, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=1, resume=0, verbose=1)
+require(data.table)		#
+		dir.name		<- "popartpower_acute"#
+		my.mkdir(DATA,dir.name)#
+		dir.name		<- paste(DATA,dir.name,sep='/')	#
+		resume			<- 1#
+		verbose			<- 1#
+		debug			<- 1#
+		##
+		m.type			<- "Acute"	#
+		cohort.size		<- 2500	#
+		cohort.dur		<- 3	#
+		theta.EE.H0		<- 0.1#
+		theta.EE.H1		<- 0.4				#
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								#
+		p.consent.coh	<- 0.9*0.9#
+		##
+		opt.design		<- "PC12+HCC"#
+		opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')#
+		opt.analysis	<- "central-1016"#
+		opt.analysis	<- "central-1017"#
+		opt.sampling	<- "strue"#
+		opt.sampling	<- "struefx40"#
+		opt.sampling	<- "struefx60"#
+		opt.sampling	<- "struefx80"#
+		opt.sampling	<- "struefx99"				#
+		#opt.sampling	<- "s5pc"					#
+		#load df.hyp#
+		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')#
+		tmp				<- load(file)#
+		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		#
+		#set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")#
+		#set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		#
+		df.hyp			<- df.prop[, {#
+					tmp<- c(which.min(E2E), which.max(E2E))#
+					list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+				}, by=c("country", "arm","target")]#
+		#load df.contam#
+		df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]							#
+		#		#
+		sites			<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )#
+		sites[which(sites[,"country"]==1),"country"]	<- "ZA"#
+		sites[which(sites[,"country"]==2),"country"]	<- "SA"	#
+		sites			<- as.data.table(sites)#
+		samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)#
+		samples.CD4		<- subset(samples.CD4, prediction=="central")#
+		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)#
+		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)#
+		#	adjust sampling percentages if required#
+		if(grepl("fx", opt.sampling))#
+		{#
+			tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+			if(verbose)	cat(paste("\nSetting sampling percentages to", tmp))#
+			set(samples.seq, NULL, c("%prev","%inc","%avg"), tmp)#
+			p.lab<- p.consent.coh<- tmp#
+		}#
+		#	load high acute and low acute tip clusters for each community					#
+		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		#
+		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)#
+		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)		#
+		tpc.obs			<- tmp$tpc.obs#
+		sites			<- merge( tmp$sites, tmp$theta.model.Hx, by="comid_old")#
+		setkey(sites, triplet.id, arm)#
+		#	if not sensitivity analysis, reset 'sigma' to zero
+sites[,sigma:= 0]
+tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))#
+		#	take out Ikhwezi#
+		tpc.obs			<- tpc.obs[names(tpc.obs)!="Ikhwezi"]#
+		#	get likelihood values for precomputed theta-E2E/Inc values#
+		remote.signat		<- "Fri_Oct_11_10:30:19_2013"#
+		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,sep='')#
+		lkl.theta			<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=1, verbose=1, remote=0, remote.signat=remote.signat)#
+		#	get true theta and Inc,E2E points used to generate tpc.obs#
+		df.true				<- rbind( 	sites[, list(comid_old, acute=acute.H0, base=base.H0, Inc=mu.inc.rate.H0, E2E=mu.pE2E.H0, h="H0")], #
+										sites[, list(comid_old, acute=acute.H1, base=base.H1, Inc=mu.inc.rate.H1, E2E=mu.pE2E.H1, h="H1")] )									#
+		tmp			<- rbind( sites[, list(pool=arm) ,by="comid_old"], sites[, list(pool=paste(arm,country,sep='')) ,by="comid_old"] )#
+		setkey(tmp, pool)#
+		tmp			<- unique(tmp)#
+		tmp			<- subset( merge(df.true, tmp, by="comid_old"), select=c(pool,acute,base,Inc,E2E,h) )#
+		setnames(tmp, "pool", "comid_old")#
+		df.true		<- rbind(df.true, tmp)#
+		setkey(df.true, comid_old)		#
+		#	df.true (Inc,E2E) is the same for pools within country only			subset(sites, select=c(country, arm, comid_old))#
+		set(df.true, which(df.true[,comid_old%in%c("A","B","C")]), c("acute","base","Inc","E2E"), NA)#
+		set(df.true, which(df.true[,comid_old%in%c("AZA","BZA","CZA","ASA","BSA","CSA")]), c("acute","base"), NA)#
+		#	plot lkl surface and take 95% CI subset#
+		lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.divH0H1(sites, lkl.theta, f.name, df.true=df.true, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=1, resume=0, verbose=1)
+sites
+prj.popart.powercalc.by.acutelklratio.divH0H1<- function(sites, lkl.theta, f.name, df.true=NULL, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, pdf.width=	ifelse(pdf.each,5,15), pdf.height=	ifelse(pdf.each,5,11), resume=1, verbose=1)#
+{	#
+	if(resume)#
+	{#
+		file	<- paste(f.name,"_H0H1divergence.R",sep='')#
+		options(show.error.messages = FALSE)		#
+		if(verbose)#
+			cat(paste("\nprj.simudata: try to resume file ",file))#
+		readAttempt<-	try(suppressWarnings(load(file)))#
+		options(show.error.messages = TRUE)#
+		if(!inherits(readAttempt, "try-error") && verbose)#
+			cat(paste("\nprj.simudata: resumed file ",file))#
+	}	#
+	if(!resume || inherits(readAttempt, "try-error"))#
+	{#
+		lkl.theta.sites		<- unique( lkl.theta[,comid_old] )#
+		if(0)#
+		{#
+			site	<-	lkl.theta.sites[1]#
+			lkl.e2e	<- lapply(c("H0","H1"), function(hyp)#
+					{#
+						#hyp					<- "H0"#
+						df		<- subset(lkl.theta, comid_old==site & h==hyp)					#
+						#	plot smoothed image for Inc, E2E#
+						df			<- subset(df, E2E<0.5 & Inc<0.015)#
+						look		<- my.image.smooth(df[,Inc], df[,E2E], df[,lkl], tol=3, theta=0.05, xlab="% incidence/year", ylab="% transmission from early infection", cex.points=0, contour.nlevel=5, contour.col="black", points.col="gold")#
+						look$z[ is.na(look$z) ]	<- min(look$z, na.rm=1)#
+						legend("topright", legend=paste(site, hyp), bty='n')#
+						legend("topleft", legend="log likelihood", bty='n', col="black")#
+						tmp			<- my.image.get.CI(look, ci=0.95, log=TRUE)#
+						dx			<- tmp$dx#
+						ci.e2e		<- tmp$ci		#
+						my.image(look$x, look$y, tmp$lkl, palette="gray", xlab="% incidence/year", ylab="% transmission from early infection", contour.nlevels=0, cex.points=0, points.col="black")#
+						cbind( data.table( expand.grid(Inc=look$x, E2E=look$y) ), comid_old=site, pixel=seq_len(prod(dim(look$z))), lkl=as.numeric(look$z), p=as.numeric(tmp$lkl), h=hyp)				#
+					})		#
+			lkl.e2e	<- rbindlist(lkl.e2e)#
+		}#
+		layout.m			<- matrix(seq_len( 8 ), 2, 4, byrow=1)#
+		def.par <- par(no.readonly = TRUE)				#
+		if(plot & !pdf.each)#
+		{			#
+			file			<- paste(f.name,'_',"allsites","_","acute_base-Inc_E2E.pdf",sep='')#
+			if(verbose)	cat(paste("\nplot likelihoods to file",file))#
+			pdf(file=file, pdf.width, pdf.height)#
+			layout(layout.m)#
+		} 	#
+		countour.col.e2e<- "#FC4E2A"#
+		lkl.e2e	<- lapply(lkl.theta.sites, function(site)#
+				{#
+					#site				<- lkl.theta.sites[1]#
+					lkl.e2e.site	<- lapply(c("H0","H1"), function(hyp)#
+							{#
+								#hyp					<- "H0"#
+								df		<- subset(lkl.theta, comid_old==site & h==hyp)	#
+								#	manual fix up#
+								if( any(which(df[,acute>13])>4000) ) 	warning("\nunexpected wrong prior")#
+								if( any(which(df[,acute>13])<=4000) )	df	<- df[4001:nrow(df),]#
+								#	get and plot log likelihood for theta				#
+								if(plot) 	#
+								{#
+									file	<- paste(f.name,'_site_',site,"_",hyp,"_loglkl_acute_base.pdf",sep='')#
+									if(pdf.each)	pdf(file=file, pdf.width, pdf.height)#
+									par(mar=c(4,4,0.5,6))#
+								}																				#
+								look		<- my.image.smooth(df[,acute], df[,base], df[,lkl], palette="rob", xlab=xlab.theta, ylab=ylab.theta, theta=0.1, plot=plot, cex.points=0, contour.nlevel=5, contour.col="black")#
+								if(plot)				#
+								{#
+									if(!pdf.each)	legend("topright", legend=paste(site, hyp), bty='n', col="white")#
+									legend("topleft", legend="log likelihood", bty='n', col="white")#
+									#if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, acute)), as.numeric(subset(df.true, comid_old==site & h==hyp, base)), col="black", pch=18, cex=2)#
+									if(pdf.each) 	dev.off()#
+								}#
+								#	get normalized likelihood and 95% CI for theta																								#
+								tmp			<- my.image.get.CI(look, ci=0.95, log=TRUE)#
+								dx			<- tmp$dx#
+								ci.theta	<- tmp$ci#
+								#	plot normalized likelihood and 95% CI for theta#
+								if(plot)#
+								{#
+									file				<- paste(f.name,'_site_',site,"_",hyp,"_ci_acute_base.pdf",sep='')#
+									if(pdf.each) pdf(file=file, pdf.width, pdf.height)									#
+									par(mar=c(4,4,0.5,0.5))#
+									my.image(look$x, look$y, tmp$lkl, xlab=xlab.theta, ylab=ylab.theta, contour.nlevels=0, cex.points=0)				#
+									lines(ci.theta[,x],ci.theta[,ymin],col="black")		#
+									lines(ci.theta[,x],ci.theta[,ymax],col="black")#
+									if(!pdf.each)	legend("topright", legend=paste(site, hyp), bty='n', col="white")#
+									legend("topleft", legend="95% confidence interval", bty='n', col="white")#
+									#if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, acute)), as.numeric(subset(df.true, comid_old==site & h==hyp, base)), col="black", pch=18, cex=2)#
+									if(pdf.each) dev.off()#
+								}#
+								df			<- subset(df, E2E<0.5 & Inc<0.015)#
+								#	get and plot smoothed image for Inc, E2E#
+								if(plot)#
+								{#
+									file	<- paste(f.name,'_site_',site,"_",hyp,"_loglkl_Inc_E2E.pdf",sep='')#
+									if(pdf.each) pdf(file=file, pdf.width, pdf.height)#
+									par(mar=c(4,4,0.5,6))#
+								}																#
+								look		<- my.image.smooth(df[,Inc], df[,E2E], df[,lkl], tol=3, theta=0.05, plot=plot, xlab="% incidence/year", ylab="% transmission from early infection", cex.points=0, contour.nlevel=5, contour.col=countour.col.e2e, points.col="gold")#
+								look$z[ is.na(look$z) ]	<- min(look$z, na.rm=1)#
+								if(plot)#
+								{									#
+									if(!pdf.each)	legend("topright", legend=paste(site, hyp), bty='n')#
+									legend("topleft", legend="log likelihood", bty='n', col="black")#
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, Inc)), as.numeric(subset(df.true, comid_old==site & h==hyp, E2E)), col=countour.col.e2e, pch=18, cex=2)#
+									if(pdf.each) dev.off()#
+								}								#
+								#	get normalized likelihood and 95% CI for Inc, E2E#
+								tmp			<- my.image.get.CI(look, ci=0.95, log=TRUE)#
+								dx			<- tmp$dx#
+								ci.e2e		<- tmp$ci		#
+								#	plot normalized likelihood and 95% CI for Inc, E2E#
+								if(plot)#
+								{#
+									file	<- paste(f.name,'_site_',site,"_",hyp,"_ci_Inc_E2E.pdf",sep='')#
+									if(pdf.each) pdf(file=file, pdf.width, pdf.height)#
+									par(mar=c(4,4,0.5,0.5))																								#
+									my.image(look$x, look$y, tmp$lkl, palette="gray", xlab="% incidence/year", ylab="% transmission from early infection", contour.nlevels=0, cex.points=0, points.col="black")#
+									points(df[,Inc], df[,E2E], cex=0, col="gold")#
+									lines(ci.e2e[,x],ci.e2e[,ymin],col=countour.col.e2e)		#
+									lines(ci.e2e[,x],ci.e2e[,ymax],col=countour.col.e2e)#
+									if(!pdf.each)	legend("topright", legend=paste(site, hyp), bty='n')#
+									legend("topleft", legend="95% confidence interval", bty='n', col="black")#
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, Inc)), as.numeric(subset(df.true, comid_old==site & h==hyp, E2E)), col=countour.col.e2e, pch=18, cex=2)#
+									if(pdf.each) dev.off()											#
+								}#
+								#	return likelihood values for for Inc, E2E#
+								cbind( data.table( expand.grid(Inc=look$x, E2E=look$y) ), comid_old=site, pixel=seq_len(prod(dim(look$z))), lkl=as.numeric(look$z), p=as.numeric(tmp$lkl), h=hyp)#
+							})	#
+					rbindlist( lkl.e2e.site )		#
+				})#
+		if(plot & !pdf.each)#
+		{#
+			par(def.par)#
+			dev.off()			#
+		} #
+		lkl.e2e		<- rbindlist( lkl.e2e )#
+		setkey(lkl.e2e, comid_old,pixel)#
+		if(sum(subset(lkl.e2e, comid_old=="Ndeke" & h=="H0")[,p])!=1)	cat(paste("\nColumn p in lkl.e2e not normalized?",	sum(subset(lkl.e2e, comid_old=="Ndeke" & h=="H0")[,p])))#
+		lkl.e2e.div	<- lkl.e2e[,	list( min.p=min(p), KL.f1t0= log(p[1]/p[2])*p[1], KL.f0t1= log(p[2]/p[1])*p[2] )	, by=c("comid_old","pixel")]#
+		lkl.e2e.div	<- lkl.e2e.div[, list(min.p=sum(min.p), KL.f1t0=sum(KL.f1t0), KL.f0t1=sum(KL.f0t1)), by="comid_old"]#
+		lkl.e2e.div	<- merge( sites[, c("country", "triplet.id", "arm", "comid_old", "hivcomb", "artadjust", "popsize", "mu.inc.rate.H0", "mu.inc.rate.H1", "mu.pE2E.H0", "mu.pE2E.H1", "%prev", "%inc", "%avg", "sigma"), with=F], lkl.e2e.div, all.y=1, by="comid_old")#
+		setkey(lkl.e2e.div, triplet.id, arm)#
+		file		<- paste(f.name,"_H0H1divergence.R",sep='')#
+		if(verbose)	cat(paste("\nsave output to file",file))#
+		save(lkl.e2e.div, file=file)#
+	}#
+	lkl.e2e.div#
+}
+lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.divH0H1(sites, lkl.theta, f.name, df.true=df.true, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=1, resume=0, verbose=1)
+traceback()
+df.true
+str(df.true)
+set(df.true, NULL, "comid_old", as.character(df.true[,comid_old]))
+lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.divH0H1(sites, lkl.theta, f.name, df.true=df.true, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=1, resume=0, verbose=1)
+prj.popart.powercalc.by.acutelklratio.divH0H1<- function(sites, lkl.theta, f.name, df.true=NULL, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, pdf.width=	ifelse(pdf.each,5,15), pdf.height=	ifelse(pdf.each,5,11), resume=1, verbose=1)#
+{	#
+	if(resume)#
+	{#
+		file	<- paste(f.name,"_H0H1divergence.R",sep='')#
+		options(show.error.messages = FALSE)		#
+		if(verbose)#
+			cat(paste("\nprj.simudata: try to resume file ",file))#
+		readAttempt<-	try(suppressWarnings(load(file)))#
+		options(show.error.messages = TRUE)#
+		if(!inherits(readAttempt, "try-error") && verbose)#
+			cat(paste("\nprj.simudata: resumed file ",file))#
+	}	#
+	if(!resume || inherits(readAttempt, "try-error"))#
+	{#
+		lkl.theta.sites		<- unique( lkl.theta[,comid_old] )#
+		if(0)#
+		{#
+			site	<-	lkl.theta.sites[1]#
+			lkl.e2e	<- lapply(c("H0","H1"), function(hyp)#
+					{#
+						#hyp					<- "H0"#
+						df		<- subset(lkl.theta, comid_old==site & h==hyp)					#
+						#	plot smoothed image for Inc, E2E#
+						df			<- subset(df, E2E<0.5 & Inc<0.015)#
+						look		<- my.image.smooth(df[,Inc], df[,E2E], df[,lkl], tol=3, theta=0.05, xlab="% incidence/year", ylab="% transmission from early infection", cex.points=0, contour.nlevel=5, contour.col="black", points.col="gold")#
+						look$z[ is.na(look$z) ]	<- min(look$z, na.rm=1)#
+						legend("topright", legend=paste(site, hyp), bty='n')#
+						legend("topleft", legend="log likelihood", bty='n', col="black")#
+						tmp			<- my.image.get.CI(look, ci=0.95, log=TRUE)#
+						dx			<- tmp$dx#
+						ci.e2e		<- tmp$ci		#
+						my.image(look$x, look$y, tmp$lkl, palette="gray", xlab="% incidence/year", ylab="% transmission from early infection", contour.nlevels=0, cex.points=0, points.col="black")#
+						cbind( data.table( expand.grid(Inc=look$x, E2E=look$y) ), comid_old=site, pixel=seq_len(prod(dim(look$z))), lkl=as.numeric(look$z), p=as.numeric(tmp$lkl), h=hyp)				#
+					})		#
+			lkl.e2e	<- rbindlist(lkl.e2e)#
+		}#
+		layout.m			<- matrix(seq_len( 8 ), 2, 4, byrow=1)#
+		def.par <- par(no.readonly = TRUE)				#
+		if(plot & !pdf.each)#
+		{			#
+			file			<- paste(f.name,'_',"allsites","_","acute_base-Inc_E2E.pdf",sep='')#
+			if(verbose)	cat(paste("\nplot likelihoods to file",file))#
+			pdf(file=file, pdf.width, pdf.height)#
+			layout(layout.m)#
+		} 	#
+		countour.col.e2e<- "#FC4E2A"#
+		lkl.e2e	<- lapply(lkl.theta.sites, function(site)#
+				{#
+					#site				<- lkl.theta.sites[1]#
+					lkl.e2e.site	<- lapply(c("H0","H1"), function(hyp)#
+							{#
+								#hyp					<- "H0"#
+								df		<- subset(lkl.theta, comid_old==site & h==hyp)	#
+								#	manual fix up#
+								if( any(which(df[,acute>13])>4000) ) 	warning("\nunexpected wrong prior")#
+								if( any(which(df[,acute>13])<=4000) )	df	<- df[4001:nrow(df),]#
+								#	get and plot log likelihood for theta				#
+								if(plot) 	#
+								{#
+									file	<- paste(f.name,'_site_',site,"_",hyp,"_loglkl_acute_base.pdf",sep='')#
+									if(pdf.each)	pdf(file=file, pdf.width, pdf.height)#
+									par(mar=c(4,4,0.5,6))#
+								}																				#
+								look		<- my.image.smooth(df[,acute], df[,base], df[,lkl], palette="rob", xlab=xlab.theta, ylab=ylab.theta, theta=0.1, plot=plot, cex.points=0, contour.nlevel=5, contour.col="black")#
+								if(plot)				#
+								{#
+									if(!pdf.each)	legend("topright", legend=paste(site, hyp), bty='n', col="white")#
+									legend("topleft", legend="log likelihood", bty='n', col="white")#
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, acute)), as.numeric(subset(df.true, comid_old==site & h==hyp, base)), col="black", pch=18, cex=2)#
+									if(pdf.each) 	dev.off()#
+								}#
+								#	get normalized likelihood and 95% CI for theta																								#
+								tmp			<- my.image.get.CI(look, ci=0.95, log=TRUE)#
+								dx			<- tmp$dx#
+								ci.theta	<- tmp$ci#
+								#	plot normalized likelihood and 95% CI for theta#
+								if(plot)#
+								{#
+									file				<- paste(f.name,'_site_',site,"_",hyp,"_ci_acute_base.pdf",sep='')#
+									if(pdf.each) pdf(file=file, pdf.width, pdf.height)									#
+									par(mar=c(4,4,0.5,0.5))#
+									my.image(look$x, look$y, tmp$lkl, xlab=xlab.theta, ylab=ylab.theta, contour.nlevels=0, cex.points=0)				#
+									lines(ci.theta[,x],ci.theta[,ymin],col="black")		#
+									lines(ci.theta[,x],ci.theta[,ymax],col="black")#
+									if(!pdf.each)	legend("topright", legend=paste(site, hyp), bty='n', col="white")#
+									legend("topleft", legend="95% confidence interval", bty='n', col="white")#
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, acute)), as.numeric(subset(df.true, comid_old==site & h==hyp, base)), col="black", pch=18, cex=2)#
+									if(pdf.each) dev.off()#
+								}#
+								df			<- subset(df, E2E<0.5 & Inc<0.015)#
+								#	get and plot smoothed image for Inc, E2E#
+								if(plot)#
+								{#
+									file	<- paste(f.name,'_site_',site,"_",hyp,"_loglkl_Inc_E2E.pdf",sep='')#
+									if(pdf.each) pdf(file=file, pdf.width, pdf.height)#
+									par(mar=c(4,4,0.5,6))#
+								}																#
+								look		<- my.image.smooth(df[,Inc], df[,E2E], df[,lkl], tol=3, theta=0.05, plot=plot, xlab="% incidence/year", ylab="% transmission from early infection", cex.points=0, contour.nlevel=5, contour.col=countour.col.e2e, points.col="gold")#
+								look$z[ is.na(look$z) ]	<- min(look$z, na.rm=1)#
+								if(plot)#
+								{									#
+									if(!pdf.each)	legend("topright", legend=paste(site, hyp), bty='n')#
+									legend("topleft", legend="log likelihood", bty='n', col="black")#
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, Inc)), as.numeric(subset(df.true, comid_old==site & h==hyp, E2E)), col=countour.col.e2e, pch=18, cex=2)#
+									if(pdf.each) dev.off()#
+								}								#
+								#	get normalized likelihood and 95% CI for Inc, E2E#
+								tmp			<- my.image.get.CI(look, ci=0.95, log=TRUE)#
+								dx			<- tmp$dx#
+								ci.e2e		<- tmp$ci		#
+								#	plot normalized likelihood and 95% CI for Inc, E2E#
+								if(plot)#
+								{#
+									file	<- paste(f.name,'_site_',site,"_",hyp,"_ci_Inc_E2E.pdf",sep='')#
+									if(pdf.each) pdf(file=file, pdf.width, pdf.height)#
+									par(mar=c(4,4,0.5,0.5))																								#
+									my.image(look$x, look$y, tmp$lkl, palette="gray", xlab="% incidence/year", ylab="% transmission from early infection", contour.nlevels=0, cex.points=0, points.col="black")#
+									points(df[,Inc], df[,E2E], cex=0, col="gold")#
+									lines(ci.e2e[,x],ci.e2e[,ymin],col=countour.col.e2e)		#
+									lines(ci.e2e[,x],ci.e2e[,ymax],col=countour.col.e2e)#
+									if(!pdf.each)	legend("topright", legend=paste(site, hyp), bty='n')#
+									legend("topleft", legend="95% confidence interval", bty='n', col="black")#
+									if(!is.null(df.true))	points( as.numeric(subset(df.true, comid_old==site & h==hyp, Inc)), as.numeric(subset(df.true, comid_old==site & h==hyp, E2E)), col=countour.col.e2e, pch=18, cex=2)#
+									if(pdf.each) dev.off()											#
+								}#
+								#	return likelihood values for for Inc, E2E#
+								cbind( data.table( expand.grid(Inc=look$x, E2E=look$y) ), comid_old=site, pixel=seq_len(prod(dim(look$z))), lkl=as.numeric(look$z), p=as.numeric(tmp$lkl), h=hyp)#
+							})	#
+					rbindlist( lkl.e2e.site )		#
+				})#
+		if(plot & !pdf.each)#
+		{#
+			par(def.par)#
+			dev.off()			#
+		} #
+		lkl.e2e		<- rbindlist( lkl.e2e )#
+		setkey(lkl.e2e, comid_old,pixel)#
+		if(sum(subset(lkl.e2e, comid_old=="Ndeke" & h=="H0")[,p])!=1)	cat(paste("\nColumn p in lkl.e2e not normalized?",	sum(subset(lkl.e2e, comid_old=="Ndeke" & h=="H0")[,p])))#
+		lkl.e2e.div	<- lkl.e2e[,	list( min.p=min(p), KL.f1t0= log(p[1]/p[2])*p[1], KL.f0t1= log(p[2]/p[1])*p[2] )	, by=c("comid_old","pixel")]#
+		lkl.e2e.div	<- lkl.e2e.div[, list(min.p=sum(min.p), KL.f1t0=sum(KL.f1t0), KL.f0t1=sum(KL.f0t1)), by="comid_old"]#
+		lkl.e2e.div	<- merge( sites[, c("country", "triplet.id", "arm", "comid_old", "hivcomb", "artadjust", "popsize", "mu.inc.rate.H0", "mu.inc.rate.H1", "mu.pE2E.H0", "mu.pE2E.H1", "%prev", "%inc", "%avg", "sigma"), with=F], lkl.e2e.div, all.y=1, by="comid_old")#
+		setkey(lkl.e2e.div, triplet.id, arm)#
+		file		<- paste(f.name,"_H0H1divergence.R",sep='')#
+		if(verbose)	cat(paste("\nsave output to file",file))#
+		save(lkl.e2e.div, file=file)#
+	}#
+	lkl.e2e.div#
+}
+lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.divH0H1(sites, lkl.theta, f.name, df.true=df.true, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=1, resume=0, verbose=1)
+require(data.table)		#
+		dir.name		<- "popartpower_acute"#
+		my.mkdir(DATA,dir.name)#
+		dir.name		<- paste(DATA,dir.name,sep='/')	#
+		resume			<- 1#
+		verbose			<- 1#
+		debug			<- 1#
+		##
+		m.type			<- "Acute"	#
+		cohort.size		<- 2500	#
+		cohort.dur		<- 3	#
+		theta.EE.H0		<- 0.1#
+		theta.EE.H1		<- 0.4				#
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								#
+		p.consent.coh	<- 0.9*0.9#
+		##
+		opt.design		<- "PC12+HCC"#
+		opt.analysis	<- paste(round(theta.EE.H0*100,d=0),round(theta.EE.H1*100,d=0),sep='')#
+		opt.analysis	<- "central-1016"#
+		opt.analysis	<- "central-1017"#
+		opt.sampling	<- "strue"#
+		opt.sampling	<- "struefx40"#
+		opt.sampling	<- "struefx60"#
+		opt.sampling	<- "struefx80"#
+		#opt.sampling	<- "struefx99"				#
+		#opt.sampling	<- "s5pc"					#
+		#load df.hyp#
+		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')#
+		tmp				<- load(file)#
+		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		#
+		#set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")#
+		#set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		#
+		df.hyp			<- df.prop[, {#
+					tmp<- c(which.min(E2E), which.max(E2E))#
+					list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])#
+				}, by=c("country", "arm","target")]#
+		#load df.contam#
+		df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]							#
+		#		#
+		sites			<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )#
+		sites[which(sites[,"country"]==1),"country"]	<- "ZA"#
+		sites[which(sites[,"country"]==2),"country"]	<- "SA"	#
+		sites			<- as.data.table(sites)#
+		samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)#
+		samples.CD4		<- subset(samples.CD4, prediction=="central")#
+		samples.seq		<- popart.predicted.sequences.130717(samples.CD4, df.nocontam, opt.analysis, p.lab)#
+		sites			<- popart.set.hypo(sites, theta.EE.H0, theta.EE.H1, opt.analysis, df.hyp=df.hyp)#
+		#	adjust sampling percentages if required#
+		if(grepl("fx", opt.sampling))#
+		{#
+			tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+			if(verbose)	cat(paste("\nSetting sampling percentages to", tmp))#
+			set(samples.seq, NULL, c("%prev","%inc","%avg"), tmp)#
+			p.lab<- p.consent.coh<- tmp#
+		}#
+		#	load high acute and low acute tip clusters for each community					#
+		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		#
+		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)#
+		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0)		#
+		tpc.obs			<- tmp$tpc.obs#
+		sites			<- merge( tmp$sites, tmp$theta.model.Hx, by="comid_old")#
+		setkey(sites, triplet.id, arm)#
+		#	if not sensitivity analysis, reset 'sigma' to zero#
+		if(grepl("strue", opt.sampling))#
+			sites[,sigma:= 0]	 #
+		else if(grepl("s5pc", opt.sampling))#
+			sites[,sigma:= as.numeric(unlist(sites[,"%avg",with=F]))*0.05]#
+		else#
+			stop("Unknown opt.sampling")#
+		#	add pools#
+		tpc.obs			<- c(tpc.obs, popart.pool.tpc.obs(sites, tpc.obs))#
+		#	take out Ikhwezi#
+		tpc.obs			<- tpc.obs[names(tpc.obs)!="Ikhwezi"]#
+		#	get likelihood values for precomputed theta-E2E/Inc values#
+		remote.signat		<- "Fri_Oct_11_10:30:19_2013"#
+		f.name				<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,sep='')#
+		lkl.theta			<- prj.popart.powercalc.by.acutelklratio.lkl4Precomputed(sites, tpc.obs, cohort.dur=cohort.dur, f.name=f.name, resume=1, verbose=1, remote=0, remote.signat=remote.signat)#
+		#	get true theta and Inc,E2E points used to generate tpc.obs#
+		df.true				<- rbind( 	sites[, list(comid_old, acute=acute.H0, base=base.H0, Inc=mu.inc.rate.H0, E2E=mu.pE2E.H0, h="H0")], #
+										sites[, list(comid_old, acute=acute.H1, base=base.H1, Inc=mu.inc.rate.H1, E2E=mu.pE2E.H1, h="H1")] )									#
+		tmp			<- rbind( sites[, list(pool=arm) ,by="comid_old"], sites[, list(pool=paste(arm,country,sep='')) ,by="comid_old"] )#
+		setkey(tmp, pool)#
+		tmp			<- unique(tmp)#
+		tmp			<- subset( merge(df.true, tmp, by="comid_old"), select=c(pool,acute,base,Inc,E2E,h) )#
+		setnames(tmp, "pool", "comid_old")#
+		df.true		<- rbind(df.true, tmp)#
+		setkey(df.true, comid_old)		#
+		#	df.true (Inc,E2E) is the same for pools within country only			subset(sites, select=c(country, arm, comid_old))#
+		set(df.true, which(df.true[,comid_old%in%c("A","B","C")]), c("acute","base","Inc","E2E"), NA)#
+		set(df.true, which(df.true[,comid_old%in%c("AZA","BZA","CZA","ASA","BSA","CSA")]), c("acute","base"), NA)#
+		set(df.true, NULL, "comid_old", as.character(df.true[,comid_old]))#
+		#	plot lkl surface and take 95% CI subset#
+		lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.divH0H1(sites, lkl.theta, f.name, df.true=df.true, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=1, resume=0, verbose=1)
+require(data.table)		#
+		dir.name		<- paste(DATA,"popartpower_acute",sep='/')	#
+		##
+		m.type			<- "Acute"	#
+		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								#
+		p.consent.coh	<- 0.9*0.9#
+		##
+		opt.design		<- "PC12+HCC"#
+		opt.analysis	<- "central-1017"#
+		opt.sampling	<- "strue"#
+		##
+		opt.sampling	<- "struefx40"#
+		opt.sampling	<- "struefx60"#
+		#opt.sampling	<- "struefx80"#
+		#opt.sampling	<- "struefx99"				#
+		#opt.sampling	<- "s5pc"					#
+		#load df.hyp#
+		if(grepl("fx", opt.sampling))#
+		{#
+			tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+			p.lab<- p.consent.coh<- tmp#
+		}#
+		file				<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,"_H0H1divergence.R",sep='')
+file
+print(load(file))
+lkl.e2e.div
+if(grepl("fx", opt.sampling))#
+		{#
+			tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+			p.lab<- p.consent.coh<- tmp#
+		}#
+		file				<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,"_H0H1divergence.R",sep='')#
+		load(file)#
+		setnames(lkl.e2e.div, c("%avg"), c("pc.avg"))#
+		lkl.e2e.div			<- subset( lkl.e2e.div, select=c(comid_old, country, arm, mu.pE2E.H0, mu.pE2E.H1, pc.avg, sigma, min.p, KL.f1t0, KL.f0t1) )
+lkl.e2e.div
+tmp
+div			<- lapply(c("struefx40","struefx60","struefx80","struefx99"), function(opt.sampling)#
+					{#
+						if(grepl("fx", opt.sampling))#
+						{#
+							tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+							p.lab<- p.consent.coh<- tmp#
+						}#
+						file				<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,"_H0H1divergence.R",sep='')#
+						load(file)#
+						setnames(lkl.e2e.div, c("%avg"), c("pc.avg"))#
+						lkl.e2e.div			<- subset( lkl.e2e.div, select=c(comid_old, country, arm, mu.pE2E.H0, mu.pE2E.H1, pc.avg, sigma, min.p, KL.f1t0, KL.f0t1) )#
+						if(grepl("fx", opt.sampling))#
+							set(lkl.e2e.div, NULL, "pc.avg", p.lab)#
+						lkl.e2e.div#
+					})#
+		names(div)	<- c("struefx40","struefx60","struefx80","struefx100")
+div
+div			<- rbindlist(div)
+div
+div.Ndeke	<- subset(div, comid_old=="Ndeke")
+div.Ndeke
+div			<- lapply(c("struefx40","struefx60","struefx80","struefx99"), function(opt.sampling)#
+					{#
+						if(grepl("fx", opt.sampling))#
+						{#
+							tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+							p.lab<- p.consent.coh<- tmp#
+						}#
+						file				<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,"_H0H1divergence.R",sep='')#
+						load(file)#
+						setnames(lkl.e2e.div, c("%avg"), c("pc.avg"))#
+						lkl.e2e.div			<- subset( lkl.e2e.div, select=c(comid_old, country, arm, mu.pE2E.H0, mu.pE2E.H1, pc.avg, sigma, min.p, KL.f1t0, KL.f0t1) )#
+						if(grepl("fx", opt.sampling))#
+							set(lkl.e2e.div, NULL, "pc.avg", p.lab)#
+						lkl.e2e.div#
+					})
+div
+div			<- do.call("rbind",div)	#
+		#	Ndeke#
+		div.Ndeke	<- subset(div, comid_old=="Ndeke")
+div.Ndeke
+div.Ndeke	<- subset(div, comid_old=="Ndeke" | comid_old=="AZA")
+div.Ndeke
+setkey(div.Ndeke, comid_old, pc.avg)
+div.Ndeke
+div.TownII	<- subset(div, comid_old=="TownII" | comid_old=="CSA")#
+		setkey(div.TownII, comid_old, pc.avg)
+div.TownII
+div.Ndeke	<- as.matrix(div.Ndeke)
+div.Ndeke
+div.Ndeke	<- as.matrix(subset(div.Ndeke, select=c(pc.avg,  min.p)))
+div.Ndeke
+div.Ndeke	<- subset(div, comid_old=="Ndeke" | comid_old=="AZA")#
+		setkey(div.Ndeke, comid_old, pc.avg)#
+		div.Ndeke	<- as.matrix(subset(div.Ndeke, select=c(pc.avg,  min.p)))
+div.Ndeke
+div.Ndeke	<- subset(div, comid_old=="Ndeke" | comid_old=="AZA")#
+		setkey(div.Ndeke, comid_old, pc.avg)#
+		div.Ndeke.t	<- as.matrix(subset(div.Ndeke, select=c(pc.avg,  min.p)))
+div.Ndeke.t
+rownames(div.Ndeke.t)	<- div.Ndeke[,comid_old]
+div.Ndeke.t
+plot(div.Ndeke.t[3:6,"pc.avg"], div.Ndeke.t[3:6,"min.p"], type='b')
+plot(div.Ndeke.t[3:6,"pc.avg"], div.Ndeke.t[3:6,"min.p"], type='b')
+div			<- lapply(c("struefx40","struefx60","struefx80","struefx99"), function(opt.sampling)#
+					{#
+						if(grepl("fx", opt.sampling))#
+						{#
+							tmp	<- as.numeric(substr(opt.sampling, regexpr("fx", opt.sampling)+2, nchar(opt.sampling))) / 100#
+							p.lab<- p.consent.coh<- tmp#
+						}#
+						file				<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,"_H0H1divergence.R",sep='')#
+						load(file)#
+						setnames(lkl.e2e.div, c("%avg"), c("pc.avg"))#
+						lkl.e2e.div			<- subset( lkl.e2e.div, select=c(comid_old, country, arm, mu.pE2E.H0, mu.pE2E.H1, pc.avg, sigma, min.p, KL.f1t0, KL.f0t1) )#
+						if(grepl("fx", opt.sampling))#
+							set(lkl.e2e.div, NULL, "pc.avg", p.lab)#
+						set(lkl.e2e.div, NULL, "pc.avg", lkl.e2e.div[, pc.avg]*100)#
+						lkl.e2e.div#
+					})#
+		div			<- do.call("rbind",div)	#
+		#	Ndeke#
+		div.Ndeke	<- subset(div, comid_old=="Ndeke" | comid_old=="AZA")#
+		setkey(div.Ndeke, comid_old, pc.avg)#
+		div.Ndeke.t				<- as.matrix(subset(div.Ndeke, select=c(pc.avg,  min.p)))#
+		rownames(div.Ndeke.t)	<- div.Ndeke[,comid_old]#
+		plot(div.Ndeke.t[3:6,"pc.avg"], div.Ndeke.t[3:6,"min.p"], type='b')
+div.TownII	<- subset(div, comid_old=="TownII" | comid_old=="CSA")#
+		setkey(div.TownII, comid_old, pc.avg)#
+		div.Ndeke.t				<- as.matrix(subset(div.TownII, select=c(pc.avg,  min.p)))#
+		rownames(div.TownII.t)	<- div.TownII[,comid_old]#
+		plot(div.TownII.t[3:6,"pc.avg"], div.TownII.t[3:6,"min.p"], type='b')
+div.TownII	<- subset(div, comid_old=="TownII" | comid_old=="CSA")#
+		setkey(div.TownII, comid_old, pc.avg)#
+		div.TownII.t			<- as.matrix(subset(div.TownII, select=c(pc.avg,  min.p)))#
+		rownames(div.TownII.t)	<- div.TownII[,comid_old]#
+		plot(div.TownII.t[3:6,"pc.avg"], div.TownII.t[3:6,"min.p"], type='b')
+div.TownII.t
+div.Ndeke	<- subset(div, comid_old=="Ndeke" | comid_old=="AZA")#
+		setkey(div.Ndeke, comid_old, pc.avg)#
+		div.Ndeke.t				<- as.numeric(subset(div.Ndeke, select=min.p))
+div.Ndeke	<- subset(div, comid_old=="Ndeke" | comid_old=="AZA")#
+		setkey(div.Ndeke, comid_old, pc.avg)
+div.Ndeke.t				<- as.numeric(unlist(subset(div.Ndeke, select=min.p)))
+div.Ndeke.t
+cbind( c( div.Ndeke.t[1:2], rep(NA,2) ), div.Ndeke.t[3:6] )
+div.Ndeke
+tmp				<- subset(div, comid_old=="Ndeke" | comid_old=="AZA")#
+		setkey(tmp, comid_old, pc.avg)#
+		tmp				<- as.numeric(unlist(subset(tmp, select=min.p)))#
+		div.Ndeke.t		<- cbind( c( tmp[1:2], rep(NA,2) ), tmp[3:6] )
+div.Ndeke.t
+brewer.pal
+?brewer.pal
+display.brewer.all()
+x		<- c(40, 60, 80, 100)#
+		cols	<- rev(brewer.pal(ncol(div.Ndeke.t)+3, "YlOrRd"))#
+		plot(1,1,type='n',bty='n',xlim=range(x), ylim=range(div.Ndeke.t), xlab="% sampling coverage", ylab="overlap of scenarios H0 and H1")#
+		dummy<- sapply(seq_len(nrow(div.Ndeke.t)),function(i)#
+				{#
+					lines(x, div.Ndeke.t[i,], col=cols[i], type='b')#
+				})
 x
-codon3.idx<- seq.int(3,ncol(seq.PROT.RT),3)
-seq.PROT.RT3<- seq.PROT.RT[, codon3.idx]
-seq.PROT.RT3
-x<- as.character(seq.PROT.RT3[1,])
-xa<- as.character(seq.PROT.RT[1,])
-all(xa[codon3.idx]==x)
-verbose<- 1
-file		<- paste(outdir,"/ATHENA_2013_03_FirstCurSequences_PROTRTCD3_",gsub('/',':',signat.out),".R",sep='')#
-		if(verbose) cat(paste("\nwrite to ",file))#
-		save(seq.PROT.RT3, file=file)
-file		<- paste(outdir,"/ATHENA_2013_03_FirstCurSequences_PROTRTCD3_",gsub('/',':',signat.out),".phylip",sep='')#
-		if(verbose) cat(paste("\nwrite to ",file))#
-		hivc.seq.write.dna.phylip(seq.PROT.RT3, file=file)
-seq.PROT.RT3[1,]
-library(roxygen2)#
-DIR_PKG<-"/Users/tonton/Documents/GitProjects/nABC/git_abc.n/pkg"#
-DIR_PKG<-"/Users/Oliver/git/abc.n/pkg"#
-roxygenize(package=paste(DIR_PKG))
-library(ape)
-boot.phylo
-sample(1:4,2,replace=1)
-sample(1:4,4,replace=1)
-bs.blocks.n<- 3
-bs.blocks.s	<- sample(seq_len(bs.blocks.n),bs.blocks.n,replace=1)-1
-bs.blocks.s
-bs.blocks.s	<- sample(seq_len(bs.blocks.n),bs.blocks.n,replace=1)-1
-bs.blocks.s
-bs.blocks.s	<- sample(seq_len(bs.blocks.n),bs.blocks.n,replace=1)-1
-bs.blocks.s
-bs.blocks.s	<- sample(seq_len(bs.blocks.n),bs.blocks.n,replace=1)-1
-bs.blocks.s
-as.numeric( sapply(bs.blocks.s,function(x)		3*x+c(1,2,3)		) )
-?break
-2.5*2 + 4.1*3 + 3.9*3.6 +4*3.7 + 4*3.9 + 2.8*3.5 +2.8*2.5
-2.5*2 + 4.1*3 + 3.9*3.6 +4*3.7 + 4*3.9 + 2.8*3.5 +2.8*2.5 + 3.8*2
-550 / 425
-575 / 500
-500 *1.3
-525 / 425
-500 * 1.235
-525 / 450
-500 * 1.17
-105/3
-choose(0,0)
-pop<- 55011
-perc.hiv<- 0.18
-perc.adult<- 0.5
-inc<- 0.0056
-pop.s<- pop * (1-perc.hiv)
-pop.s * 3 * inc
-perc.hivcov<- 0.28
-pop.s<- pop * (1-perc.hiv*perc.hivcov)
-perc.hivcov<- 0.28
-pop.s * 3 * inc
-1714 * 0.5
-pop<- 55011; perc.hiv<- 0.18; perc.adult<- 0.5; inc<- 0.0056; perc.hivcov<- 0.28
-pop.s<- pop * perc.adult * (1-perc.hiv)
-pop.s * 3 * inc
-pop.s<- pop * (1-perc.hiv*perc.hivcov)
-pop.s * 3 * inc
-pop.s<- pop * perc.adult * (1-perc.hiv*perc.hivcov)
-pop.s * 3 * inc
-pop<- 55011; perc.hiv<- 0.18; perc.adult<- 0.5; inc<- 0.0075; perc.hivcov<- 0.28
-pop.s<- pop * perc.adult * (1-perc.hiv)
-pop.s * 3 * inc
-pop<- 55011; perc.hiv<- 0.18; perc.adult<- 0.5; inc<- 0.01; perc.hivcov<- 0.28
-pop.s<- pop * perc.adult * (1-perc.hiv)
-pop.s * 3 * inc
-1714*0.5 / (3*inc)
-pop.s<- pop * perc.adult * (1-perc.hiv*perc.hivcov)
-pop.s * 3 * inc
-1714 / 2
-pop.s * 3 * inc
-83.7*83.7
-83.7*83.7/100/100
-setwd("/Users/Oliver/git/phylodesign/pkg")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
-source("misc/phdes.startme.R")
+x		<- c(40, 60, 80, 100)#
+		cols	<- rev(brewer.pal(ncol(div.Ndeke.t)+3, "YlOrRd"))#
+		plot(1,1,type='n',bty='n',xlim=range(x), ylim=range(div.Ndeke.t, na.rm=1), xlab="% sampling coverage", ylab="overlap of scenarios H0 and H1")#
+		dummy<- sapply(seq_len(nrow(div.Ndeke.t)),function(i)#
+				{#
+					lines(x, div.Ndeke.t[,i], col=cols[i], type='b')#
+				})
+sites
+tmp						<- subset(div, comid_old=="Ndeke" | comid_old=="AZA")		#Maramba#
+		setkey(tmp, comid_old, pc.avg)#
+		tmp						<- as.numeric(unlist(subset(tmp, select=min.p)))#
+		div.Ndeke.t				<- cbind( c( tmp[1:2], rep(NA,2) ), tmp[3:6] ) #
+		colnames(div.Ndeke.t)	<- c("pool arm A, ZA", "Ndeke")#
+		x		<- c(40, 60, 80, 100)#
+		cols	<- rev(brewer.pal(ncol(div.Ndeke.t)+3, "YlOrRd"))#
+		plot(1,1,type='n',bty='n',xlim=range(x), ylim=range(div.Ndeke.t, na.rm=1), xlab="% sampling coverage", ylab="overlap of scenarios H0 and H1")#
+		dummy<- sapply(seq_len(nrow(div.Ndeke.t)),function(i)#
+				{#
+					lines(x, div.Ndeke.t[,i], col=cols[i], type='b')#
+				})#
+		legend("topright", legend=colnames(div.Ndeke.t), fill=cols[1:2], border=NA, bty='n')
+cols	<- rev(brewer.pal(ncol(div.Ndeke.t)+1, "YlOrRd"))
+tmp						<- subset(div, comid_old=="Ndeke" | comid_old=="AZA")		#Maramba#
+		setkey(tmp, comid_old, pc.avg)#
+		tmp						<- as.numeric(unlist(subset(tmp, select=min.p)))#
+		div.Ndeke.t				<- cbind( c( tmp[1:2], rep(NA,2) ), tmp[3:6] ) #
+		colnames(div.Ndeke.t)	<- c("pool arm A, ZA", "Ndeke")#
+		x		<- c(40, 60, 80, 100)#
+		cols	<- rev(brewer.pal(ncol(div.Ndeke.t)+1, "YlOrRd"))#
+		plot(1,1,type='n',bty='n',xlim=range(x), ylim=range(div.Ndeke.t, na.rm=1), xlab="% sampling coverage", ylab="overlap of scenarios H0 and H1")#
+		dummy<- sapply(seq_len(nrow(div.Ndeke.t)),function(i)#
+				{#
+					lines(x, div.Ndeke.t[,i], col=cols[i], type='b')#
+				})#
+		legend("topright", legend=colnames(div.Ndeke.t), fill=cols[1:2], border=NA, bty='n')#
+		rownames(div.Ndeke.t)	<- div.Ndeke[,comid_old]#
+		plot(div.Ndeke.t[3:6,"pc.avg"], div.Ndeke.t[3:6,"min.p"], type='b')
+x		<- c(40, 60, 80, 100)#
+		cols	<- rev(brewer.pal(ncol(div.Ndeke.t)+2, "YlOrRd"))#
+		plot(1,1,type='n',bty='n',xlim=range(x), ylim=range(div.Ndeke.t, na.rm=1), xlab="% sampling coverage", ylab="overlap of scenarios H0 and H1")#
+		dummy<- sapply(seq_len(nrow(div.Ndeke.t)),function(i)#
+				{#
+					lines(x, div.Ndeke.t[,i], col=cols[i], type='b')#
+				})#
+		legend("topright", legend=colnames(div.Ndeke.t), fill=cols[1:2], border=NA, bty='n')#
+		rownames(div.Ndeke.t)	<- div.Ndeke[,comid_old]#
+		plot(div.Ndeke.t[3:6,"pc.avg"], div.Ndeke.t[3:6,"min.p"], type='b')
+tmp						<- subset(div, comid_old=="Ndeke" | comid_old=="AZA")		#Maramba#
+		setkey(tmp, comid_old, pc.avg)#
+		tmp						<- as.numeric(unlist(subset(tmp, select=min.p)))#
+		div.Ndeke.t				<- cbind( c( tmp[1:2], rep(NA,2) ), tmp[3:6] ) #
+		colnames(div.Ndeke.t)	<- c("pool arm A, ZA", "Ndeke")#
+		div.Ndeke.t				<- div.Ndeke.t[,c(2,1)]#
+		x		<- c(40, 60, 80, 100)#
+		cols	<- rev(brewer.pal(ncol(div.Ndeke.t)+2, "YlOrRd"))#
+		plot(1,1,type='n',bty='n',xlim=range(x), ylim=range(div.Ndeke.t, na.rm=1), xlab="% sampling coverage", ylab="overlap of scenarios H0 and H1")#
+		dummy<- sapply(seq_len(nrow(div.Ndeke.t)),function(i)#
+				{#
+					lines(x, div.Ndeke.t[,i], col=cols[i], type='b')#
+				})#
+		legend("topright", legend=colnames(div.Ndeke.t), fill=cols[1:2], border=NA, bty='n')
+file	<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_','_H0H1divergence_Ndeke.pdf',sep='')
+file
+file	<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_H0H1divergence_Ndeke.pdf',sep='')
+file
+pdf(file, 5, 5)#
+		x		<- c(40, 60, 80, 100)#
+		cols	<- rev(brewer.pal(ncol(div.Ndeke.t)+2, "YlOrRd"))#
+		par(mar=c(4,5,0.5,0.5))#
+		plot(1,1,type='n',bty='n',xlim=range(x), ylim=range(div.Ndeke.t, na.rm=1), xlab="% sampling coverage", ylab="probability overlap of scenarios H0 and H1")#
+		dummy<- sapply(seq_len(nrow(div.Ndeke.t)),function(i)#
+				{#
+					lines(x, div.Ndeke.t[,i], col=cols[i], type='b')#
+				})#
+		legend("topright", legend=colnames(div.Ndeke.t), fill=cols[1:2], border=NA, bty='n')#
+		dev.off()
+tmp						<- subset(div, comid_old=="Ndeke" | comid_old=="AZA")		#Maramba#
+		setkey(tmp, comid_old, pc.avg)#
+		tmp						<- as.numeric(unlist(subset(tmp, select=min.p)))#
+		div.Ndeke.t				<- cbind( c( tmp[1:2], rep(NA,2) ), tmp[3:6] ) #
+		colnames(div.Ndeke.t)	<- c("pool arm A, ZA", "Ndeke")#
+		div.Ndeke.t				<- div.Ndeke.t[,c(2,1)]#
+		file	<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_H0H1divergence_Ndeke.pdf',sep='')#
+		pdf(file, 5, 5)#
+		x		<- c(40, 60, 80, 100)#
+		cols	<- rev(brewer.pal(ncol(div.Ndeke.t)+2, "YlOrRd"))#
+		par(mar=c(4,5,0.5,0.5))#
+		plot(1,1,type='n',bty='n',xlim=range(x), ylim=range(div.Ndeke.t, na.rm=1), xlab="% sampling coverage", ylab="probability overlap of scenarios H0 and H1")#
+		dummy<- sapply(seq_len(nrow(div.Ndeke.t)),function(i)#
+				{#
+					lines(x, div.Ndeke.t[,i], col=cols[i], type='b')#
+				})#
+		legend("topright", legend=colnames(div.Ndeke.t), fill=cols[1:2], border=NA, bty='n')#
+		dev.off()
+tmp						<- subset(div, comid_old=="Ndeke" | comid_old=="AZA")		#Maramba#
+		setkey(tmp, comid_old, pc.avg)#
+		tmp						<- as.numeric(unlist(subset(tmp, select=min.p)))#
+		div.Ndeke.t				<- cbind( c( tmp[1:2], rep(NA,2) ), tmp[3:6] ) #
+		colnames(div.Ndeke.t)	<- c("pool arm A, ZA", "Ndeke")#
+		div.Ndeke.t				<- div.Ndeke.t[,c(2,1)]
+div.Ndeke.t
+x		<- c(40, 60, 80, 100)#
+		cols	<- rev(brewer.pal(ncol(div.Ndeke.t)+2, "YlOrRd"))#
+		par(mar=c(4,5,0.5,0.5))#
+		plot(1,1,type='n',bty='n',xlim=range(x), ylim=range(div.Ndeke.t, na.rm=1), xlab="% sampling coverage", ylab="probability overlap of scenarios H0 and H1")#
+		dummy<- sapply(seq_len(nrow(div.Ndeke.t)),function(i)#
+				{#
+					lines(x, div.Ndeke.t[,i], col=cols[i], type='b')#
+				})#
+		legend("topright", legend=colnames(div.Ndeke.t), fill=cols[1:2], border=NA, bty='n')
+traceback()
+dummy<- sapply(seq_len(ncol(div.Ndeke.t)),function(i)#
+				{#
+					lines(x, div.Ndeke.t[,i], col=cols[i], type='b')#
+				})
+file	<- paste(dir.name,'/',"tpclkl_",m.type,'_',opt.design,'_',opt.analysis,'_H0H1divergence_Ndeke.pdf',sep='')#
+		pdf(file, 5, 5)#
+		x		<- c(40, 60, 80, 100)#
+		cols	<- rev(brewer.pal(ncol(div.Ndeke.t)+2, "YlOrRd"))#
+		par(mar=c(4,5,0.5,0.5))#
+		plot(1,1,type='n',bty='n',xlim=range(x), ylim=range(div.Ndeke.t, na.rm=1), xlab="% sampling coverage", ylab="probability overlap of scenarios H0 and H1")#
+		dummy<- sapply(seq_len(ncol(div.Ndeke.t)),function(i)#
+				{#
+					lines(x, div.Ndeke.t[,i], col=cols[i], type='b')#
+				})#
+		legend("topright", legend=colnames(div.Ndeke.t), fill=cols[1:2], border=NA, bty='n')#
+		dev.off()
+(58+54) *0.75*0.9
