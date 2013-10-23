@@ -41,11 +41,12 @@ ibm.init.incidence<- function(loc)
 	ans
 }
 ###############################################################################
-ibm.init.popinitdistributions.popart<- function(attr, popart.community)
+ibm.init.popinitdistributions.popart<- function(attr, popart.community, verbose=0)
 {
 	popart.triplets	<- popart.getdata.randomized.arm( 1, rtn.fixed=1 )
-#print(popart.community); print(popart.triplets)
-	comm			<- popart.triplets[ popart.community==popart.triplets$comid_old, , drop=0]
+	comm			<- popart.triplets[ popart.community==popart.triplets$comid_old, , drop=0]	
+	if(verbose) cat(paste("\nibm pop art community to compute init distributions is", comm[, "comid_old"]))
+	
 	tmp				<- lapply(seq_along(attr),function(i)
 						{
 							switch(	names(attr)[i],
@@ -64,6 +65,7 @@ ibm.init.popinitdistributions.popart<- function(attr, popart.community)
 							)
 						})
 	names(tmp)	<- names(attr)
+	if(verbose) cat(paste("\nibm distribution of status is", paste(tmp$status, collapse=', ')))
 	tmp$npop	<- round( comm[,"popsize"] * comm[,"p.adults"] ) 
 	tmp	
 }
@@ -172,7 +174,7 @@ ibm.init.pop<- function(attr, distr)
 }
 ###############################################################################
 #' @export
-ibm.init.model<- function(m.type, loc.type, m.popsize, theta, save='', resume= 1, init.pop=1, debug=0)
+ibm.init.model<- function(m.type, loc.type, m.popsize, theta, save='', resume= 1, init.pop=1, debug=0, verbose=0)
 {	
 	#data(popart.phylo.com)	
 	old.warn<- getOption("warn")
@@ -180,8 +182,7 @@ ibm.init.model<- function(m.type, loc.type, m.popsize, theta, save='', resume= 1
 	require(data.table)
 	options(warn=old.warn)
 	theta.acute	<- theta[1]
-	theta.base	<- theta[2]
-	
+	theta.base	<- theta[2]	
 	if(resume && nchar(save))
 	{
 		options(show.error.messages = FALSE)		
@@ -193,13 +194,14 @@ ibm.init.model<- function(m.type, loc.type, m.popsize, theta, save='', resume= 1
 	}
 	if(!resume || inherits(readAttempt, "try-error"))
 	{
+		if(verbose)	cat(paste("\ncreate ibm model for loc", loc.type, "model", m.type))
 		ibm						<- vector("list",4)
 		names(ibm)				<- c("init.pop","init.pop.distr","curr.pop","beta")		
 		ibm.att					<- ibm.init.attributes(m.type)
 		ibm$beta				<- ibm.init.beta(ibm.att)					
 		ibm$beta				<- ibm.set.modelbeta(m.type, ibm$beta, theta)		
 		if(loc.type%in%c("Ndeke","Chimwemwe","Ngungu","Maramba","Dambwa","Shampande","Ikhwezi","Bloekombos","DelftSouth","TownII","Luvuyo","Kuyasa"))
-			ibm.distr			<- ibm.init.popinitdistributions.popart(ibm.att, loc.type)
+			ibm.distr			<- ibm.init.popinitdistributions.popart(ibm.att, loc.type, verbose=verbose)
 		else
 			ibm.distr			<- ibm.init.popinitdistributions.vanilla(ibm.att, loc.type,m.popsize)
 		if(debug)
@@ -214,8 +216,7 @@ ibm.init.model<- function(m.type, loc.type, m.popsize, theta, save='', resume= 1
 			ibm$curr.pop		<- ibm$init.pop
 		}
 		else
-			ibm$init.pop.distr	<- ibm.distr
-		
+			ibm$init.pop.distr	<- ibm.distr		 
 		if(nchar(save))
 		{
 			cat(paste("\nibm.init.model: save ibm to",save))

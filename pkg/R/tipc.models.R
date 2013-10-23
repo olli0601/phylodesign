@@ -211,7 +211,7 @@ acute.loglkl.batch<- function(loc.type, tpc.table, cluster.tw, theta, clu.closur
 	m.type			<- "Acute"
 	theta0			<- c(1, 0, 0, 0)
 	names(theta0)	<- c("acute","base","m.st1","m.st2")
-	ibm				<- ibm.collapse( ibm.init.model(m.type, loc.type, NA, theta0, save='', resume= 0, init.pop=0) )
+	ibm				<- ibm.collapse( ibm.init.model(m.type, loc.type, NA, theta0, save='', resume= 0, init.pop=0, verbose=verbose) )
 	state.n			<- ibm$init.pop.distr$status * ibm$init.pop.distr$npop
 	pop.n			<- ibm$init.pop.distr$npop	
 	if(verbose)	print(pop.n)
