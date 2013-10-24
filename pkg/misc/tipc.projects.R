@@ -2852,7 +2852,7 @@ prj.pipeline<- function()
 	#
 	#	compute representative theta corresponding to H0 and H1 and simulate tip cluster table for this theta
 	#
-	if(1)	
+	if(0)	
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
@@ -2925,7 +2925,7 @@ prj.pipeline<- function()
 	#
 	#	compute likelihood of representative theta matching H0 and H1 for all precomputed tip clusters
 	#	
-	if(0)
+	if(1)
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
@@ -2944,9 +2944,9 @@ prj.pipeline<- function()
 		p.consent.coh	<- 0.9*0.9
 		#
 		opt.design		<- "PC12+HCC"
-		opt.analysis	<- "1040"
-		opt.analysis	<- "central-1016"
-		opt.analysis	<- "central-1017"
+		#opt.analysis	<- "1040"
+		#opt.analysis	<- "central-1016"
+		#opt.analysis	<- "central-1017"
 		opt.analysis	<- "central-SC12-1023"
 		opt.analysis	<- "central-SC45-1023"
 		opt.sampling	<- "strue"
@@ -2989,7 +2989,7 @@ prj.pipeline<- function()
 		#	load high acute and low acute tip clusters for each community					
 		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		
 		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)
-		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=0, standalone=0, nrep=200)		
+		tmp				<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0, nrep=200)		
 		tpc.obs			<- tmp$tpc.obs
 		sites			<- merge( tmp$sites, tmp$theta.model.Hx, by="comid_old")		
 		setkey(sites, triplet.id, arm)
