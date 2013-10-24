@@ -2950,6 +2950,8 @@ prj.pipeline<- function()
 		opt.analysis	<- "central-SC12-1023"
 		opt.analysis	<- "central-SC45-1023"
 		opt.sampling	<- "strue"
+		#opt.sampling	<- "struefx10"
+		#opt.sampling	<- "struefx20"
 		#opt.sampling	<- "struefx40"
 		#opt.sampling	<- "struefx60"
 		#opt.sampling	<- "struefx80"
