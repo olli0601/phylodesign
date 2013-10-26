@@ -1457,6 +1457,44 @@ prj.popart.convert.from.Anne<- function()
 		if(verbose) cat(paste("save to file",file))
 		save(df.prop, file=file)
 	}
+	if(0)	#convert Anne s propacute and propcontam into a data.table
+	{						
+		file	<- paste(CODE.HOME,"data","popart.propacute.131015.RData",sep='/')
+		tmp		<- load(file)
+		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))
+		colnames(averageInc.SA)[2]	<- "AOptimistic" 
+		colnames(averageInc.Za)[2]	<- "AOptimistic"
+		colnames(propAcute.SA)[2]	<- "AOptimistic"
+		colnames(propAcute.Za)[2]	<- "AOptimistic"
+		
+		tmp		<- list(	data.table(country="ZA", arm='A', target="central", Inc=averageInc.Za[,"ACentral"], E2E=propAcute.Za[,"ACentral"]),
+				data.table(country="ZA", arm='A', target="optimistic", Inc=averageInc.Za[,"AOptimistic"], E2E=propAcute.Za[,"AOptimistic"]),
+				data.table(country="ZA", arm='B', target="central", Inc=averageInc.Za[,"BCentral"], E2E=propAcute.Za[,"BCentral"]),
+				data.table(country="ZA", arm='B', target="optimistic", Inc=averageInc.Za[,"BOptimistic"], E2E=propAcute.Za[,"BOptimistic"]),
+				data.table(country="ZA", arm='C', target="central", Inc=averageInc.Za[,"C"], E2E=propAcute.Za[,"C"]),
+				data.table(country="ZA", arm='C', target="optimistic", Inc=averageInc.Za[,"C"], E2E=propAcute.Za[,"C"]),		
+				data.table(country="SA", arm='A', target="central", Inc=averageInc.SA[,"ACentral"], E2E=propAcute.SA[,"ACentral"]),
+				data.table(country="SA", arm='A', target="optimistic", Inc=averageInc.SA[,"AOptimistic"], E2E=propAcute.SA[,"AOptimistic"]),
+				data.table(country="SA", arm='B', target="central", Inc=averageInc.SA[,"BCentral"], E2E=propAcute.SA[,"BCentral"]),
+				data.table(country="SA", arm='B', target="optimistic", Inc=averageInc.SA[,"BOptimistic"], E2E=propAcute.SA[,"BOptimistic"]),
+				data.table(country="SA", arm='C', target="central", Inc=averageInc.SA[,"C"], E2E=propAcute.SA[,"C"]),
+				data.table(country="SA", arm='C', target="optimistic", Inc=averageInc.SA[,"C"], E2E=propAcute.SA[,"C"])		)
+		df.prop	<- rbindlist(tmp)
+		#add contamination
+		file							<- paste(CODE.HOME,"data","popart.prop_results_contam.central.131016.RData",sep='/')
+		tmp								<- load(file)
+		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))
+		origin_new_infections$country	<- c(rep("ZA",6),rep("SA",6))
+		df.contam						<- as.data.table(origin_new_infections)
+		setnames(df.contam, c("allocatedArms","propContamination"), c("arm","O2E"))
+		setkey(df.contam, country, arm)
+		df.contam						<- subset( unique(df.contam), select=c(country, arm, O2E))
+		df.prop							<- merge(df.prop, df.contam, by=c("country","arm"))
+		
+		file	<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
+		if(verbose) cat(paste("save to file",file))
+		save(df.prop, file=file)
+	}
 	if(1)	#convert Anne s propacute and propcontam into a data.table
 	{						
 		file	<- paste(CODE.HOME,"data","popart.propacute.131015.RData",sep='/')
@@ -1480,7 +1518,7 @@ prj.popart.convert.from.Anne<- function()
 				data.table(country="SA", arm='C', target="central", Inc=averageInc.SA[,"C"], E2E=propAcute.SA[,"C"]),
 				data.table(country="SA", arm='C', target="optimistic", Inc=averageInc.SA[,"C"], E2E=propAcute.SA[,"C"])		)
 		df.prop	<- rbindlist(tmp)
-		
+		#add contamination
 		file							<- paste(CODE.HOME,"data","popart.prop_results_contam.central.131016.RData",sep='/')
 		tmp								<- load(file)
 		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))
@@ -1490,8 +1528,19 @@ prj.popart.convert.from.Anne<- function()
 		setkey(df.contam, country, arm)
 		df.contam						<- subset( unique(df.contam), select=c(country, arm, O2E))
 		df.prop							<- merge(df.prop, df.contam, by=c("country","arm"))
+		#add pessimistic
+		file	<- paste(CODE.HOME,"data","popart.propacute.131023.RData",sep='/')
+		tmp		<- load(file)
+		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))
+		df.pess	<- data.table(	country = c(rep("SA",3),rep("ZA",3)),
+				arm		= rep(c("A","B","C"),2),
+				target	= "pessimistic",
+				Inc		= c( as.numeric(unlist( averageInc.SA[4,c("AMostPessimistic","BMostPessimistic")] )), 0.013, as.numeric(unlist( averageInc.Za[3,c("AMostPessimistic","BMostPessimistic")] )), 0.013 ),
+				E2E		= c( propAcute.SA[4,c("AMostPessimistic","BMostPessimistic")], 0.1, propAcute.Za[3,c("AMostPessimistic","BMostPessimistic")], 0.1 ),
+				O2E		= c( propContamination.SA[4,c("AMostPessimistic","BMostPessimistic")], 0.1, propContamination.Za[3,c("AMostPessimistic","BMostPessimistic")], 0.1 )	)
+		df.prop	<- rbind(df.prop, df.pess)			
 		
-		file	<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
+		file	<- paste(CODE.HOME,"data","popart.propacute.131025.R",sep='/')
 		if(verbose) cat(paste("save to file",file))
 		save(df.prop, file=file)
 	}
@@ -2845,7 +2894,7 @@ prj.pipeline<- function()
 	#
 	#	compute representative theta corresponding to H0 and H1 and simulate tip cluster table for this theta
 	#
-	if(0)	
+	if(1)	
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
@@ -2857,18 +2906,28 @@ prj.pipeline<- function()
 		#
 		m.type			<- "Acute"	
 		cohort.size		<- 2500	
-		cohort.dur		<- 3	
-		theta.EE.H0		<- 0.1
-		theta.EE.H1		<- 0.4				
-		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								
-		p.consent.coh	<- 0.9*0.9
+		cohort.dur		<- 3
 		#
 		opt.design		<- "PC12+HCC"
 		opt.analysis	<- "1040"
-		opt.analysis	<- "central-SC12-1023"
-		opt.analysis	<- "central-SC45-1023"
 		#opt.analysis	<- "central-1016"
-		#opt.analysis	<- "central-1017"
+		#opt.analysis	<- "central-1017"		
+		if(0)	#central
+		{
+			p.lab			<- 0.75*0.9											
+			p.consent.coh	<- 0.9*0.9
+			opt.analysis	<- "central-SC12-1023"
+			opt.analysis	<- "central-SC45-1023"
+			
+		}
+		if(1)	#pessimistic
+		{
+			p.lab			<- 0.75*0.9											
+			p.consent.coh	<- 0.9*0.9	
+			opt.analysis	<- "pessimistic-SC12-1023"
+			opt.analysis	<- "pessimistic-SC45-1023"
+			
+		}		
 		opt.sampling	<- "strue"
 		#opt.sampling	<- "struefx10"
 		#opt.sampling	<- "struefx20"
@@ -2877,7 +2936,7 @@ prj.pipeline<- function()
 		#opt.sampling	<- "struefx80"
 		#opt.sampling	<- "struefx99"
 		#load df.hyp
-		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
+		file			<- paste(CODE.HOME,"data","popart.propacute.131025.R",sep='/')
 		tmp				<- load(file)
 		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		
 		#set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")

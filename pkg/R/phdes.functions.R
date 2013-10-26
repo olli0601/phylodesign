@@ -504,6 +504,7 @@ popart.predicted.sequences<- function(sites, first.CD4, p.consent.PC, p.consent.
 ###############################################################################
 popart.set.hypo<- function(sites, opt.analysis, df.hyp=NULL)
 {
+	opt.target	<- ifelse( grepl("central",opt.analysis), "central", ifelse( grepl("optimistic",opt.analysis), "optimistic", "pessimistic" ) )
 	if(grepl("1040",opt.analysis))
 	{
 		sites[,"mu.inc.rate.H0"]	<- sites[,inc.rate]
@@ -513,15 +514,35 @@ popart.set.hypo<- function(sites, opt.analysis, df.hyp=NULL)
 	}
 	else if(grepl("SC12",opt.analysis))
 	{
-		sites[,"mu.inc.rate.H0"]	<- sites[,inc.rate]
-		sites[,"mu.inc.rate.H1"]	<- sites[,inc.rate]
+		if(opt.target=="pessimistic")
+		{
+			tmp		<- subset( df.hyp, target=="pessimistic" & h=="H0",  c(country, arm, Inc))
+			setnames(tmp, "Inc", "mu.inc.rate.H0")
+			tmp[, "mu.inc.rate.H1":= tmp[,mu.inc.rate.H0]]
+			sites	<- merge(sites, tmp, by=c("country","arm"))
+		}	
+		else
+		{
+			sites[,"mu.inc.rate.H0"]	<- sites[,inc.rate]
+			sites[,"mu.inc.rate.H1"]	<- sites[,inc.rate]
+		}
 		sites[,"mu.pE2E.H0"]		<- 0.1
 		sites[,"mu.pE2E.H1"]		<- 0.2		
 	}
 	else if(grepl("SC45",opt.analysis))
 	{
-		sites[,"mu.inc.rate.H0"]	<- sites[,inc.rate]
-		sites[,"mu.inc.rate.H1"]	<- sites[,inc.rate]
+		if(opt.target=="pessimistic")
+		{
+			tmp		<- subset( df.hyp, target=="pessimistic" & h=="H0",  c(country, arm, Inc))
+			setnames(tmp, "Inc", "mu.inc.rate.H0")
+			tmp[, "mu.inc.rate.H1":= tmp[,mu.inc.rate.H0]]
+			sites	<- merge(sites, tmp, by=c("country","arm"))
+		}	
+		else
+		{
+			sites[,"mu.inc.rate.H0"]	<- sites[,inc.rate]
+			sites[,"mu.inc.rate.H1"]	<- sites[,inc.rate]
+		}
 		sites[,"mu.pE2E.H0"]		<- 0.4
 		sites[,"mu.pE2E.H1"]		<- 0.5		
 	}	
@@ -543,9 +564,9 @@ popart.set.hypo<- function(sites, opt.analysis, df.hyp=NULL)
 ###############################################################################
 popart.predicted.sequences.130717<- function(samples.CD4, df.nocontam, opt.analysis, p.lab)
 {
-	opt.prediction	<- ifelse( grepl("central",opt.analysis), "central", ifelse( grepl("optimistic",opt.analysis), "optimistic", "pessimistic" ) )
-	tmp				<- subset(df.nocontam, target==opt.prediction, c(country, arm, p.nocontam))
-	samples.seq		<- subset(samples.CD4, prediction==opt.prediction)
+	opt.target		<- ifelse( grepl("central",opt.analysis), "central", ifelse( grepl("optimistic",opt.analysis), "optimistic", "pessimistic" ) )
+	tmp				<- subset(df.nocontam, target==opt.target, c(country, arm, p.nocontam))
+	samples.seq		<- subset(samples.CD4, prediction==opt.target)
 	samples.seq		<- merge(samples.seq, tmp, by=c("country","arm"))
 	samples.seq		<- samples.seq[, list(country=country, arm=arm, PC.prev=round(PC.prev*p.lab*p.nocontam), PC.inc=round(PC.inc*p.lab*p.nocontam), HCF.inc=round(HCF.inc*p.lab*p.nocontam), HCF.prev=round(HCF.prev*p.lab*p.nocontam), all.prev=all.prev, all.inc=all.inc), by="comid_old"]
 	samples.seq[,"%prev":=round( samples.seq[, (PC.prev+HCF.prev) / all.prev], d=3)]
@@ -565,9 +586,9 @@ popart.predicted.sequences.131023<- function(samples.CD4, df.nocontam, opt.analy
 	df.inpatient	<- data.table(target=c("optimistic","central","pessimistic"), p.inpatient=c(p.inpatient.c,p.inpatient.c,p.inpatient.p))
 	tmp[,p.inpatient:= subset(df.inpatient, target==opt.prediction)[1,p.inpatient]]
 	#determine p.nocontam.prev among prevalent
-	tmp[,p.nocontam.prev:= subset(df.nocontam, arm=='C' & target=="central" )[1, p.nocontam]]
+	tmp[,p.nocontam.prev:= subset(df.nocontam, arm=='C' & target==opt.prediction )[1, p.nocontam]]
 	
-	samples.seq		<- subset(samples.CD4, prediction==opt.prediction)
+	samples.seq		<- subset(samples.CD4, prediction=="central")
 	samples.seq		<- merge(samples.seq, tmp, by=c("country","arm"))
 	samples.seq		<- samples.seq[, list(	country=country, arm=arm, all.prev=all.prev, all.inc=all.inc,
 											PC.prev=round(PC.prev*p.lab*p.nocontam.prev), 
@@ -579,6 +600,7 @@ popart.predicted.sequences.131023<- function(samples.CD4, df.nocontam, opt.analy
 	#samples.seq[,"%avg":=round( samples.seq[, (PC.inc+HCF.inc+PC.prev+HCF.prev) / (all.prev+all.inc)], d=3)]
 	samples.seq		<- merge(samples.seq, samples.seq[, list(pc.avg=min(pc.prev,pc.inc)), by="comid_old"], by="comid_old")
 	setnames(samples.seq, c("HCF.inc","HCF.prev","pc.prev","pc.inc","pc.avg"), c("nonPC.inc","nonPC.prev","%prev","%inc","%avg") )		#to match previous data table
+	setkey(samples.seq, country, arm)
 	samples.seq	
 }
 ###############################################################################
