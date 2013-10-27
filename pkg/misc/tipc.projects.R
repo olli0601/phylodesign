@@ -613,7 +613,7 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(sites, samples.seq, coho
 	m.type			<- "Acute"
 	hpc.q			<- "pqeph"	#"pqeph"	
 	hpc.walltime	<- 8		# 8
-	hpc.mem			<- "3850mb"	#"1600mb"
+	hpc.mem			<- "7850mb"	#"1600mb"
 	theta.model.Hx	<- NULL		
 	if(resume)
 	{
@@ -2922,11 +2922,10 @@ prj.pipeline<- function()
 		}
 		if(1)	#pessimistic
 		{
-			p.lab			<- 0.75*0.9											
+			p.lab			<- 0.7*0.85											
 			p.consent.coh	<- 0.9*0.9	
 			opt.analysis	<- "pessimistic-SC12-1023"
-			opt.analysis	<- "pessimistic-SC45-1023"
-			
+			opt.analysis	<- "pessimistic-SC45-1023"			
 		}		
 		opt.sampling	<- "strue"
 		#opt.sampling	<- "struefx10"
@@ -2971,13 +2970,13 @@ prj.pipeline<- function()
 		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		
 		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)
 		dummy			<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=1, nrep=200)
-		
+		#dummy			<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=1, standalone=0, nrep=200)
 		stop()
 	}
 	#
 	#	compute likelihood of representative theta matching H0 and H1 for all precomputed tip clusters
 	#	
-	if(1)
+	if(0)
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
@@ -2990,25 +2989,35 @@ prj.pipeline<- function()
 		m.type			<- "Acute"	
 		cohort.size		<- 2500	
 		cohort.dur		<- 3	
-		theta.EE.H0		<- 0.1
-		theta.EE.H1		<- 0.4				
-		p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing								
-		p.consent.coh	<- 0.9*0.9
 		#
 		opt.design		<- "PC12+HCC"
 		#opt.analysis	<- "1040"
 		#opt.analysis	<- "central-1016"
-		#opt.analysis	<- "central-1017"
-		opt.analysis	<- "central-SC12-1023"
-		#opt.analysis	<- "central-SC45-1023"
-		#opt.sampling	<- "strue"
+		#opt.analysis	<- "central-1017"		
+		if(0)	#central
+		{
+			p.lab			<- 0.75*0.9											
+			p.consent.coh	<- 0.9*0.9
+			opt.analysis	<- "central-SC12-1023"
+			opt.analysis	<- "central-SC45-1023"
+			
+		}
+		if(1)	#pessimistic
+		{
+			p.lab			<- 0.7*0.85											
+			p.consent.coh	<- 0.9*0.9	
+			opt.analysis	<- "pessimistic-SC12-1023"
+			opt.analysis	<- "pessimistic-SC45-1023"
+			
+		}			
+		opt.sampling	<- "strue"
 		#opt.sampling	<- "struefx10"
 		#opt.sampling	<- "struefx20"
 		#opt.sampling	<- "struefx40"
 		#opt.sampling	<- "struefx60"
 		#opt.sampling	<- "struefx80"
 		#opt.sampling	<- "struefx99"
-		opt.sampling	<- "s5pc"
+		#opt.sampling	<- "s5pc"
 									
 		#load df.hyp
 		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
