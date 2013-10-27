@@ -2894,7 +2894,7 @@ prj.pipeline<- function()
 	#
 	#	compute representative theta corresponding to H0 and H1 and simulate tip cluster table for this theta
 	#
-	if(1)	
+	if(0)	
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
@@ -2976,7 +2976,7 @@ prj.pipeline<- function()
 	#
 	#	compute likelihood of representative theta matching H0 and H1 for all precomputed tip clusters
 	#	
-	if(0)
+	if(1)
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
@@ -3020,12 +3020,13 @@ prj.pipeline<- function()
 		#opt.sampling	<- "s5pc"
 									
 		#load df.hyp
-		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
+		file			<- paste(CODE.HOME,"data","popart.propacute.131025.R",sep='/')
 		tmp				<- load(file)
 		if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		
 		#set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")
 		#set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		
-		df.hyp			<- NULL		#df.prop[, {	tmp<- c(which.min(E2E), which.max(E2E));  list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])	}, by=c("country", "arm","target")]
+		#df.hyp			<- NULL		
+		df.hyp			<- df.prop[, {	tmp<- c(which.min(E2E), which.max(E2E));  list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])	}, by=c("country", "arm","target")]
 		df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]							
 		#		
 		sites			<- popart.getdata.randomized.arm( 1, rtn.fixed=debug, rtn.phylostudy=1 )
@@ -3071,7 +3072,7 @@ prj.pipeline<- function()
 	#
 	#	compute divergence between H0 and H1 for each of the communities
 	#	
-	if(1)
+	if(0)
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
