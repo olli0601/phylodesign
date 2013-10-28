@@ -758,7 +758,7 @@ prj.popart.powercalc.by.acutelklratio.lkl4Precomputed<- function(sites=NULL, tpc
 	m.type			<- "Acute"
 	hpc.walltime	<- 21
 	hpc.mem			<- "1600mb"
-	hpc.q			<- NA	#"pqeph"
+	hpc.q			<- "pqeph"
 	f.name.remote	<- paste(f.name,'_tmp_',remote.signat,sep='')
 	if(resume)
 	{
@@ -1139,13 +1139,14 @@ prj.popart.powercalc.by.acutelklratio.lklH0H1<- function(sites=NULL, tpc.obs=NUL
 	mlkl.theta
 }
 ###############################################################################
-prog.acute.loglkl.batch.cmd<- function(dir.name, infile, outfile, site, tpcHx, verbose=1)
+prog.acute.loglkl.batch.cmd<- function(dir.name, infile, outfile, site, tpcHx, verbose=1, resume=1)
 {
 	cmd<- paste("\n",dir.name,"/misc/phdes.startme.R -exeACUTE.LKL.BATCH ",sep='')
 	cmd<- paste(cmd, " -infile=",infile,sep='')
 	cmd<- paste(cmd, " -outfile=",outfile,sep='')
 	cmd<- paste(cmd, " -site=",site,sep='')
 	cmd<- paste(cmd, " -tpcHx=",tpcHx,sep='')
+	cmd<- paste(cmd, " -resume=",resume,sep='')
 	cmd<- paste(cmd, " -v=",verbose,sep='')
 	cmd
 }
@@ -1179,7 +1180,12 @@ prog.acute.loglkl.batch<- function()
 		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,6),
 									tpcHx= return(substr(arg,8,nchar(arg))),NA)	}))
-		if(length(tmp)>0) tpcHx<- tmp[1]			
+		if(length(tmp)>0) tpcHx<- tmp[1]
+		tmp<- na.omit(sapply(argv,function(arg)
+						{	switch(substr(arg,2,7),
+									resume= return(as.numeric(substr(arg,9,nchar(arg)))),NA)	}))
+		if(length(tmp)>0) resume<- tmp[1]
+		
 		tmp<- na.omit(sapply(argv,function(arg)
 						{	switch(substr(arg,2,2),
 									v= return(as.numeric(substr(arg,4,nchar(arg)))),NA)	}))
@@ -1191,6 +1197,7 @@ prog.acute.loglkl.batch<- function()
 		print(outfile)
 		print(site)
 		print(tpcHx)
+		print(resume)
 	}
 	if(resume)
 	{
@@ -2994,21 +3001,19 @@ prj.pipeline<- function()
 		#opt.analysis	<- "1040"
 		#opt.analysis	<- "central-1016"
 		#opt.analysis	<- "central-1017"		
-		if(0)	#central
+		if(1)	#central
 		{
 			p.lab			<- 0.75*0.9											
 			p.consent.coh	<- 0.9*0.9
 			opt.analysis	<- "central-SC12-1023"
-			opt.analysis	<- "central-SC45-1023"
-			
+			#opt.analysis	<- "central-SC45-1023"			
 		}
-		if(1)	#pessimistic
+		if(0)	#pessimistic
 		{
 			p.lab			<- 0.7*0.85											
 			p.consent.coh	<- 0.9*0.9	
 			opt.analysis	<- "pessimistic-SC12-1023"
-			opt.analysis	<- "pessimistic-SC45-1023"
-			
+			opt.analysis	<- "pessimistic-SC45-1023"			
 		}			
 		opt.sampling	<- "strue"
 		#opt.sampling	<- "struefx10"
@@ -3017,7 +3022,7 @@ prj.pipeline<- function()
 		#opt.sampling	<- "struefx60"
 		#opt.sampling	<- "struefx80"
 		#opt.sampling	<- "struefx99"
-		#opt.sampling	<- "s5pc"
+		opt.sampling	<- "s5pc"
 									
 		#load df.hyp
 		file			<- paste(CODE.HOME,"data","popart.propacute.131025.R",sep='/')
@@ -3097,13 +3102,13 @@ prj.pipeline<- function()
 		opt.analysis	<- "central-SC12-1023"
 		#opt.analysis	<- "central-SC45-1023"		
 		opt.sampling	<- "strue"
-		#opt.sampling	<- "struefx10"
+		opt.sampling	<- "struefx10"
 		#opt.sampling	<- "struefx20"
 		#opt.sampling	<- "struefx40"
 		#opt.sampling	<- "struefx60"
 		#opt.sampling	<- "struefx80"
 		#opt.sampling	<- "struefx99"				
-		opt.sampling	<- "s5pc"					
+		#opt.sampling	<- "s5pc"					
 		#load df.hyp
 		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
 		tmp				<- load(file)
@@ -3175,7 +3180,7 @@ prj.pipeline<- function()
 	#
 	#	compute divergence between scenarios S0 vs S1, S2, S3 for each of the communities
 	#	
-	if(0)
+	if(1)
 	{
 		require(data.table)		
 		dir.name		<- "popartpower_acute"
@@ -3196,13 +3201,13 @@ prj.pipeline<- function()
 		opt.design		<- "PC12+HCC"		
 		#opt.analysis	<- "central-SC45-1023"		
 		opt.sampling	<- "strue"
-		#opt.sampling	<- "struefx10"
-		#opt.sampling	<- "struefx20"
-		#opt.sampling	<- "struefx40"
-		#opt.sampling	<- "struefx60"
-		#opt.sampling	<- "struefx80"
-		#opt.sampling	<- "struefx99"				
-		#opt.sampling	<- "s5pc"					
+		opt.sampling	<- "struefx10"
+		opt.sampling	<- "struefx20"
+		opt.sampling	<- "struefx40"
+		opt.sampling	<- "struefx60"
+		opt.sampling	<- "struefx80"
+		opt.sampling	<- "struefx99"				
+		opt.sampling	<- "s5pc"					
 		#load df.hyp
 		file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
 		tmp				<- load(file)
@@ -3286,8 +3291,14 @@ prj.pipeline<- function()
 		#set(df.true, which(df.true[,comid_old%in%c("AZA","BZA","CZA","ASA","BSA","CSA")]), c("acute","base"), NA)
 		set(df.true, NULL, "comid_old", as.character(df.true[,comid_old]))
 		#	plot lkl surface and take 95% CI subset
-		#lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.get.scenarios(sites, lkl.theta, f.name, df.true=df.true, scenarios=c("S0","S1","S2","S3"),plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, pdf.height=22,resume=0, verbose=1)
-		lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.get.scenarios(sites, lkl.theta, f.name, df.true=df.true, scenarios=c("S0","S1","S2","S3"),plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=1, pdf.width=4, pdf.height=4,resume=0, verbose=1)
+		lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.get.scenarios(sites, lkl.theta, f.name, df.true=df.true, scenarios=c("S0","S1","S2","S3"),plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, pdf.height=22,resume=0, verbose=1)
+		#lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.get.scenarios(sites, lkl.theta, f.name, df.true=df.true, scenarios=c("S0","S1","S2","S3"),plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=1, pdf.width=4, pdf.height=4,resume=0, verbose=1)
+		
+		f.name			<- paste(dir.name,'/',"tpcdiv_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,".R",sep='')
+		if(verbose)	cat(paste("\nwrite div to file",f.name))
+		save(lkl.e2e, file=f.name)
+		
+		stop()
 		
 		lkl.e2e.div	<- lkl.e2e[,	{
 										cmp01<- c(which(h=="S0"), which(h=="S1"))
