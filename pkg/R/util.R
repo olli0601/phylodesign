@@ -140,8 +140,13 @@ my.image.get.CI<- function(look, ci=0.95, log=TRUE)
 	df.CI[,dummy:=-df.CI[,lkl]]
 	setkey(df.CI, dummy)
 	df.CI[,cumlkl:=cumsum(df.CI[,lkl])]
+	setkey(df.CI, cumlkl)
+	ci		<- ifelse( df.CI[1,cumlkl]>ci, df.CI[2,cumlkl], ci)
+	#print( df.CI )
 	df.CI	<- subset(df.CI, cumlkl<ci)
 	setkey(df.CI, x)
+	#print( df.CI )
+	#print( df.CI[, min(y), by='x'] )
 	df.CI	<- df.CI[,list(xl= x+c(-0.5,0.5)*dx[1], ymin=rep(min(y)-dx[2]/2,2), ymax=rep(max(y)+dx[2]/2,2)),by='x']
 	df.CI	<- rbind( rbind( df.CI[1,],df.CI ), df.CI[nrow(df.CI),] )
 	set(df.CI,1L,"ymax",df.CI[1,ymin])

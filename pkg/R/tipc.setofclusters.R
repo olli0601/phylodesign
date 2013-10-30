@@ -90,7 +90,7 @@ tpc.tabulate<- function(tpc)
 		for(j in seq.int(st.mx,0,-1))
 		{			
 			if(roots[i]=='i')
-				tmp				<- st.m['u',]==0 & st.m['t',]==0 & st.m['i',]==j
+				tmp				<- st.m['u',]==0 & st.m['t',]==0 & st.m['i',]==j+1
 			else
 				tmp				<- st.m[roots[i],]==1 & st.m['i',]==j
 			
@@ -114,6 +114,45 @@ tpc.proportion.E2E<- function(tpc)
 }	
 ###############################################################################
 tpc.sample<- function( tpc, sample.prob )
+{
+	s.Idx			<- sample.prob["Idx"]
+	s.E				<- sample.prob["E"]
+	#sample nodes given index sampled
+	tpc[["trees"]]	<- lapply(tpc[["trees"]], function(x)
+			{	 				
+				tmp				<- runif( nrow(x[["nodes"]]) )	
+				tmp				<- tmp<=c(s.Idx, rep(s.E, nrow(x[["nodes"]])-1 ))
+				id.notsampled	<- x[["nodes"]][which(!tmp),"id"]
+				id.sampled		<- x[["nodes"]][which(tmp),"id"]								
+				e.sampled		<- x[["edges"]]
+				if(length(id.sampled)<2)
+					e.sampled	<- na.omit(data.frame(from=NA, to=NA, bl=NA))
+				else
+				{
+					for(z in id.notsampled)
+					{
+						edge.notsampled					<- which(e.sampled[,"to"]==z)		#this should be <2
+						if(length(edge.notsampled)==0)										#case z is root
+						{
+							edge.notsampled				<- which(e.sampled[,"from"]==z)		
+							e.sampled					<- e.sampled[-edge.notsampled, , drop=F]
+						}
+						else if(length(edge.notsampled)==1)	
+						{
+							edges.rewire					<- which(e.sampled[,"from"]==z)							
+							e.sampled[edges.rewire,"from"]	<- rep(e.sampled[edge.notsampled,"from"], length(edges.rewire)) 
+							e.sampled[edges.rewire,"bl"]	<- e.sampled[edges.rewire,"bl"] + e.sampled[edge.notsampled,"bl"]
+							e.sampled						<- e.sampled[-edge.notsampled, , drop=F]
+						}
+						else stop("unexpected edges.notsampled")
+					}
+				}
+				list(nodes=x[["nodes"]][tmp,], edges=e.sampled)											
+			})
+	tpc
+}
+###############################################################################
+tpc.sample.noEidx<- function( tpc, sample.prob )
 {
 	s.Idx			<- sample.prob["Idx"]
 	s.E				<- sample.prob["E"]
