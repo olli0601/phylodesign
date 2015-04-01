@@ -9,6 +9,35 @@
 #' @examples	popart.getdata.randomized.arm(1)
 popart.getdata.randomized.arm<- function( randomize.n, r.inc.A= 0.0056, r.inc.B=0.01, r.inc.C=0.013, p.adults.ZA=0.53, p.adults.SA=0.7, rtn.fixed=0, rtn.phylostudy=1 )
 {	
+	load(system.file(package="phylodesign", "misc", "popart.triplets.130207.rda"))						
+	# select studies for phylogenetics	
+	if(rtn.phylostudy)
+	{
+		simul	<- popart.triplets.130207[popart.triplets.130207$country==1, ]
+		simul	<- simul[!simul$comid_old %in%c('Chawama','Chipata','Kanyama'), ] 
+	}
+	else
+		simul	<- popart.triplets.130207[rep(seq_len(nrow(popart.triplets.130207)),randomize.n),]
+	simul$comid_old	<- gsub(' ','',simul$comid_old)
+	# randomise communities arms
+	#if(!rtn.fixed)
+	#	simul$random	<- runif(nrow(simul))
+	#else
+	#	simul$random	<- seq_len(nrow(simul)) / nrow(simul)
+	#simul$arm.code	<- unlist(tapply(simul$random,rep(1:(nrow(simul)/3),each=3),rank))
+	#simul$arm		<- ifelse(simul$arm.code==1,"A",simul$arm.code)
+	#simul$arm		<- ifelse(simul$arm.code==2,"B",simul$arm)
+	#simul$arm		<- ifelse(simul$arm.code==3,"C",simul$arm)
+	#drops 			<- c("random","arm.code")
+	#simul			<- simul[,!names(simul) %in% drops]
+	simul$inc.rate	<- sapply(simul$arm,function(x){(x %in% "A")*r.inc.A+(x %in% "B")*r.inc.B+(x %in% "C")*r.inc.C})
+	simul$p.adults	<- ifelse(simul$country==1,p.adults.ZA,p.adults.SA)
+	#simul$rid		<- rep(1:randomize.n, each=3*4)
+	simul[ order(simul$triplet.id, simul$arm), ]	
+}
+###############################################################################
+popart.getdata.randomized.arm.v1<- function( randomize.n, r.inc.A= 0.0056, r.inc.B=0.01, r.inc.C=0.013, p.adults.ZA=0.53, p.adults.SA=0.7, rtn.fixed=0, rtn.phylostudy=1 )
+{	
 	data(popart.triplets.130207)					
 	# select studies for phylogenetics	
 	if(rtn.phylostudy)
@@ -357,28 +386,28 @@ popart.predicted.firstCD4.131023<- function(sites, opt.design="PC12+HCC", verbos
 	#	assume all FirstCD4 counts exclude PC counts
 	#
 	samples.CD4<- data.table(	FirstCD4.all= c(4623, 4078, 1032, 7358, 6353, 1159),
-								FirstCD4.inc= c(710, 929, 106, 705, 926, 57),
-								country		= c("ZA","ZA","ZA","SA","SA","SA"),
-								arm			= c("A","B","C","A","B","C"),
-								prediction	= "central",
-								p.contam.act= 0.05	)		
+			FirstCD4.inc= c(710, 929, 106, 705, 926, 57),
+			country		= c("ZA","ZA","ZA","SA","SA","SA"),
+			arm			= c("A","B","C","A","B","C"),
+			prediction	= "central",
+			p.contam.act= 0.05	)		
 	#
 	# 	patients by country, arm	from PC
 	#	assume all PC patients provide samples to HCF
 	#
 	samples.PC<- data.table(	PC0.u			= c(rep(502,3),rep(574,3)),
-								PC0.t			= c(rep(166,3),rep(162,3)),
-								PC0.l			= c(rep(74,3),rep(82,3)),
-								PC12.u			= c(164,350,448,182,370,502),
-								PC12.t			= c(408,236,154,3454,274,150),
-								PC12.l			= c(134,138,140,148,152,154),
-								SC.y1			= c(32,46,64,22,32,46),
-								SC.y2			= c(22,40,58,16,28,42),
-								SC.y3			= c(20,36,54,14,26,38),									
-								country			= c("ZA","ZA","ZA","SA","SA","SA"),
-								arm				= c("A","B","C","A","B","C"),
-								prediction		= "central",
-								p.contam.act	= 0.05		)									
+			PC0.t			= c(rep(166,3),rep(162,3)),
+			PC0.l			= c(rep(74,3),rep(82,3)),
+			PC12.u			= c(164,350,448,182,370,502),
+			PC12.t			= c(408,236,154,3454,274,150),
+			PC12.l			= c(134,138,140,148,152,154),
+			SC.y1			= c(32,46,64,22,32,46),
+			SC.y2			= c(22,40,58,16,28,42),
+			SC.y3			= c(20,36,54,14,26,38),									
+			country			= c("ZA","ZA","ZA","SA","SA","SA"),
+			arm				= c("A","B","C","A","B","C"),
+			prediction		= "central",
+			p.contam.act	= 0.05		)									
 	#
 	#	total incidence and prevalence by community
 	#
@@ -414,6 +443,187 @@ popart.predicted.firstCD4.131023<- function(sites, opt.design="PC12+HCC", verbos
 	samples.CD4	<- subset(samples.CD4, design==opt.design)
 	samples.CD4
 }	
+###############################################################################
+popart.predicted.firstCD4.141006<- function(sites, opt.design="PC12+HCC", verbose=0)
+{
+	tmp			<- load(system.file(package="phylodesign", "misc", "phylogenetics_bloodsampleflows-1.Rdata"))
+	if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))
+	result		<- as.data.table(result)
+	setnames(result, c("comm.name","allocatedArms"), c("comid_old","arm"))
+	result.CD4	<- as.data.table(result_old)
+	setnames(result.CD4, c("comm.name","allocatedArms"), c("comid_old","arm"))
+	#	total CD4 tests performed (only for protocol)
+	result.CD4[, list(total=sum(CD4total.year2+CD4total.year3+CD4total.year4)), by='arm']
+	#	total first CD4 amongst those on ART
+	#	ignores first phylo testers in year 2
+	result.CD4[, list(total=sum(CD4amongstART_firstvisit.year2+CD4amongstART_firstvisit.year3+CD4amongstART_firstvisit.year4)), by='arm']
+	#
+	#	prevalence at year 3 and sum of incident
+	#
+	tmp			<- subset( result, select=c(comid_old, arm, adultpopsize, cumulincyear1, cumulincyear2, cumulincyear3, prevalence0m, prevalence12m, prevalence24m, prevalence36m) )
+	setkey(tmp, arm)
+	pred.model	<- result[, list( 	arm=arm, 
+									all.prev= round(adultpopsize*prevalence36m), 
+									all.inc= round(adultpopsize*sum(cumulincyear1, cumulincyear2, cumulincyear3)) ), by="comid_old" ]
+	pred.model[, prediction:= "central"]
+	#
+	#	first CD4 samples in year 2 3 4 in HCF
+	#	add CD4first.year2 (these are first timers in HCF) + CD4repeated.year2	(these are repeaters in HCF but first timers in phylo study)
+	#
+	tmp			<- subset( result.CD4, select=c(comid_old, arm, CD4first.year2, CD4first.year3, CD4first.year4, CD4incidAmongstFirst.year2, CD4incidAmongstFirst.year3, CD4incidAmongstFirst.year4, CD4repeated.year2))
+	set(tmp, NULL, 'CD4first.year2', tmp[, CD4first.year2+CD4repeated.year2])				
+	set(tmp, NULL, 'HCF.prev', tmp[, CD4first.year2+CD4first.year3+CD4first.year4])	
+	set(tmp, NULL, 'HCF.inc', tmp[, CD4incidAmongstFirst.year2+CD4incidAmongstFirst.year3+CD4incidAmongstFirst.year4])
+	tmp[,prediction:= "central"]
+	tmp[,country:= "ZA"]
+	samples.CD4	<- subset( tmp, select=c(comid_old, country, prediction, HCF.inc, HCF.prev) )
+	#
+	#	seroconverters in PC at PC12, PC24, PC36
+	#
+	samples.PC	<- subset(result, select=c(comid_old, arm, NbInc12mNotLostAndConsenting, NbInc24mNotLostAndConsenting, NbInc36mNotLostAndConsenting))
+	#samples.PC[, list(m12=sum(NbInc12mNotLostAndConsenting), m24=sum(NbInc24mNotLostAndConsenting), m36=sum(NbInc36mNotLostAndConsenting)), by='arm']
+	#samples.PC[, list(m12=sum(NbInc12mNotLostAndConsenting), m24=sum(NbInc24mNotLostAndConsenting), m36=sum(NbInc36mNotLostAndConsenting))]	
+	tmp			<- subset(result, select=c(comid_old, arm, NbPrevPC12AmongstInitial2500, NbPrevPC12NotLostAndConsenting, NbPrevPC12NotOnART, NbPrevPC24AmongstInitial2500, NbPrevPC24NotLostAndConsenting, NbPrevPC24NotOnART, NbPrevPC36AmongstInitial2500, NbPrevPC36NotLostAndConsenting, NbPrevPC36NotOnART))
+	tmp[, PC12ART:= NbPrevPC12NotLostAndConsenting-NbPrevPC12NotOnART]
+	tmp[, PC12Lost:= NbPrevPC12AmongstInitial2500-NbPrevPC12NotLostAndConsenting]
+	tmp[, list(PC12ART=sum(PC12ART)), by='arm']
+	tmp[, list(PC12ART=sum(PC12ART))]
+	tmp[, list(PC12Lost=sum(PC12Lost)), by='arm']
+	tmp[, list(PC12Lost=sum(PC12Lost))]	
+	#
+	#	untreated prevalent at phylo baseline in PC at PC0, PC12
+	#	
+	tmp			<- subset(result, select=c(comid_old, NbPrevPC0NotOnART, NbPrevPC12NotOnART))
+	samples.PC	<- merge(samples.PC, tmp, by=c('comid_old'))
+	samples.PC[, PC0.prev:= NbPrevPC0NotOnART]
+	samples.PC[, PC12.prev:= NbPrevPC12NotOnART]
+	samples.PC[, PC0.inc:= round(NbInc12mNotLostAndConsenting+NbInc24mNotLostAndConsenting+NbInc36mNotLostAndConsenting)]
+	samples.PC[, PC12.inc:= round(NbInc12mNotLostAndConsenting+NbInc24mNotLostAndConsenting+NbInc36mNotLostAndConsenting)]
+	samples.PC[, prediction:= "central"]
+	samples.PC	<- rbindlist( list( 	samples.PC[, list(comid_old=comid_old, prediction=prediction, design="PC+HCC", PC.prev=PC0.prev,  PC.inc=PC0.inc)],
+										samples.PC[, list(comid_old=comid_old, prediction=prediction, design="PC12+HCC", PC.prev=PC12.prev, PC.inc=PC12.inc)]	)		)
+	#	add PC and HCF samples
+	samples.CD4	<- merge(samples.PC, samples.CD4, by=c("comid_old","prediction"))
+	samples.CD4	<- merge(samples.CD4, pred.model, by=c("comid_old","prediction"))
+	#
+	samples.CD4	<- subset(samples.CD4, design==opt.design)
+	setkey(samples.CD4, arm)
+	samples.CD4
+}
+###############################################################################
+popart.predicted.firstCD4.ByFeb16<- function()
+{
+	tmp			<- load(system.file(package="phylodesign", "misc", "popart.141028.ForOlli.RData"))
+	if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))
+	result		<- as.data.table(result)
+	setnames(result, c("comm.name","allocatedArms"), c("comid_old","arm"))
+	result.CD4	<- as.data.table(result_old)
+	setnames(result.CD4, c("comm.name","allocatedArms"), c("comid_old","arm"))
+	#
+	#	first CD4 samples in year 2 3 (ie 2015 and 2016) in HCF before ART
+	#	add CD4first.year2 (these are first timers in HCF) + CD4repeated.year2	(these are repeaters in HCF but first timers in phylo study)
+	#
+	#	CD4 samples in year 2 3 in HCF after ART start
+	#
+	tmp			<- subset( result.CD4, select=c(comid_old, arm, CD4first.year2, CD4first.year3, CD4repeated.year2, CD4amongstART_firstvisit.year1, CD4amongstART_firstvisit.year2, CD4amongstART_firstvisit.year3))
+	set(tmp, NULL, 'CD4first.year2', tmp[, CD4first.year2+CD4repeated.year2])		
+	set(tmp, NULL, 'CD4amongstART_firstvisit.year2B', tmp[, CD4amongstART_firstvisit.year1+CD4amongstART_firstvisit.year2])
+	set(tmp, NULL, c('CD4repeated.year2','CD4amongstART_firstvisit.year1'), NULL)
+	#	from Sep-1 in 2015
+	set(tmp, NULL, 'CD4first.201509', tmp[, CD4first.year2*4/12])
+	set(tmp, NULL, 'CD4amongstART_firstvisit.201509', tmp[, CD4amongstART_firstvisit.year2*4/12])
+	set(tmp, NULL, 'CD4amongstART_firstvisit.201509B', tmp[, CD4amongstART_firstvisit.year2B*4/12])
+	#	until End of Feb 2016
+	set(tmp, NULL, 'CD4first.201602', tmp[, CD4first.year3*2/12])
+	set(tmp, NULL, 'CD4amongstART_firstvisit.201602', tmp[, CD4amongstART_firstvisit.year3*2/12])
+	#	until End of May 2016
+	set(tmp, NULL, 'CD4first.201605', tmp[, CD4first.year3*5/12])
+	set(tmp, NULL, 'CD4amongstART_firstvisit.201605', tmp[, CD4amongstART_firstvisit.year3*5/12])
+	#	cast
+	tmp			<- melt(tmp, id.vars=c('comid_old', 'arm'), measure.vars=names(tmp)[grepl('201',names(tmp))], value.name='SAMPLES')		
+	tmp[, TYPE:='FirstPhylo_BeforeART']
+	set(tmp, tmp[, which(grepl('amongstART',variable))], 'TYPE', 'FirstPhylo_AfterART')
+	tmp[, TIME:=paste('P',tmp[,regmatches(variable, regexpr('201.*', variable))],sep='')]
+	#	sum over sites
+	samples.CD4	<- dcast.data.table(tmp, TYPE~TIME, value.var='SAMPLES', fun.aggregate=sum)
+	samples.CD4[, OPTION.1509.1602:= round(P201509+P201602)]
+	samples.CD4[, OPTION.1509.1605:= round(P201509+P201605)]
+	samples.CD4[, OPTION.1509.1602.with14FirstART:= round(P201509B+P201602)]
+	samples.CD4[, OPTION.1509.1605.with14FirstART:= round(P201509B+P201605)]
+	samples.CD4	<- melt(samples.CD4, id.vars=c('TYPE'), measure.vars=names(samples.CD4)[grepl('OPTION',names(samples.CD4))])			
+}
+###############################################################################
+popart.predicted.firstCD4.141029<- function(sites, opt.design="PC12+HCC", verbose=0)
+{	
+	tmp			<- load(system.file(package="phylodesign", "misc", "popart.141028.ForOlli.RData"))
+	if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))
+	result		<- as.data.table(result)
+	setnames(result, c("comm.name","allocatedArms"), c("comid_old","arm"))
+	result.CD4	<- as.data.table(result_old)
+	setnames(result.CD4, c("comm.name","allocatedArms"), c("comid_old","arm"))
+	#	total CD4 tests performed (only for protocol)
+	result.CD4[, list(total=sum(CD4total.year2+CD4total.year3+CD4total.year4)), by='arm']
+	#	total first CD4 amongst those on ART
+	#	ignores first phylo testers in year 2
+	result.CD4[, list(total=sum(CD4amongstART_firstvisit.year2+CD4amongstART_firstvisit.year3+CD4amongstART_firstvisit.year4)), by='arm']
+	#
+	#	prevalence at year 3 and sum of incident
+	#
+	tmp			<- subset( result, select=c(comid_old, arm, adultpopsize, cumulincyear1, cumulincyear2, cumulincyear3, prevalence0m, prevalence12m, prevalence24m, prevalence36m) )
+	setkey(tmp, arm)
+	pred.model	<- result[, list( 	arm=arm, 
+					all.prev= round(adultpopsize*prevalence36m), 
+					all.inc= round(adultpopsize*sum(cumulincyear1, cumulincyear2, cumulincyear3)) ), by="comid_old" ]
+	pred.model[, prediction:= "central"]
+	#
+	#	first CD4 samples in year 2 3 4 in HCF
+	#	add CD4first.year2 (these are first timers in HCF) + CD4repeated.year2	(these are repeaters in HCF but first timers in phylo study)
+	#
+	tmp			<- subset( result.CD4, select=c(comid_old, arm, CD4first.year2, CD4first.year3, CD4first.year4, CD4incidAmongstFirst.year2, CD4incidAmongstFirst.year3, CD4incidAmongstFirst.year4, CD4repeated.year2))
+	set(tmp, NULL, 'CD4first.year2', tmp[, CD4first.year2+CD4repeated.year2])				
+	set(tmp, NULL, 'HCF.prev', tmp[, CD4first.year2+CD4first.year3+CD4first.year4])	
+	set(tmp, NULL, 'HCF.inc', tmp[, CD4incidAmongstFirst.year2+CD4incidAmongstFirst.year3+CD4incidAmongstFirst.year4])
+	tmp[,prediction:= "central"]
+	tmp[,country:= "ZA"]
+	samples.CD4	<- subset( tmp, select=c(comid_old, country, prediction, HCF.inc, HCF.prev) )
+	#
+	#	seroconverters in PC at PC12, PC24, PC36
+	#
+	samples.PC	<- subset(result, select=c(comid_old, arm, NbInc12mNotLostAndConsenting, NbInc24mNotLostAndConsenting, NbInc36mNotLostAndConsenting))
+	#	for protocol:
+	samples.PC[, list(m12=sum(NbInc12mNotLostAndConsenting), m24=sum(NbInc24mNotLostAndConsenting), m36=sum(NbInc36mNotLostAndConsenting)), by='arm']
+	samples.PC[, list(m12=sum(NbInc12mNotLostAndConsenting), m24=sum(NbInc24mNotLostAndConsenting), m36=sum(NbInc36mNotLostAndConsenting))]
+	#
+	tmp			<- subset(result, select=c(comid_old, arm, NbPrevPC12AmongstInitial2500, NbPrevPC12NotLostAndConsenting, NbPrevPC12NotOnART, NbPrevPC24AmongstInitial2500, NbPrevPC24NotLostAndConsenting, NbPrevPC24NotOnART, NbPrevPC36AmongstInitial2500, NbPrevPC36NotLostAndConsenting, NbPrevPC36NotOnART))
+	tmp[, PC12ART:= NbPrevPC12NotLostAndConsenting-NbPrevPC12NotOnART]
+	tmp[, PC12Lost:= NbPrevPC12AmongstInitial2500-NbPrevPC12NotLostAndConsenting]
+	tmp[, list(PC12ART=sum(PC12ART)), by='arm']
+	tmp[, list(PC12ART=sum(PC12ART))]
+	tmp[, list(PC12Lost=sum(PC12Lost)), by='arm']
+	tmp[, list(PC12Lost=sum(PC12Lost))]	
+	#
+	#	untreated prevalent at phylo baseline in PC at PC0, PC12
+	#	
+	tmp			<- subset(result, select=c(comid_old, NbPrevPC0NotOnART, NbPrevPC12NotOnART))
+	samples.PC	<- merge(samples.PC, tmp, by=c('comid_old'))
+	samples.PC[, PC0.prev:= NbPrevPC0NotOnART]
+	samples.PC[, PC12.prev:= NbPrevPC12NotOnART]
+	samples.PC[, PC0.inc:= round(NbInc12mNotLostAndConsenting+NbInc24mNotLostAndConsenting+NbInc36mNotLostAndConsenting)]
+	samples.PC[, PC12.inc:= round(NbInc12mNotLostAndConsenting+NbInc24mNotLostAndConsenting+NbInc36mNotLostAndConsenting)]
+	samples.PC[, prediction:= "central"]
+	samples.PC	<- rbindlist( list( 	samples.PC[, list(comid_old=comid_old, prediction=prediction, design="PC+HCC", PC.prev=PC0.prev,  PC.inc=PC0.inc)],
+					samples.PC[, list(comid_old=comid_old, prediction=prediction, design="PC12+HCC", PC.prev=PC12.prev, PC.inc=PC12.inc)]	)		)
+	#	add PC and HCF samples
+	samples.CD4	<- merge(samples.PC, samples.CD4, by=c("comid_old","prediction"))
+	samples.CD4	<- merge(samples.CD4, pred.model, by=c("comid_old","prediction"))
+	#
+	samples.CD4	<- subset(samples.CD4, design==opt.design)
+	#	for protocol
+	subset(samples.CD4, select=c(PC.prev, PC.inc, HCF.inc, HCF.prev, arm))[, lapply(.SD,sum), by='arm']
+	#
+	setkey(samples.CD4, arm)
+	samples.CD4
+}
 ###############################################################################
 popart.predicted.firstCD4<- function(version= "130627")
 {
@@ -602,6 +812,71 @@ popart.predicted.sequences.131023<- function(samples.CD4, df.nocontam, opt.analy
 	setnames(samples.seq, c("HCF.inc","HCF.prev","pc.prev","pc.inc","pc.avg"), c("nonPC.inc","nonPC.prev","%prev","%inc","%avg") )		#to match previous data table
 	setkey(samples.seq, country, arm)
 	samples.seq	
+}
+###############################################################################
+#p.inpatient.c=0.95; p.inpatient.p=0.9; p.consent.coh=p.consent.coh; p.consent.clu=p.consent.clu 
+popart.predicted.sequences.141006<- function(samples.CD4, df.nocontam, opt.analysis, p.lab, p.inpatient.c=0.95, p.inpatient.p=0.9, p.consent.coh=0.9, p.consent.clu=0.8)
+{	
+	#determine p.nocontam among incident
+	opt.prediction	<- ifelse( grepl("central",opt.analysis), "central", ifelse( grepl("optimistic",opt.analysis), "optimistic", "pessimistic" ) )
+	tmp				<- subset(df.nocontam, target==opt.prediction, c(country, arm, p.nocontam))
+	setnames(tmp, "p.nocontam", "p.nocontam.inc")
+	#add p.inpatient
+	df.inpatient	<- data.table(target=c("optimistic","central","pessimistic"), p.inpatient=c(p.inpatient.c,p.inpatient.c,p.inpatient.p))
+	tmp[,p.inpatient:= subset(df.inpatient, target==opt.prediction)[1,p.inpatient]]
+	#determine p.nocontam.prev among prevalent
+	tmp[,p.nocontam.prev:= subset(df.nocontam, arm=='C' & target==opt.prediction )[1, p.nocontam]]
+	set( tmp, NULL, 'p.consent.coh', p.consent.coh )
+	set( tmp, NULL, 'p.consent.clu', p.consent.clu )
+	samples.seq		<- subset(samples.CD4, prediction=="central")
+	samples.seq		<- merge(samples.seq, tmp, by=c("country","arm"))
+	samples.seq		<- samples.seq[, list(	country=country, arm=arm, all.prev=all.prev, all.inc=all.inc,
+											PC.prev=round(PC.prev*p.lab*p.nocontam.prev*p.consent.coh), 
+											PC.inc=round(PC.inc*p.lab*p.nocontam.inc*p.consent.coh), 
+											HCF.inc=round(HCF.inc*p.lab*p.nocontam.inc*p.inpatient*p.consent.clu), 
+											HCF.prev=round(HCF.prev*p.lab*p.nocontam.prev*p.inpatient*p.consent.clu)), by="comid_old"]
+	samples.seq[,"pc.prev":=round( samples.seq[, (PC.prev+HCF.prev) / all.prev], d=3)]
+	samples.seq[,"pc.inc":=round( samples.seq[, (PC.inc+HCF.inc) / all.inc], d=3)]
+	#samples.seq[,"%avg":=round( samples.seq[, (PC.inc+HCF.inc+PC.prev+HCF.prev) / (all.prev+all.inc)], d=3)]
+	samples.seq		<- merge(samples.seq, samples.seq[, list(pc.avg=min(pc.prev,pc.inc)), by="comid_old"], by="comid_old")
+	setnames(samples.seq, c("HCF.inc","HCF.prev","pc.prev","pc.inc","pc.avg"), c("nonPC.inc","nonPC.prev","%prev","%inc","%avg") )		#to match previous data table
+	setkey(samples.seq, country, arm)
+	samples.seq	
+}
+###############################################################################
+popart.predicted.incpairs.141015<- function(samples.seq, p.identify=0.75)
+{
+	require(Hmisc)
+	ipairs.seq	<- copy(samples.seq)
+	ipairs.seq[, ipairs:= floor((PC.inc+nonPC.inc)*pc.prev*p.nocontam*p.identify)]
+	
+	#	smallest community in arm
+	ipairs.seq.mc	<- ipairs.seq[, {										
+										tmp	<- which.min(ipairs)
+										list(comid_old=comid_old[tmp], ipairs=ipairs[tmp])
+									}, by=c('country','arm')]
+	tmp				<- as.data.table( expand.grid(pE2E=seq(0.05, 0.6, 0.01), arm=c('A','B','C')) )							
+	ipairs.seq.mc	<- merge( subset(ipairs.seq.mc, select=c(country, arm, comid_old, ipairs)), tmp, by='arm', allow.cartesian=TRUE)	
+	ipairs.seq.mc[, ipairs.EE:=floor(ipairs*pE2E)]
+							
+	tmp				<- ipairs.seq.mc[, {
+									tmp<- binconf( ipairs.EE, ipairs, alpha=0.05, method= "wilson", include.x=FALSE, include.n=FALSE )
+									list(pE2E= pE2E, p.mle= tmp[,'PointEst'], p.l95=tmp[,'Lower'], p.u95=tmp[,'Upper'])
+								}, by=c('arm','country','comid_old')]
+	ipairs.seq.mc	<- merge(ipairs.seq.mc, tmp, by=c('arm','country','comid_old','pE2E'))
+	
+	#	pooling all communities in arm
+	ipairs.seq.p	<- ipairs.seq[, list(ipairs=sum(ipairs)), by=c('country','arm')]
+	tmp				<- as.data.table( expand.grid(pE2E=seq(0.05, 0.6, 0.01), arm=c('A','B','C')) )							
+	ipairs.seq.p	<- merge( subset(ipairs.seq.p, select=c(country, arm, ipairs)), tmp, by='arm', allow.cartesian=TRUE)	
+	ipairs.seq.p[, ipairs.EE:=floor(ipairs*pE2E)]	
+	tmp				<- ipairs.seq.p[, {
+											tmp<- binconf( ipairs.EE, ipairs, alpha=0.05, method= "wilson", include.x=FALSE, include.n=FALSE )
+											list(pE2E= pE2E, p.mle= tmp[,'PointEst'], p.l95=tmp[,'Lower'], p.u95=tmp[,'Upper'])
+										}, by=c('arm','country')]
+	ipairs.seq.p	<- merge(ipairs.seq.p, tmp, by=c('arm','country','pE2E'))
+	
+	list(ipairs.seq.mc=ipairs.seq.mc, ipairs.seq.p=ipairs.seq.p)
 }
 ###############################################################################
 popart.sampling.init<- function(x, p.consent.PC, p.consent.HCC, p.lab, p.vhcc.prev.AB, p.vhcc.inc.AB, p.vhcc.prev.C, p.vhcc.inc.C, method="PC and HCC")

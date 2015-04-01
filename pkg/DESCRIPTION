@@ -5,7 +5,7 @@ Title: tools to design phylodynamic components of randomized trials.
 Author: {Christophe Fraser, Oliver Ratmann}
 Maintainer: Oliver Ratmann <o.ratmann@imperial.ac.uk>
 Depends:
-    R (>= 2.10)
+    R (>= 3.1)
 Description: tools to design phylodynamic components of randomized trials.
 License: GPL (>=2)
 LazyLoad: yes

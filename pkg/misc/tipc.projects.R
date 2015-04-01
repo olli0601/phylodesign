@@ -691,7 +691,8 @@ prj.popart.powercalc.by.acutelklratio.tpcobs<- function(sites, samples.seq, coho
 							})
 			theta.model.Hx	<- rbindlist(theta.model.Hx)
 			if(verbose)	cat(paste("\nfind theta corresponding to incidence and %E2E under H0 and H1"))
-			print(theta.model.Hx)			
+			print(theta.model.Hx)
+			#stop()
 		}
 		#have data table with model parameters for each site to simulate from
 		#	-- take subset from data table and simulate 50				
@@ -858,7 +859,35 @@ prj.popart.powercalc.by.acutelklratio.lkl4Precomputed<- function(sites=NULL, tpc
 	lkl.theta
 }
 ###############################################################################
-prj.popart.powercalc.by.acutelklratio.get.scenarios<- function(sites, lkl.theta, f.name, df.true=NULL, scenarios= c("H0","H1"), plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, pdf.width=	ifelse(pdf.each,5,15), pdf.height=	ifelse(pdf.each,5,11), resume=1, verbose=1)
+prj.popart.powercalc.by.acutelklratio.plot.one.me2e<- function(df, ci=95, e2e.true= {e2e.true<- c(0.1,0.2,0.4); names(e2e.true)<- c("S0","S2","S1"); e2e.true}, verbose=1,  f.name=NULL)
+{
+	scenarios		<- unique(df[,h])	
+	cols			<- c("black",brewer.pal(3, "Set1")[1:2])
+	names(cols)		<- c("S0","S1","S2")
+	if(!is.null(f.name))
+	{
+		if(verbose)	cat(paste("\nplot to",f.name))
+		pdf(file=f.name, 4, 4)
+	}
+	par(mar=c(4.5,4.5,0.5,0.5))
+	plot(1,1,type='n', bty='n', xlab="% transmission from early infection", ylab="probability density", xlim=range(df[,E2E]), ylim=range(c(-0.5,df[,dens.p])))
+	lapply(scenarios, function(scenario)
+			{
+				x	<- subset( df, h==scenario )[,E2E]
+				y	<- subset( df, h==scenario )[,dens.p]
+				cy	<- cumsum(y / sum(y) )
+				z	<- c( tail( which( cy <= (100-ci)/2/100 ), 1), which( cy >= 1-(100-ci)/2/100 )[1] )
+				polygon( c(x[seq.int(z[1],z[2])],x[c(z[2],z[1])]), c(y[seq.int(z[1],z[2])],0,0), col=my.fade.col(cols[scenario],0.5), border=NA		 )
+				lines( x, y )
+				points(e2e.true[scenario],-0.5, pch=18, col=my.fade.col(cols[scenario]))
+			})
+	legend("topright", legend=paste("scenario",scenarios), fill= sapply(cols[scenarios],function(x) my.fade.col(x,0.5)), bty='n', border=NA)
+	if(!is.null(f.name))
+		dev.off()
+}
+###############################################################################
+#	scenarios=c("S0","S1","S2","S3"); subset.Inc=0.025; subset.E2E=0.65; plot=1; xlab.theta="acute"; ylab.theta="base"; pdf.each=0; pdf.height=22; resume=0; verbose=1
+prj.popart.powercalc.by.acutelklratio.get.scenarios<- function(sites, lkl.theta, f.name, df.true=NULL, scenarios= c("H0","H1"), subset.Inc=0.015, subset.E2E=0.5, plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, pdf.width=	ifelse(pdf.each,5,15), pdf.height=	ifelse(pdf.each,5,11), resume=1, verbose=1)
 {	
 	
 	if(resume & !is.null(f.name))
@@ -880,7 +909,7 @@ prj.popart.powercalc.by.acutelklratio.get.scenarios<- function(sites, lkl.theta,
 			site	<-	lkl.theta.sites[1]
 			lkl.e2e	<- lapply(scenarios, function(hyp)
 					{
-						#hyp					<- "H0"
+						hyp					<- "S0"
 						df		<- subset(lkl.theta, comid_old==site & h==hyp)					
 						#	plot smoothed image for Inc, E2E
 						df			<- subset(df, E2E<0.5 & Inc<0.015)
@@ -893,6 +922,10 @@ prj.popart.powercalc.by.acutelklratio.get.scenarios<- function(sites, lkl.theta,
 						dx			<- tmp$dx
 						ci.e2e		<- tmp$ci		
 						my.image(look$x, look$y, tmp$lkl, palette="gray", xlab="% incidence/year", ylab="% transmission from early infection", contour.nlevels=0, cex.points=0, points.col="black")
+						
+						lkl.e2e		<- apply(tmp$lkl,2,sum)
+						d.e2e		<- density(look$y, weights=lkl.e2e, width=0.05)
+						plot(d.e2e$x, d.e2e$y, type='l', bty='n', ylab="% transmission from early infection")
 						
 						cbind( data.table( expand.grid(Inc=look$x, E2E=look$y) ), comid_old=site, pixel=seq_len(prod(dim(look$z))), lkl=as.numeric(look$z), p=as.numeric(tmp$lkl), h=hyp)				
 					})		
@@ -957,7 +990,7 @@ prj.popart.powercalc.by.acutelklratio.get.scenarios<- function(sites, lkl.theta,
 									if(pdf.each) dev.off()
 								}
 								
-								df			<- subset(df, E2E<0.5 & Inc<0.015)
+								df			<- subset(df, E2E<subset.E2E & Inc<subset.Inc)
 								#	get and plot smoothed image for Inc, E2E
 								if(plot)
 								{
@@ -1363,7 +1396,7 @@ prj.popart.compute.numbers.for.protocol<- function()
 	
 	m.type			<- "Acute"	
 	cohort.size		<- 2500	
-	cohort.dur		<- 3	
+	cohort.dur		<- 2	
 	theta.EE.H0		<- 0.1
 	theta.EE.H1		<- 0.4
 	theta.UE		<- 0.3
@@ -1373,8 +1406,8 @@ prj.popart.compute.numbers.for.protocol<- function()
 	debug			<- 1
 	
 	p.lab			<- 0.75*0.9			#set lower as discussed	70% from CD4 90% from sequencing
-	p.consent.coh	<- 0.9*0.9			#90% consent to main study and of those 90% consent to phylo study				
-	p.consent.clu	<- 1				#waiver
+	p.consent.coh	<- 0.9				#90% consent to main study already in Anne's numbers, and of those 90% consent to phylo study				
+	p.consent.clu	<- 0.8				#waiver
 	p.vhcc.prev.AB	<- 1				#already in PopART model estimate
 	p.vhcc.inc.AB	<- 1				#already in PopART model estimate
 	p.vhcc.prev.C	<- 1				#already in PopART model estimate
@@ -1387,15 +1420,16 @@ prj.popart.compute.numbers.for.protocol<- function()
 	
 	
 	#compute df.hypotheses on Inc and E2E
-	file			<- paste(CODE.HOME,"data","popart.propacute.131016.R",sep='/')
-	tmp				<- load(file)
+	tmp				<- load(system.file(package="phylodesign", "misc", "popart.propacute.131016.R"))
 	if(verbose) cat(paste("loaded",paste(tmp,collapse=' ')))		
 	#set(df.prop, which(df.prop[,target=="central"]), "target", "central-1016")
-	#set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")		
-	df.hyp			<- df.prop[, {
-									tmp<- c(which.min(E2E), which.max(E2E))
-									list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])
-								}, by=c("country", "arm","target")]
+	#set(df.prop, which(df.prop[,target=="optimistic"]), "target", "optimistic-1016")
+	df.hyp			<- data.table(arm=c('A','A','B','B','C','C'), EE=c(0.1, 0.4), HYP=c('H0','H1'))
+	#	don t have update proportions by arm
+	#df.hyp			<- df.prop[, {
+	#								tmp<- c(which.min(E2E), which.max(E2E))
+	#								list( h=c("H0","H1"), Inc= Inc[tmp], E2E= E2E[tmp], O2E=O2E[tmp])
+	#							}, by=c("country", "arm","target")]
 	#compute df.hypotheses on O2E
 	df.nocontam		<- df.prop[, list(p.nocontam= 1-median(O2E)), by=c("country", "arm","target")]
 	sites			<- popart.getdata.randomized.arm( pooled.n, rtn.fixed=debug, rtn.phylostudy=1 )
@@ -1403,7 +1437,7 @@ prj.popart.compute.numbers.for.protocol<- function()
 	sites[which(sites[,"country"]==2),"country"]	<- "SA"	
 	sites			<- as.data.table(sites)
 
-	if(1)
+	if(0)
 	{
 		#Table 4.7 --> no adjustment for contamination
 		set(df.nocontam, NULL, "p.nocontam", 1)
@@ -1418,22 +1452,76 @@ prj.popart.compute.numbers.for.protocol<- function()
 		#total sum
 		samples.seq[, list(PC.prev=sum(PC.prev), PC.inc=sum(PC.inc), nonPC.prev=sum(nonPC.prev), nonPC.inc=sum(nonPC.inc), all.prev=sum(all.prev), all.inc=sum(all.inc))]		
 	}
-	if(1)
+	if(0)
 	{
 		#with adjustment for contamination and outpatients
 	
 		#samples.CD4		<- popart.predicted.firstCD4.131017(sites, opt.design)
 		samples.CD4		<- popart.predicted.firstCD4.131023(sites, opt.design)
+		tmp				<- samples.CD4[, list(PC.prev=sum(PC.prev), PC.inc=sum(PC.inc), HCF.inc=sum(HCF.inc), HCF.prev=sum(HCF.prev), all.prev=sum(all.prev), all.inc=sum(all.inc)), by='arm']
 		samples.seq		<- popart.predicted.sequences.131023(samples.CD4, df.nocontam, opt.analysis, p.lab, p.inpatient.c=0.95, p.inpatient.p=0.9)
 		samples.seq		<- merge( subset( sites, select=c(comid_old, triplet.id) ), samples.seq, by="comid_old")
-		setkey(samples.seq, triplet.id, arm)		
+		setkey(samples.seq, arm)		
 		setnames(samples.seq, c("%prev","%inc","%avg"), c("pc.prev","pc.inc","pc.avg"))
 		samples.seq		<- samples.seq[, list(PC.prev=sum(PC.prev), PC.inc=sum(PC.inc), nonPC.prev=sum(nonPC.prev), nonPC.inc=sum(nonPC.inc), all.prev=sum(all.prev), all.inc=sum(all.inc), pc.prev=mean(pc.prev), pc.inc=mean(pc.inc), pc.avg=mean(pc.avg)), by=c("country","arm")]
 		samples.seq		<- merge(samples.seq, subset(df.nocontam, target=="central", c(arm, country, p.nocontam)), by=c("country","arm"))
 		print(samples.seq)
 		#total sum
 		samples.seq[, list(PC.prev=sum(PC.prev), PC.inc=sum(PC.inc), nonPC.prev=sum(nonPC.prev), nonPC.inc=sum(nonPC.inc), all.prev=sum(all.prev), all.inc=sum(all.inc))]
-	}	
+	}
+	if(1)
+	{
+		samples.CD4	<- popart.predicted.firstCD4.ByFeb16()
+	}
+	if(1)
+	{
+		#for 9 ZA sites
+		#predicted first CD4
+		samples.CD4		<- popart.predicted.firstCD4.141029(sites, opt.design)
+		#predicted sequences
+		samples.seq		<- popart.predicted.sequences.141006(samples.CD4, df.nocontam, opt.analysis, p.lab, p.inpatient.c=0.95, p.inpatient.p=0.9, p.consent.coh=p.consent.coh, p.consent.clu=p.consent.clu )
+		tmp				<- merge( subset( sites, select=c(comid_old, triplet.id) ), samples.seq, by="comid_old")
+		setkey(tmp, triplet.id, arm)		
+		setnames(tmp, c("%prev","%inc","%avg"), c("pc.prev","pc.inc","pc.avg"))
+		tmp		<- tmp[, list(PC.prev=sum(PC.prev), PC.inc=sum(PC.inc), nonPC.prev=sum(nonPC.prev), nonPC.inc=sum(nonPC.inc), all.prev=sum(all.prev), all.inc=sum(all.inc), pc.prev=mean(pc.prev), pc.inc=mean(pc.inc), pc.avg=mean(pc.avg)), by=c("country","arm")]
+		print(tmp)
+		subset(tmp, select=c( PC.prev, PC.inc, nonPC.prev, nonPC.inc))[, lapply(.SD, sum)]
+		#predicted sequence pairs
+		samples.seq		<- merge(samples.seq, subset(df.nocontam, target=="central", c(arm, country, p.nocontam)), by=c("country","arm"))
+		setnames(samples.seq, c("%prev","%inc","%avg"), c("pc.prev","pc.inc","pc.avg"))		
+		#total sum
+		#samples.seq[, list(PC.prev=sum(PC.prev), PC.inc=sum(PC.inc), nonPC.prev=sum(nonPC.prev), nonPC.inc=sum(nonPC.inc), all.prev=sum(all.prev), all.inc=sum(all.inc))]		
+		tmp				<- popart.predicted.incpairs.141015(samples.seq)
+		ipairs.seq.mc	<- copy(tmp$ipairs.seq.mc)
+		ipairs.seq.p	<- copy(tmp$ipairs.seq.p)
+		
+		subset( ipairs.seq.p, pE2E==0.1 )
+		
+		ipairs.seq.mc[, arm.long:= paste('arm',arm)]
+		ggplot(ipairs.seq.mc, aes(x=100*pE2E, y=100*p.mle, fill=arm.long)) + 				
+				geom_line() + geom_ribbon(aes(ymin=100*p.l95, ymax=100*p.u95, linetype=NA), alpha=0.6) +
+				geom_hline(yintercept=c(10, 40), linetype=2) +
+				scale_x_continuous(breaks=seq(0,100,10), minor_breaks=seq(0,100,2.5)) + scale_y_continuous(breaks=seq(0,100,10), minor_breaks=seq(0,100,2.5)) +
+				scale_fill_brewer(palette='Set1') +
+				theme_bw() + theme(strip.background = element_blank(), strip.text = element_blank()) +
+				labs(x='true proportion of transmissions\nfrom individuals with acute HIV infection\n(%)', y='estimated proportion of transmissions\nfrom individuals with acute HIV infection\n(%)', fill='smallest\ncommunity\nin arm') +
+				facet_grid(.~arm.long)
+		file			<- paste(dir.name,'141015_smallestcommunity.pdf',sep='/')
+		ggsave(file=file, w=8, h=4)
+		
+		ipairs.seq.p[, arm.long:= paste('arm',arm)]
+		ggplot(ipairs.seq.p, aes(x=100*pE2E, y=100*p.mle, fill=arm.long)) + 				
+				geom_line() + geom_ribbon(aes(ymin=100*p.l95, ymax=100*p.u95, linetype=NA), alpha=0.6) +
+				geom_hline(yintercept=c(10, 40), linetype=2) +
+				scale_x_continuous(breaks=seq(0,100,10), minor_breaks=seq(0,100,2.5)) + scale_y_continuous(breaks=seq(0,100,10), minor_breaks=seq(0,100,2.5)) +
+				scale_fill_brewer(palette='Set1') +
+				theme_bw() + theme(strip.background = element_blank(), strip.text = element_blank()) +
+				labs(x='true proportion of transmissions\nfrom individuals with acute HIV infection\n(%)', y='estimated proportion of transmissions\nfrom individuals with acute HIV infection\n(%)', fill='all three\ncommunities\npooled\nin arm') +
+				facet_grid(.~arm.long)
+		file			<- paste(dir.name,'141015_pooledcommunity.pdf',sep='/')
+		ggsave(file=file, w=8, h=4)
+		
+	}
 	
 }
 ###############################################################################
@@ -2831,6 +2919,7 @@ prj.wh.sleeper<- function()
 ###############################################################################
 prj.pipeline<- function()
 {
+	stop()
 	if(0)	#simulate debug tip cluster data sets
 	{
 		dir.name			<- CODE.HOME
@@ -2929,7 +3018,7 @@ prj.pipeline<- function()
 			p.lab			<- 0.75*0.9											
 			p.consent.coh	<- 0.9*0.9
 			opt.analysis	<- "central-SC12-1023"
-			opt.analysis	<- "central-SC45-1023"
+			#opt.analysis	<- "central-SC45-1023"
 			
 		}
 		if(0)	#pessimistic
@@ -2981,8 +3070,8 @@ prj.pipeline<- function()
 		#			
 		f.name			<- paste(dir.name,'/',"tpcobs_",m.type,'_',opt.design,'_',opt.analysis,'_',p.lab,'_',p.consent.coh,sep='')		
 		samples.seq		<- subset(samples.seq, select=c("comid_old","PC.prev","PC.inc","nonPC.inc","nonPC.prev","%prev","%inc","%avg"), with=0)
-		dummy			<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=1, nrep=200)
-		#dummy			<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=1, standalone=0, nrep=200)
+		#dummy			<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=1, nrep=200)
+		dummy			<- prj.popart.powercalc.by.acutelklratio.tpcobs(sites, samples.seq, cohort.dur, f.name, dir.name=dir.name, verbose=verbose, resume=resume, standalone=0, nrep=200)
 		stop()
 	}
 	#
@@ -3204,7 +3293,7 @@ prj.pipeline<- function()
 			p.lab			<- 0.75*0.9											
 			p.consent.coh	<- 0.9*0.9
 			opt.analysis.12	<- "central-SC12-1023"
-			#opt.analysis.45<- "central-SC45-1023"			
+			opt.analysis.45<- "central-SC45-1023"			
 		}
 		if(1)	#pessimistic
 		{
@@ -3305,12 +3394,26 @@ prj.pipeline<- function()
 		#set(df.true, which(df.true[,comid_old%in%c("AZA","BZA","CZA","ASA","BSA","CSA")]), c("acute","base"), NA)
 		set(df.true, NULL, "comid_old", as.character(df.true[,comid_old]))
 		#	plot lkl surface and take 95% CI subset
-		lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.get.scenarios(sites, lkl.theta, f.name, df.true=df.true, scenarios=c("S0","S1","S2","S3"),plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, pdf.height=22,resume=0, verbose=1)
+		lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.get.scenarios(sites, lkl.theta, f.name, df.true=df.true, scenarios=c("S0","S1","S2","S3"),subset.Inc=0.025, subset.E2E=0.65,plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, pdf.height=22,resume=0, verbose=1)
+		#lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.get.scenarios(sites, lkl.theta, f.name, df.true=df.true, scenarios=c("S0","S1","S2","S3"),subset.Inc=0.015, subset.E2E=0.5,plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, pdf.height=22,resume=0, verbose=1)
+		#lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.get.scenarios(sites, lkl.theta, f.name, df.true=df.true, scenarios=c("S0","S1","S2","S3"),plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=0, pdf.height=22,resume=0, verbose=1)
 		#lkl.e2e			<- prj.popart.powercalc.by.acutelklratio.get.scenarios(sites, lkl.theta, f.name, df.true=df.true, scenarios=c("S0","S1","S2","S3"),plot=1, xlab.theta="acute", ylab.theta="base", pdf.each=1, pdf.width=4, pdf.height=4,resume=0, verbose=1)
 		
 		f.name			<- paste(dir.name,'/',"tpcdiv_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,".R",sep='')
 		if(verbose)	cat(paste("\nwrite div to file",f.name))
 		save(lkl.e2e, file=f.name)		
+		#SSS
+		
+		lkl.me2e		<- lkl.e2e[, list(marg.p=sum(p)), by=c("comid_old", "h", "E2E") ]		
+		lkl.de2e		<- lkl.me2e[, {			tmp<- density(E2E, weights=marg.p, width=0.1, from=0);	list( E2E= tmp$x, dens.p= tmp$y )		}, by=c("comid_old", "h") ]
+		select			<- unique(lkl.de2e[,comid_old])
+		dummy			<- lapply(select, function(x)
+				{
+					f.name			<- paste(dir.name,'/',"tpcme2e_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,"_",x,"S0S1.pdf",sep='')		
+					prj.popart.powercalc.by.acutelklratio.plot.one.me2e(subset( lkl.de2e, comid_old==x & ( h=="S0" | h=="S1") ), f.name=f.name)
+					f.name			<- paste(dir.name,'/',"tpcme2e_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,"_",x,"S0S2.pdf",sep='')		
+					prj.popart.powercalc.by.acutelklratio.plot.one.me2e(subset( lkl.de2e, comid_old==x & ( h=="S0" | h=="S2") ), f.name=f.name)					
+				})
 		stop()				
 	}
 	#
@@ -3327,13 +3430,13 @@ prj.pipeline<- function()
 		debug			<- 1
 		#
 		m.type			<- "Acute"	
-		if(1)		#central estimates
+		if(0)		#central estimates
 		{
 			p.lab			<- 0.75*0.9									
 			p.consent.coh	<- 0.9*0.9
 			opt.analysis	<- "central-SC45-1023"	
 		}
-		if(0)		#pessimistic estimates
+		if(1)		#pessimistic estimates
 		{
 			p.lab			<- 0.7*0.85									
 			p.consent.coh	<- 0.9*0.9
@@ -3342,8 +3445,8 @@ prj.pipeline<- function()
 		#
 		opt.design		<- "PC12+HCC"						
 		opt.samplings	<- "strue"
-		opt.samplings	<- "s5pc"
-		opt.samplings	<- c("struefx10","struefx20","struefx40","struefx60","struefx80","struefx99")
+		#opt.samplings	<- "s5pc"
+		#opt.samplings	<- c("struefx10","struefx20","struefx40","struefx60","struefx80","struefx99")
 		lkl.e2e.div		<- lapply(opt.samplings, function(opt.sampling)
 				{
 					if(verbose)	cat(paste("\nprocess",opt.sampling))
@@ -3353,8 +3456,9 @@ prj.pipeline<- function()
 						p.lab		<- p.consent.coh<- tmp
 					}
 					f.name			<- paste(dir.name,'/',"tpcdiv_",m.type,'_',opt.design,'_',opt.analysis,'_',opt.sampling,'_',p.lab,'_',p.consent.coh,".R",sep='')
+					if(verbose)	cat(paste("\nloading",f.name))
 					tmp				<- load(f.name)
-					if(verbose)	cat(paste("\nloaded",tmp))
+					if(verbose)	cat(paste("\nloaded",tmp))					
 					lkl.e2e.div		<- lkl.e2e[,	{
 														cmp01<- c(which(h=="S0"), which(h=="S1"))
 														cmp02<- c(which(h=="S0"), which(h=="S2"))
@@ -3571,8 +3675,13 @@ prj.pipeline<- function()
 				})
 		names(tpc.obs.sc45)	<- c("strue","struefx10","struefx20","struefx40","struefx60","struefx80","struefx99")
 		#	collect S0 and S1 scenarios for Ndeke (arm A, ZA) Chimwemwe (arm B, ZA) CZA			
-		tpc.obs.t		<- list( tpc.obs.sc12[["strue"]][["Ndeke"]][["H0"]], tpc.obs.sc45[["strue"]][["Ndeke"]][["H0"]], tpc.obs.sc12[["strue"]][["Chimwemwe"]][["H0"]], tpc.obs.sc45[["strue"]][["Chimwemwe"]][["H0"]], tpc.obs.sc12[["strue"]][["CZA"]][["H0"]], tpc.obs.sc45[["strue"]][["CZA"]][["H0"]], tpc.obs.sc12[["strue"]][["C"]][["H0"]], tpc.obs.sc45[["strue"]][["C"]][["H0"]] )
-		names(tpc.obs.t)<- c("1-A-ZA-S0","1-A-ZA-S1","1-B-ZA-S0","1-B-ZA-S1","2-C-ZA-S0","2-C-ZA-S1","4-C-S0","4-C-S1")	
+		tpc.obs.t		<- list( tpc.obs.sc12[["strue"]][["Ndeke"]][["H0"]], tpc.obs.sc45[["strue"]][["Ndeke"]][["H0"]], tpc.obs.sc12[["strue"]][["Ndeke"]][["H1"]], 
+								tpc.obs.sc12[["strue"]][["Chimwemwe"]][["H0"]], tpc.obs.sc45[["strue"]][["Chimwemwe"]][["H0"]], tpc.obs.sc12[["strue"]][["Chimwemwe"]][["H1"]], 
+								tpc.obs.sc12[["strue"]][["CZA"]][["H0"]], tpc.obs.sc45[["strue"]][["CZA"]][["H0"]], 
+								tpc.obs.sc12[["strue"]][["C"]][["H0"]], tpc.obs.sc45[["strue"]][["C"]][["H0"]], tpc.obs.sc12[["strue"]][["C"]][["H1"]] )
+		names(tpc.obs.t)<- c(	"1-A-ZA-S0","1-A-ZA-S1","1-A-ZA-S2",
+								"1-B-ZA-S0","1-B-ZA-S1","1-B-ZA-S2",
+								"2-C-ZA-S0","2-C-ZA-S1","4-C-S0","4-C-S1","4-C-S2")	
 			
 		#	collect Ndeke for sampling plot
 		tpc.obs.Ndeke				<- lapply(tpc.obs.sc45[2:length(tpc.obs.sc45)], function(x)	x[["Ndeke"]][["H0"]]	)				

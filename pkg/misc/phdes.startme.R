@@ -1,4 +1,4 @@
-#! /Library/Frameworks/R.framework/Versions/2.15/Resources/bin/Rscript
+#! /Library/Frameworks/R.framework/Versions/3.1/Resources/bin/Rscript
 #--DSCR------- #! /opt/apps/R-2.15.2/lib64/R/bin/Rscript
 #--CX1-------- #! /apps/R/2.15/lib64/R/bin/Rscript
 ###############################################################################
@@ -9,8 +9,7 @@
 #
 # usage from R:
 #> setwd("/Users/cfraser/git/phylodesign/pkg")
-#> setwd("/Users/Oliver/git/phylodesign/pkg")
-#> source("misc/phdes.startme.R")
+#> setwd("/Users/Oliver/git/phylodesign/pkg"); source("misc/phdes.startme.R")
 # usage from bash:
 #> misc/phdes.startme.R --help
 #
@@ -160,6 +159,7 @@ if(length(args))
 	argv<<- args	
 }
 ###############################################################################
+stop()
 if(PHDES.DEBUG)	options(error= my.dumpframes)	
 cat(paste("\nphdes.startme.R: ",ifelse(PHDES.DEBUG,"debug",""),"call",default.fun))
 dummy<- do.call(default.fun,list()) 	
